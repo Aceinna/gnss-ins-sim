@@ -1,0 +1,4 @@
+!.gitignore
+/data/
+__pycache__/
+*.cprofile

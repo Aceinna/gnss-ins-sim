@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Fielname = mahony.py
+# Fielname = inclinometer_mahony.py
 
 """
 INS+GNSS fusion.

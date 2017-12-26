@@ -60,6 +60,7 @@ class Sim(object):
         self.ref_frame.data = 0
         # reference data
         self.time = Sim_data(name='time', description='sample time, start from 1')
+        self.gps_time = Sim_data(name='gps_time', description='GPS sample time')
         self.ref_pos = Sim_data(name='ref_pos', description='true pos',\
                                 legend=['ref_pos_x', 'ref_pos_y', 'ref_pos_z'])
         self.ref_vel = Sim_data(name='ref_vel', description='true vel',\
@@ -121,34 +122,35 @@ class Sim(object):
         simulations, and sensor data vary for different simulations.
         '''
         self.supported_in_constant = {
-            'fs': 'sample frequency, Hz',
-            'ref_frame': 'navigation frame, 0--NED, 1--virtual inertial frame',
-            'ref_pos': 'reference trajectory',
-            'ref_vel': 'reference velocity',
-            'ref_att': 'reference attitude (Euler angles, ZYX)',
-            'ref_gyro': 'error-free angular velocity',
-            'ref_accel': 'error-free angular velocity'}
+            self.fs.name: self.fs.description,
+            self.ref_frame.name: self.ref_frame.description,
+            self.ref_pos.name: self.ref_pos.description,
+            self.ref_vel.name: self.ref_vel.description,
+            self.ref_att.name: self.ref_att.description,
+            self.ref_gyro.name: self.ref_gyro.description,
+            self.ref_accel.name: self.ref_accel.description}
         self.supported_in_varying = {
-            'gyro': 'gyro measurements',
-            'accel': 'accel measurements'}
+            self.gyro.name: self.gyro.description,
+            self.accel.name: self.accel.description}
         if self.imu.gps:    # optional GPS
-            self.supported_in_constant['ref_gps'] = 'error-free GPS pos/vel (down-sampled)'
-            self.supported_in_varying['gps'] = 'GPS measurements'
+            self.supported_in_constant[self.ref_gps.name] = self.ref_gps.description
+            self.supported_in_constant[self.gps_time] = self.gps_time.description
+            self.supported_in_varying[self.gps.name] = self.gps.description
         if self.imu.magnetometer:   # optional mag
-            self.supported_in_constant['ref_mag'] = 'error-free geomagnetic field in body frame'
-            self.supported_in_varying['mag'] = 'magnetometer measurements'
+            self.supported_in_constant[self.ref_mag.name] = self.ref_mag.description
+            self.supported_in_varying[self.mag.name] = self.mag.description
         # algorithm output that can be handled by Sim class
         # algorithm outputs vary for different simulations
         self.supported_out = {
-            'pos': 'sim position',
-            'vel': 'sim velocity',
-            'att_quat': 'sim attitude (quaternion)',
-            'att_euler': 'sim attitude (Euler angles)',
-            'gyro_b_estimate': 'estimated gyro bias',
-            'accel_b_estimate': 'estimated accel bias',
-            'av_t': 'Allan var time',
-            'av_gyro': 'Allan var of gyro',
-            'av_accel': 'Allan var of accel'}
+            self.pos.name: self.pos.description,
+            self.vel.name: self.vel.description,
+            self.att_quat.name: self.att_quat.description,
+            self.att_euler.name: self.att_euler.description,
+            self.wb.name: self.wb.description,
+            self.ab.name: self.ab.description,
+            self.av_t.name: self.av_t.description,
+            self.av_gyro.name: self.av_gyro.description,
+            self.av_accel.name: self.av_accel.description}
         # all available data
         self.res = {}
         # all available data for plot
@@ -233,7 +235,8 @@ class Sim(object):
         self.ref_accel.data = rtn['imu'][:, 1:4]
         self.ref_gyro.data = rtn['imu'][:, 4:7]
         if self.imu.gps:
-            self.ref_gps.data = rtn['gps']
+            self.gps_time.data = rtn['gps'][:, 0]
+            self.ref_gps.data = rtn['gps'][:, 1:7]
         if self.imu.magnetometer:
             self.ref_mag.data = rtn['mag'][:, 1:4]
         ########## simulation ##########
@@ -260,7 +263,6 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
-
     def results(self):
         '''
         simulation results.
@@ -284,33 +286,40 @@ class Sim(object):
             # print(self.supported_plot)
         return self.res
 
-    def plot(self, what_to_plot, sim_idx=0):
+    def plot(self, what_to_plot, sim_idx=None):
         '''
         Plot specified results.
         Args:
             what_to_plot: a string list to specify what to plot. See manual for details.
             sim_idx: specify the simulation index. This can be an integer, or a list or tuple.
-                Each element should be within [0, num_times-1].
+                Each element should be within [0, num_times-1]. Default is None, and plot data
+                of all simulations.
         '''
         # check sim_idx
-        if isinstance(sim_idx, int) or isinstance(sim_idx, float):
+        if sim_idx is None:
+            sim_idx = list(range(self.sim_count))
+        elif isinstance(sim_idx, int):
             sim_idx = [sim_idx]
+        elif isinstance(sim_idx, float):
+            sim_idx = [int(sim_idx)]
         for i in range(0, len(sim_idx)):
             if sim_idx[i] >= self.sim_count:
                 sim_idx.remove(i)
                 print('Simulation index: %s exceeds max simulation count: %s.'%(i, self.sim_count))
-        # # convert sim_idx into a list or tuple of strings
-        # for i in range(0, len(sim_idx)):
-        #     sim_idx[i] = str(sim_idx[i])
         # dict of data to plot
         for i in what_to_plot:
+            # print("data to plot: %s"% i)
             x_axis = self.time.data
             if i in self.supported_plot:
                 if i in self.supported_in_constant:
+                    if i == self.ref_gps.name or i == self.gps_time.name:
+                        x_axis = self.gps_time.data
                     exec('self.' + i + '.plot(x_axis)')
                 else:
                     if i == self.av_gyro.name or i == self.av_accel.name or i == self.av_t.name:
                         x_axis = self.av_t.data[0]
+                    elif i == self.gps.name:
+                        x_axis = self.gps_time.data
                     exec('self.' + i + '.plot(x_axis, sim_idx)')
             else:
                 print('Unsupported plot: %s.'% i)
@@ -461,6 +470,8 @@ def plot_in_one_figure(x, y, logx=False, logy=False,\
         else:
             raise ValueError
     except:
+        print(x.shape)
+        print(y.shape)
         raise ValueError('Check input data y.')
     # legend
     if legend is not None:

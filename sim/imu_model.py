@@ -143,11 +143,11 @@ class IMU(object):
                 if 'mag_si' in accuracy:
                     self.mag_err['si'] = accuracy['mag_si']
                 else:
-                    self.mag_err = np.eye(3)
+                    self.mag_err['si'] = np.eye(3)
                 if 'mag_hi' in accuracy:
                     self.mag_err['hi'] = accuracy['mag_hi']
                 else:
-                    self.mag_err = np.array([0.0, 0.0, 0.0])
+                    self.mag_err['hi'] = np.array([0.0, 0.0, 0.0])
             # raise error when required keys are missing
             else:
                 raise ValueError('accuracy should at least have keys: \n' +\

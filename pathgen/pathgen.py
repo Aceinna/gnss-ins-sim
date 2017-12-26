@@ -132,8 +132,8 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
     '''
     Add error to true GPS data according to GPS receiver error parameters
     Args:
-        ref_gps: If gps_type is 0, [Lat, Lon, Alt], [rad, rad, m].
-                 If gps_type is 1, [x, y, z], [m, m, m].
+        ref_gps: If gps_type is 0, [Lat, Lon, Alt, vx, vy, vz], [rad, rad, m].
+                 If gps_type is 1, [x, y, z, vx, vy, vz], [m, m, m].
                  ref_gps data are expressed in the navigation frame.
         gps_err: GPS reeceiver parameters.
             'stdm': RMS position error, [m, m, m].
@@ -154,9 +154,8 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
     ## simulate GPS error
     pos_noise = gps_err['stdm'] * np.random.randn(n, 3)
     vel_noise = gps_err['stdv'] * np.random.randn(n, 3)
-    gps_mea = np.hstack([ref_gps[:, 0].reshape((n, 1)),
-                         ref_gps[:, 1:4] + pos_noise,
-                         ref_gps[:, 4:7] + vel_noise])
+    gps_mea = np.hstack([ref_gps[:, 0:3] + pos_noise,
+                         ref_gps[:, 3:6] + vel_noise])
     return gps_mea
 
 def odo_gen(ref_odo, odo_err):

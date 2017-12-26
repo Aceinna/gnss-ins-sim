@@ -10,10 +10,8 @@ Created on 2017-12-20
 """
 
 # import
-import math
 import numpy as np
 from allan import allan
-D2R = math.pi/180
 
 class Allan(object):
     '''
@@ -40,12 +38,12 @@ class Allan(object):
         accel = set_of_input[1]
         gyro = set_of_input[2]
         # calculate
-        avar_ax, tau = allan.allan_var(accel[:, 0]/9.8, fs)
-        avar_ay = allan.allan_var(accel[:, 1]/9.8, fs)[0]
-        avar_az = allan.allan_var(accel[:, 2]/9.8, fs)[0]
-        avar_wx = allan.allan_var(gyro[:, 0]/D2R, fs)[0]
-        avar_wy = allan.allan_var(gyro[:, 1]/D2R, fs)[0]
-        avar_wz = allan.allan_var(gyro[:, 2]/D2R, fs)[0]
+        avar_ax, tau = allan.allan_var(accel[:, 0], fs)
+        avar_ay = allan.allan_var(accel[:, 1], fs)[0]
+        avar_az = allan.allan_var(accel[:, 2], fs)[0]
+        avar_wx = allan.allan_var(gyro[:, 0], fs)[0]
+        avar_wy = allan.allan_var(gyro[:, 1], fs)[0]
+        avar_wz = allan.allan_var(gyro[:, 2], fs)[0]
         # generate results, must be a tuple or list consistent with self.output
         self.results = tau,\
                        np.array([avar_ax, avar_ay, avar_az]).T,\

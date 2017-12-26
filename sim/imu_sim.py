@@ -57,7 +57,7 @@ class Sim(object):
         self.fs.data = fs[0]
         self.ref_frame = Sim_data(name='ref_frame', description='reference frame',\
                                   plottable=False)
-        self.ref_frame.data = 0
+        self.ref_frame.data = 0 # NED
         # reference data
         self.time = Sim_data(name='time', description='sample time, start from 1')
         self.gps_time = Sim_data(name='gps_time', description='GPS sample time')
@@ -72,7 +72,8 @@ class Sim(object):
         self.ref_accel = Sim_data(name='ref_accel', description='true accel',\
                                   legend=['ref_accel_x', 'ref_accel_y', 'ref_accel_z'])
         self.ref_gps = Sim_data(name='ref_gps', description='true GPS pos/vel',\
-                                legend=['ref_gps_x', 'ref_gps_y', 'ref_gps_z'])
+                                legend=['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
+                                        'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz'])
                                 # downsampled true pos/vel, first row is sample index,
                                 # sync with self.time
         self.ref_mag = Sim_data(name='ref_mag', description='true magnetic field',\
@@ -91,7 +92,7 @@ class Sim(object):
         self.accel = Sim_data(name='accel', description='accel measurements',\
                               legend=['accel_x', 'accel_y', 'accel_z'])
         self.gps = Sim_data(name='gps', description='GPS measurements',\
-                            legend=['gps_x', 'gps_y', 'gps_z'])
+                            legend=['gps_x', 'gps_y', 'gps_z', 'gps_vx', 'gps_vy', 'gps_vz'])
         self.mag = Sim_data(name='mag', description='magnetometer measurements',\
                             legend=['mag_x', 'mag_y', 'mag_z'])
         self.wb = Sim_data(name='wb', description='gyro bias estimation',\
@@ -296,16 +297,21 @@ class Sim(object):
                 of all simulations.
         '''
         # check sim_idx
-        if sim_idx is None:
+        if sim_idx is None:                 # no index specified, plot all data
             sim_idx = list(range(self.sim_count))
-        elif isinstance(sim_idx, int):
+        elif isinstance(sim_idx, int):      # scalar input, convert to list
             sim_idx = [sim_idx]
         elif isinstance(sim_idx, float):
             sim_idx = [int(sim_idx)]
-        for i in range(0, len(sim_idx)):
-            if sim_idx[i] >= self.sim_count:
-                sim_idx.remove(i)
-                print('Simulation index: %s exceeds max simulation count: %s.'%(i, self.sim_count))
+        invalid_idx = []
+        for i in range(0, len(sim_idx)):    # a list specified, remove invalid values
+            sim_idx[i] = int(sim_idx[i])
+            if sim_idx[i] >= self.sim_count or sim_idx[i] < 0:
+                invalid_idx.append(sim_idx[i])
+                print('sim_idx[%s] = %s exceeds max simulation count: %s.'%\
+                      (i, sim_idx[i], self.sim_count))
+        for i in invalid_idx:
+            sim_idx.remove(i)
         # dict of data to plot
         for i in what_to_plot:
             # print("data to plot: %s"% i)

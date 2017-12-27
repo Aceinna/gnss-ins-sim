@@ -27,7 +27,7 @@ def allan_var(x, fs):
     """
     ts = 1.0 / fs
     n = len(x)      # number of samples
-    max_sample_per_bin = int(math.floor(n/9.0))      # max samples in one bin, at least 9 bins required
+    max_sample_per_bin = int(math.floor(n/9.0)) # max samples in one bin, at least 9 bins required
     tau = np.zeros((max_sample_per_bin,))
     avar = np.zeros((max_sample_per_bin,))
     # calculate Allan var

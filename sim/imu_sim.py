@@ -169,36 +169,36 @@ class Sim(object):
         simulations, and sensor data vary for different simulations.
         '''
         self.supported_in_constant = {
-            self.fs.name: self.fs.description,
-            self.time.name: self.time.description,
-            self.ref_frame.name: self.ref_frame.description,
-            self.ref_pos.name: self.ref_pos.description,
-            self.ref_vel.name: self.ref_vel.description,
-            self.ref_att.name: self.ref_att.description,
-            self.ref_gyro.name: self.ref_gyro.description,
-            self.ref_accel.name: self.ref_accel.description}
+            self.fs.name: self.fs,
+            self.time.name: self.time,
+            self.ref_frame.name: self.ref_frame,
+            self.ref_pos.name: self.ref_pos,
+            self.ref_vel.name: self.ref_vel,
+            self.ref_att.name: self.ref_att,
+            self.ref_gyro.name: self.ref_gyro,
+            self.ref_accel.name: self.ref_accel}
         self.supported_in_varying = {
-            self.gyro.name: self.gyro.description,
-            self.accel.name: self.accel.description}
+            self.gyro.name: self.gyro,
+            self.accel.name: self.accel}
         if self.imu.gps:    # optional GPS
-            self.supported_in_constant[self.ref_gps.name] = self.ref_gps.description
-            self.supported_in_constant[self.gps_time] = self.gps_time.description
-            self.supported_in_varying[self.gps.name] = self.gps.description
+            self.supported_in_constant[self.ref_gps.name] = self.ref_gps
+            self.supported_in_constant[self.gps_time] = self.gps_time
+            self.supported_in_varying[self.gps.name] = self.gps
         if self.imu.magnetometer:   # optional mag
-            self.supported_in_constant[self.ref_mag.name] = self.ref_mag.description
-            self.supported_in_varying[self.mag.name] = self.mag.description
+            self.supported_in_constant[self.ref_mag.name] = self.ref_mag
+            self.supported_in_varying[self.mag.name] = self.mag
         # algorithm output that can be handled by Sim class
         # algorithm outputs vary for different simulations
         self.supported_out = {
-            self.pos.name: self.pos.description,
-            self.vel.name: self.vel.description,
-            self.att_quat.name: self.att_quat.description,
-            self.att_euler.name: self.att_euler.description,
-            self.wb.name: self.wb.description,
-            self.ab.name: self.ab.description,
-            self.av_t.name: self.av_t.description,
-            self.av_gyro.name: self.av_gyro.description,
-            self.av_accel.name: self.av_accel.description}
+            self.pos.name: self.pos,
+            self.vel.name: self.vel,
+            self.att_quat.name: self.att_quat,
+            self.att_euler.name: self.att_euler,
+            self.wb.name: self.wb,
+            self.ab.name: self.ab,
+            self.av_t.name: self.av_t,
+            self.av_gyro.name: self.av_gyro,
+            self.av_accel.name: self.av_accel}
         # all available data
         self.res = {}
         # all available data for plot
@@ -317,8 +317,6 @@ class Sim(object):
         '''
         simulation results.
         Returns: a dict contains all simulation results.
-            ''
-            ''
         '''
         if self.sim_complete:
             '''
@@ -343,7 +341,7 @@ class Sim(object):
             Simulation results include a summary file containing statistics of the simulation
             and .csv files containing all data generated.
             '''
-            if data_dir is not None:
+            if data_dir is not None:    # save to files
                 import os
                 import time
                 # check data dir
@@ -364,6 +362,8 @@ class Sim(object):
                 except:
                     raise IOError('Unable to save summary to %s.'% data_dir)
                 # save data
+                for i in self.supported_plot:
+                    self.supported_plot[i].save_to_file(data_dir)
         return self.res
 
     def summary(self):
@@ -379,8 +379,6 @@ class Sim(object):
         # simulation time duration
         self.sum += 'Simulation time duration: ' + \
                     str(self.time.data[-1] / self.fs.data) + ' s' + '\n'
-        for i in self.supported_in_constant:
-            pass
 
     def parse_algo_in_out(self):
         '''
@@ -442,13 +440,13 @@ class Sim(object):
                 if i in self.supported_in_constant:
                     if i == self.ref_gps.name or i == self.gps_time.name:
                         x_axis = self.gps_time
-                    exec('self.' + i + '.plot(x_axis)')
+                    self.supported_plot[i].plot(x_axis)
                 else:
                     if i == self.av_gyro.name or i == self.av_accel.name or i == self.av_t.name:
                         x_axis = self.av_t
                     elif i == self.gps.name:
                         x_axis = self.gps_time
-                    exec('self.' + i + '.plot(x_axis, sim_idx)')
+                    self.supported_plot[i].plot(x_axis, sim_idx)
             else:
                 print('Unsupported plot: %s.'% i)
                 # print("Only the following data are available for plot:")
@@ -461,7 +459,7 @@ class Sim_data(object):
     '''
     Simulation data
     '''
-    def __init__(self, name, description, units='',\
+    def __init__(self, name, description, units=[],\
                  plottable=True, logx=False, logy=False,\
                  grid='on', legend=None, pre_func=None):
         '''
@@ -491,7 +489,10 @@ class Sim_data(object):
             self.grid = grid
         self.legend = legend
         self.pre_func = pre_func
-        self.data = {}  # a dict to store data, each key corresponds to a set of data
+        # a dict to store data, each key corresponds to a set of data
+        # or a numpy array of size(m,n)
+        # or a scalar
+        self.data = {}
 
     def plot(self, x, key=None):
         '''
@@ -542,6 +543,52 @@ class Sim_data(object):
                            title=self.name,\
                            grid=self.grid,\
                            legend=self.legend)
+
+    def save_to_file(self, data_dir):
+        '''
+        Save self.data to files.
+        Args:
+            data_dir: directory for the data files.
+        '''
+        #### generate header
+        # how many columns in each set of data? 0 if scalar
+        cols = 0
+        if isinstance(self.data, dict):
+            for i in self.data.keys():
+                if self.data[i].ndim > 1:
+                    cols = self.data[i].shape[1]
+                break   # each set of data in data should have the same number of columns
+        else:
+            if self.data.ndim > 1:
+                cols = self.data.shape[1]
+        # add the name and unit of each column to header
+        header_line = ''
+        if cols > 0:    # more than one column
+            for i in range(cols):
+                # units
+                str_unit = ''
+                if i < len(self.units):
+                    str_unit = ' (' + self.units[i] + ')'
+                # add a column
+                if cols == len(self.legend):    # legend available
+                    header_line += self.legend[i] + str_unit + ','
+                else:                           # legend not available
+                    header_line += self.name + '_' + str(i) + str_unit + ','
+            # remove the trailing ','
+            header_line = header_line[0:-1]
+        else:           # only one column
+            str_unit = ''
+            if len(self.units) > 0:
+                str_unit = ' (' + self.units[0] + ')'
+            header_line = self.name + str_unit
+        #### save data and header to .csv files
+        if isinstance(self.data, dict):
+            for i in self.data:
+                file_name = data_dir + '//' + self.name + '_' + str(i) + '.csv'
+                np.savetxt(file_name, self.data[i], header=header_line, delimiter=',', comments='')
+        else:
+            file_name = data_dir + '//' + self.name + '.csv'
+            np.savetxt(file_name, self.data, header=header_line, delimiter=',', comments='')
 
 def plot_in_one_figure(x, y, logx=False, logy=False,\
                        title='Figure', xlabel=None, ylabel=None,\

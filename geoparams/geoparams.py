@@ -65,3 +65,13 @@ def earth_radius(lat):
     rm = (Re*(1 - E_SQR)) / (math.sqrt(1.0 - E_SQR*sl_sqr) * (1.0 - E_SQR*sl_sqr))
     rn = Re / (math.sqrt(1.0 - E_SQR*sl_sqr))
     return rm, rn
+
+def lla2xyz(lla):
+    '''
+    [Lat Lon Alt] position to xyz position
+    Args:
+        lla: [Lat, Lon, Alt], [rad, rad, meter], numpy array of size (3,)
+    return:
+        [x, y, z], [m, m, m], numpy array of size (3,)
+    '''
+    pass

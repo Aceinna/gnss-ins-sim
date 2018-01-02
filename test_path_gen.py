@@ -13,12 +13,14 @@ import numpy as np
 from sim import imu_model
 from sim import imu_sim
 from algorithm import allan_analysis
+from algorithm import inclinometer_mahony
+from algorithm import free_integration
 
 # globals
 VERSION = '1.0'
 D2R = math.pi/180
 
-data_path = os.path.abspath('.//data//')
+data_path = os.path.abspath('.//sim_def_files//')
 fs = 100.0           # IMU sample frequency
 fs_gps = 10.0        # GPS sample frequency
 ref_frame = 0       # 0: NED frame, 1: virtual inertial frame
@@ -40,13 +42,16 @@ def test_sim():
     # imu_err = 'mid-accuracy'
 
     imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True)
-    algo = allan_analysis.Allan()
-    sim = imu_sim.Sim([fs, fs_gps, fs], imu, data_path+"//motion_def-static.csv",
+    # algo = allan_analysis.Allan()
+    algo = inclinometer_mahony.MahonyFilter()
+    # algo = free_integration.FreeIntegration()
+    sim = imu_sim.Sim([fs, fs_gps, fs], imu, data_path+"//motion_def.csv",
+                      ref_frame=0,
                       mode=np.array([1.0, 0.5, 2.0]),
                       algorithm=algo)
-    sim.run(10)
+    sim.run(1)
     sim.results(data_dir='.//data//')
-    sim.plot(['time', 'av_gyro', 'av_accel'])
+    sim.plot(['time', 'ref_att', 'att_quat', 'av_gyro', 'av_accel'])
     print('test sim OK.')
 
 if __name__ == '__main__':

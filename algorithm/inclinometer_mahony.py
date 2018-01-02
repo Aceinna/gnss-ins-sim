@@ -2,7 +2,7 @@
 # Fielname = inclinometer_mahony.py
 
 """
-INS+GNSS fusion.
+IMU fusion.
 Created on 2017-09-27
 @author: dongxiaoguang
 """
@@ -19,18 +19,41 @@ class MahonyFilter(object):
     '''
     Mahony filter.
     '''
-    def __init__(self, dt):
+    def __init__(self):
         '''
-        Initialize sample period
-        Args:
-            dt: sample period, sec.
+        vars
         '''
+        # algorithm description
+        self.input = ['fs', 'gyro', 'accel', 'mag']
+        self.output = ['att_quat']
+        self.batch = True
+        self.results = None
+        # algorithm vars
         self.ini = 0                                # indicate if attitude is initialized
-        self.dt = dt                                # sample period, sec
+        self.dt = 1.0                               # sample period, sec
         self.q = np.array([1.0, 0.0, 0.0, 0.0])     # quaternion
         self.err_int = np.array([0.0, 0.0, 0.0])    # integral of error
         self.kp_acc = 0.1
         self.ki_acc = 0.001
+
+    def run(self, set_of_input):
+        '''
+        main procedure of the algorithm
+        Args:
+            set_of_input is a tuple or list consistent with self.input
+        '''
+        # get input
+        self.dt = 1.0 / set_of_input[0]
+        gyro = set_of_input[1]
+        accel = set_of_input[2]
+        # mag = set_of_input[3]
+        n = accel.shape[0]
+        # calculate
+        self.results = np.zeros((n, 4))
+        for i in range(n):
+            self.update(gyro[i, :], accel[i, :])
+            # generate results, must be a tuple or list consistent with self.output
+            self.results[i, :] = self.q
 
     def update(self, gyro, acc, mag=np.array([0.0, 0.0, 0.0])):
         '''
@@ -102,6 +125,12 @@ class MahonyFilter(object):
         gyro = gyro + gyro_cor
         # quaternion update
         self.q = attitude.quat_update(self.q, gyro, self.dt)
+
+    def get_results(self):
+        '''
+        return algorithm results as specified in self.output
+        '''
+        return [self.results]
 
     def reset(self):
         '''

@@ -37,7 +37,7 @@ class InclinometerKF_la(object):
     '''
     def __init__(self, fs, sigma_nb, sigma_nw, sigma_na, sigma_nl, tao):
         '''
-        Initialize sample period
+        Algorithm definitions
         Args:
             fs: sample frequency, Hz.
             sigma_nb: gyro bias instability. b_dot = nb, b stands for gyro bias.

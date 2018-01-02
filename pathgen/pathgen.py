@@ -236,15 +236,15 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                         False:
             'imu':      True/ideal IMU measurements. Each line is organized as [index, acc, gyro],
                         index is an interger and increases at imu_output_freq.
-            'nav':      True position, velocity and attitude.
-                        ref_frame==0, [index, absolute_position_lla, velocity_in_body_frame, attitude].
-                        ref_frame==1, [index, position_change, velocity_in_body_frame, attitude].
+            'nav':      True position, velocity and attitude (Euler angles, ZYX).
+                        ref_frame==0, [index, absolute_position_lla, velocity_in_body_frame, attitude],
+                        ref_frame==1, [index, absolute_position_xyz, velocity_in_body_frame, attitude],
                         Index is synced with index in mimu.csv.
             'mag':      True/ideal geomagneti field in the body frame.
                         [index, magx, magy, magz], uT, index synced with mimu.csv index.
             'gps':      True GPS measurements.
-                        For ref_frame==0, [index, absolute_position_lla, velocity_in_navigation_frame],
-                        For ref_frame==1, [index, position_change, velocity_in_navigation_frame],
+                        ref_frame==0, [index, absolute_position_lla, velocity_in_navigation_frame],
+                        ref_frame==1, [index, absolute_position_xyz, velocity_in_navigation_frame],
                         GPS data are down sampled to gps_freq, index synced with mimu.csv index.
             'odo':      True odometer measurements.
                         [index, travel_distance, velocity_in_body_frame].
@@ -322,6 +322,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             geo_mag_n[0] = math.sqrt(geo_mag_n[0]*geo_mag_n[0] + geo_mag_n[1]*geo_mag_n[1])
             geo_mag_n[1] = 0.0
     ## start trajectory generation
+    if ref_frame == 1:
+        pass
     idx_high_freq = 0       # data index for imu, nav, mag
     idx_low_freq = 0        # data index for gps, odo
     for i in range(0, motion_def.shape[0]):
@@ -408,18 +410,10 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 imu_data[idx_high_freq, 5] = gyro_avg[1]
                 imu_data[idx_high_freq, 6] = gyro_avg[2]
                 nav_data[idx_high_freq, 0] = idx_high_freq
-                if ref_frame == 0:
-                    #nav_data[idx_high_freq, :] = np.hstack((idx_high_freq,
-                    #                                        pos_n+pos_delta_n, vel_b, att))
-                    nav_data[idx_high_freq, 1] = pos_n[0] + pos_delta_n[0]
-                    nav_data[idx_high_freq, 2] = pos_n[1] + pos_delta_n[1]
-                    nav_data[idx_high_freq, 3] = pos_n[2] + pos_delta_n[2]
-                else:
-                    #nav_data[idx_high_freq, :] = np.hstack((idx_high_freq,
-                    #                                        pos_delta_n, vel_b, att))
-                    nav_data[idx_high_freq, 1] = pos_delta_n[0]
-                    nav_data[idx_high_freq, 2] = pos_delta_n[1]
-                    nav_data[idx_high_freq, 3] = pos_delta_n[2]
+                # nav data
+                nav_data[idx_high_freq, 1] = pos_n[0] + pos_delta_n[0]
+                nav_data[idx_high_freq, 2] = pos_n[1] + pos_delta_n[1]
+                nav_data[idx_high_freq, 3] = pos_n[2] + pos_delta_n[2]
                 nav_data[idx_high_freq, 4] = vel_b[0]
                 nav_data[idx_high_freq, 5] = vel_b[1]
                 nav_data[idx_high_freq, 6] = vel_b[2]
@@ -444,22 +438,13 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 if (sim_count % output_def[1, 1]) == 0:     # measurement period
                     if output_def[1, 0] == 1:               # GPS
                         gps_data[idx_low_freq, 0] = idx_low_freq
-                        if ref_frame == 0:                  # NED frame
-                            #gps_data[idx_low_freq, :] = np.hstack((idx_low_freq,
-                            #                                       pos_n+pos_delta_n, vel_n))
-                            gps_data[idx_low_freq, 1] = pos_n[0] + pos_delta_n[0]
-                            gps_data[idx_low_freq, 2] = pos_n[1] + pos_delta_n[1]
-                            gps_data[idx_low_freq, 3] = pos_n[2] + pos_delta_n[2]
-                        else:                               # planar frame
-                            #gps_data[idx_low_freq, :] = np.hstack((idx_low_freq,
-                            #                                       pos_delta_n, vel_n))
-                            gps_data[idx_low_freq, 1] = pos_delta_n[0]
-                            gps_data[idx_low_freq, 2] = pos_delta_n[1]
-                            gps_data[idx_low_freq, 3] = pos_delta_n[2]
+                        gps_data[idx_low_freq, 1] = pos_n[0] + pos_delta_n[0]
+                        gps_data[idx_low_freq, 2] = pos_n[1] + pos_delta_n[1]
+                        gps_data[idx_low_freq, 3] = pos_n[2] + pos_delta_n[2]
                         gps_data[idx_low_freq, 4] = vel_n[0]
                         gps_data[idx_low_freq, 5] = vel_n[1]
                         gps_data[idx_low_freq, 6] = vel_n[2]
-                    elif output_def[1, 0] == 2:                                   # odometer
+                    elif output_def[1, 0] == 2:             # odometer
                         #odo_data[idx_low_freq, :] = np.hstack((idx_low_freq,
                         #                                       odo_dist, odo_vel))
                         odo_data[idx_low_freq, 0] = idx_low_freq

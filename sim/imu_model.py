@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Fielname = imu.py
+# Fielname = imu_model.py
 
 """
 IMU class.
@@ -46,9 +46,9 @@ gyro_high_accuracy = {'b': np.array([0.0, 0.0, 0.0]) * D2R,
                       'b_corr':np.array([100.0, 100.0, 100.0]),
                       'arw': np.array([2.0e-3, 2.0e-3, 2.0e-3]) * D2R/60}
 accel_high_accuracy = {'b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
-                      'b_drift': np.array([3.6e-6, 3.6e-6, 3.6e-6]),
-                      'b_corr': np.array([100.0, 100.0, 100.0]),
-                      'vrw': np.array([2.5e-5, 2.5e-5, 2.5e-5]) / 60}
+                       'b_drift': np.array([3.6e-6, 3.6e-6, 3.6e-6]),
+                       'b_corr': np.array([100.0, 100.0, 100.0]),
+                       'vrw': np.array([2.5e-5, 2.5e-5, 2.5e-5]) / 60}
 mag_high_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                      'hi': np.array([10.0, 10.0, 10.0])*0.0,
                      'std': np.array([0.5, 0.5, 0.5])}

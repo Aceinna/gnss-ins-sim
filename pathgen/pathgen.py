@@ -305,7 +305,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     gyro_sum = np.zeros(3)      # accum of over sampled simulated gyro data
     odo_dist = 0                # accum of travel distance
     ## initialize
-    pos_n = ini_pos_vel_att[0:3]                # ini pos
+    pos_n = ini_pos_vel_att[0:3]                # ini pos, LLA
     vel_b = ini_pos_vel_att[3:6]                # ini vel
     att = ini_pos_vel_att[6:9]                  # ini att
     c_nb = attitude.euler2dcm(att, 'zyx').T     # b to n
@@ -322,7 +322,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             geo_mag_n[0] = math.sqrt(geo_mag_n[0]*geo_mag_n[0] + geo_mag_n[1]*geo_mag_n[1])
             geo_mag_n[1] = 0.0
     ## start trajectory generation
-    if ref_frame == 1:
+    if ref_frame == 1:      # if using virtual inertial frame, convert LLA to xyz
         pass
     idx_high_freq = 0       # data index for imu, nav, mag
     idx_low_freq = 0        # data index for gps, odo

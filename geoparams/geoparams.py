@@ -10,6 +10,7 @@ Created on 2017-09-12
 
 # import
 import math
+import numpy as np
 #import scipy.linalg
 
 # global
@@ -74,4 +75,14 @@ def lla2xyz(lla):
     return:
         [x, y, z], [m, m, m], numpy array of size (3,)
     '''
-    pass
+    sl = math.sin(lla[0])
+    cl = math.cos(lla[0])
+    sl_sqr = sl * sl
+
+    r = Re / math.sqrt(1.0 - E_SQR*sl_sqr)
+    rho = (r + lla[2]) * cl
+    x = rho * math.cos(lla[1])
+    y = rho * math.sin(lla[1])
+    z = (r*(1.0-E_SQR) + lla[2]) * sl
+
+    return np.array([x, y, z])

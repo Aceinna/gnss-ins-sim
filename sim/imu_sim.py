@@ -224,7 +224,7 @@ class Sim(object):
         waypoints = np.genfromtxt(path, delimiter=',')
         if waypoints.shape[0] < 2 or waypoints.shape[1] != 9:
             raise ValueError('motion definition file must have nine columns \
-                              and at least two rows and ')
+                              and at least two rows.')
         self.ini_pos_n = waypoints[0, 0:3]
         self.ini_pos_n[0] = self.ini_pos_n[0] * D2R
         self.ini_pos_n[1] = self.ini_pos_n[1] * D2R

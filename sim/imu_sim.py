@@ -11,6 +11,8 @@ import math
 import numpy as np
 from pathgen import pathgen
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+from mpl_toolkits.mplot3d import Axes3D
 
 D2R = math.pi/180
 # built-in mobility
@@ -83,14 +85,16 @@ class Sim(object):
                                  description='GPS sample time',\
                                  units=['No. of samples'])
         self.ref_pos = Sim_data(name='ref_pos',\
-                                description='True pos',\
+                                description='True pos in the navigation frame',\
                                 units=['rad', 'rad', 'm'],\
                                 legend=['ref_pos_x', 'ref_pos_y', 'ref_pos_z'])
+        if self.ref_frame.data == 1:
+            self.ref_pos.units = ['m', 'm', 'm']
         self.ref_vel = Sim_data(name='ref_vel',\
-                                description='True vel',\
+                                description='True vel in the body frame',\
                                 units=['m/s', 'm/s', 'm/s'],\
                                 legend=['ref_vel_x', 'ref_vel_y', 'ref_vel_z'])
-        self.ref_att = Sim_data(name='ref_att',\
+        self.ref_att_euler = Sim_data(name='ref_att_euler',\
                                 description='True attitude (Euler angles, ZYX)',\
                                 units=['rad', 'rad', 'rad'],\
                                 legend=['ref_Yaw', 'ref_Pitch', 'ref_Roll'])
@@ -116,7 +120,7 @@ class Sim(object):
         # simulation results
         self.pos = Sim_data(name='pos',\
                             description='Simulation pos from algo',\
-                            units=['rad', 'rad', 'm'],\
+                            units=self.ref_pos.units,\
                             legend=['pos_x', 'pos_y', 'pos_z'])
         self.vel = Sim_data(name='vel',\
                             description='sim vel',\
@@ -168,7 +172,19 @@ class Sim(object):
                                  logx=True, logy=True,\
                                  legend=['av_ax', 'av_ay', 'av_az'],\
                                  pre_func=np.sqrt)
-
+        # errors
+        self.pos_err = Sim_data(name='pos_err',\
+                                description='Position error (sim-ref)',\
+                                units=self.ref_pos.units,\
+                                legend=['pos_x', 'pos_y', 'pos_z'])
+        self.vel_err = Sim_data(name='vel_err',\
+                                description='Velocity error (sim-ref)',\
+                                units=['m/s', 'm/s', 'm/s'],\
+                                legend=['vel_x', 'vel_y', 'vel_z'])
+        self.euler_err = Sim_data(name='euler_err',
+                                  description='Euler angles error (sim-ref)',\
+                                  units=['rad', 'rad', 'rad'],\
+                                  legend=['Yaw', 'Pitch', 'Roll'])
         ########## supported data ##########
         '''
         each item in the supported data should be either scalar or numpy.array of size(n, dim).
@@ -188,7 +204,7 @@ class Sim(object):
             self.ref_frame.name: self.ref_frame,
             self.ref_pos.name: self.ref_pos,
             self.ref_vel.name: self.ref_vel,
-            self.ref_att.name: self.ref_att,
+            self.ref_att_euler.name: self.ref_att_euler,
             self.ref_gyro.name: self.ref_gyro,
             self.ref_accel.name: self.ref_accel}
         self.supported_in_varying = {
@@ -281,7 +297,7 @@ class Sim(object):
         self.time.data = rtn['nav'][:, 0]
         self.ref_pos.data = rtn['nav'][:, 1:4]
         self.ref_vel.data = rtn['nav'][:, 4:7]
-        self.ref_att.data = rtn['nav'][:, 7:10]
+        self.ref_att_euler.data = rtn['nav'][:, 7:10]
         self.ref_accel.data = rtn['imu'][:, 1:4]
         self.ref_gyro.data = rtn['imu'][:, 4:7]
         if self.imu.gps:
@@ -317,8 +333,8 @@ class Sim(object):
                 # run
                 self.algo.run(algo_input)
                 # output
-                nout = len(self.algo.output)
                 algo_results = self.algo.get_results()
+                nout = len(self.algo.output)
                 for j in range(nout):
                     self.supported_out[self.algo.output[j]].data[i] = algo_results[j]
                 # reset algorithm for next run
@@ -329,6 +345,10 @@ class Sim(object):
     def results(self, data_dir=None):
         '''
         simulation results.
+        Args:
+            data_dir: if not None, save simulation data to files.
+                if data_dir is a valid directory, data files will be saved in data_idr,
+                else, data files will be saved in the default directory './data/'
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:
@@ -421,7 +441,7 @@ class Sim(object):
         except:
             raise TypeError('algorithm input or output is not a valid list or tuple.')
 
-    def plot(self, what_to_plot, sim_idx=None):
+    def plot(self, what_to_plot, sim_idx=None, opt=None):
         '''
         Plot specified results.
         Args:
@@ -429,6 +449,10 @@ class Sim(object):
             sim_idx: specify the simulation index. This can be an integer, or a list or tuple.
                 Each element should be within [0, num_times-1]. Default is None, and plot data
                 of all simulations.
+            opt: a dict to specify plot options. its keys are composed of elements in what_to_plot.
+                values can be:
+                    'error': plot the error of the data specified by what_to_plot w.r.t ref
+                    '3d': 3d plot
         '''
         # check sim_idx
         if sim_idx is None:                 # no index specified, plot all data
@@ -449,18 +473,29 @@ class Sim(object):
         # dict of data to plot
         for i in what_to_plot:
             # print("data to plot: %s"% i)
+            # get plot options
+            ref = None
+            plot3d = None
+            if isinstance(opt, dict):
+                if i in opt:
+                    if opt[i].lower() == '3d':
+                        plot3d = True
+                    elif opt[i].lower() == 'error':
+                        ref_name = 'ref_' + i   # this data have reference, error can be calculated
+                        if ref_name in self.supported_plot:
+                            ref = self.supported_plot[ref_name]
             x_axis = self.time
             if i in self.supported_plot:
                 if i in self.supported_in_constant:
                     if i == self.ref_gps.name or i == self.gps_time.name:
                         x_axis = self.gps_time
-                    self.supported_plot[i].plot(x_axis)
+                    self.supported_plot[i].plot(x_axis, ref=ref, plot3d=plot3d)
                 else:
                     if i == self.av_gyro.name or i == self.av_accel.name or i == self.av_t.name:
                         x_axis = self.av_t
                     elif i == self.gps.name:
                         x_axis = self.gps_time
-                    self.supported_plot[i].plot(x_axis, sim_idx)
+                    self.supported_plot[i].plot(x_axis, key=sim_idx, ref=ref, plot3d=plot3d)
             else:
                 print('Unsupported plot: %s.'% i)
                 # print("Only the following data are available for plot:")
@@ -491,6 +526,7 @@ class Sim_data(object):
             grid: if this is not 'off', it will be changed to 'on'
             legend: tuple or list of strings to specify legend of data.
                 The length of units is the same as columns of each set of data in self.data.
+            pre_func: a function to process the data before plot.
         '''
         self.name = name
         self.description = description
@@ -510,7 +546,7 @@ class Sim_data(object):
         # or a scalar
         self.data = {}
 
-    def plot(self, x, key=None):
+    def plot(self, x, key=None, ref=None, plot3d=False):
         '''
         Plot self.data[key]
         Args:
@@ -519,46 +555,84 @@ class Sim_data(object):
         '''
         if self.plottable:
             if isinstance(self.data, dict):
-                self.plot_dict(x, key)
+                self.plot_dict(x, key, ref, plot3d)
             else:
-                self.plot_array(x)
+                self.plot_array(x, ref, plot3d)
 
-    def plot_dict(self, x, key):
+    def plot_dict(self, x, key, ref=None, plot3d=False):
         '''
         self.data is a dict. plot self.data according to key
         '''
         for i in key:
+            # pre-process data
             if self.pre_func is not None:
                 y_data = self.pre_func(self.data[i])
             else:
                 y_data = self.data[i]
+            # x axis
             if isinstance(x.data, dict):
                 x_data = x.data[i]
             else:
                 x_data = x.data
-            plot_in_one_figure(x_data, y_data,\
-                               logx=self.logx, logy=self.logy,\
-                               title=self.name + '_' + str(i),\
-                               xlabel=x.name + ' (' + x.units[0] + ')',\
-                               ylabel=self.name + ' (' + str(self.units) + ')',\
-                               grid=self.grid,\
-                               legend=self.legend)
+            # error
+            if ref is not None:
+                if isinstance(ref.data, dict):
+                    ref_data = ref.data[i]
+                else:
+                    ref_data = ref.data
+                try:
+                    y_data = y_data - ref_data
+                except:
+                    print(ref_data.shape)
+                    print(y_data.shape)
+                    raise ValueError('Check input data ref and self.data dimension.')
+            # plot
+            if plot3d:
+                plot3d_in_one_figure(y_data,\
+                                     title=self.name,\
+                                     grid=self.grid,\
+                                     legend=self.legend)
+            else:
+                plot_in_one_figure(x_data, y_data,\
+                                   logx=self.logx, logy=self.logy,\
+                                   title=self.name + '_' + str(i),\
+                                   xlabel=x.name + ' (' + x.units[0] + ')',\
+                                   ylabel=self.name + ' (' + str(self.units) + ')',\
+                                   grid=self.grid,\
+                                   legend=self.legend)
 
-    def plot_array(self, x):
+    def plot_array(self, x, ref=None, plot3d=False):
         '''
         self.data is a numpy.array
         '''
+        # x axis
         if isinstance(x.data, dict):
             x_data = x.data[0]
         else:
             x_data = x.data
-        plot_in_one_figure(x_data, self.data,\
-                           logx=self.logx, logy=self.logy,\
-                           xlabel=x.name + ' (' + x.units[0] + ')',\
-                           ylabel=self.name + ' (' + str(self.units) + ')',\
-                           title=self.name,\
-                           grid=self.grid,\
-                           legend=self.legend)
+        # error
+        y_data = self.data
+        if ref is not None:
+            try:
+                y_data = self.data - ref
+            except:
+                print(ref.shape)
+                print(self.data.shape)
+                raise ValueError('Check input data ref and self.data dimension.')
+        # plot
+        if plot3d:
+            plot3d_in_one_figure(y_data,\
+                                 title=self.name,\
+                                 grid=self.grid,\
+                                 legend=self.legend)
+        else:
+            plot_in_one_figure(x_data, y_data,\
+                               logx=self.logx, logy=self.logy,\
+                               xlabel=x.name + ' (' + x.units[0] + ')',\
+                               ylabel=self.name + ' (' + str(self.units) + ')',\
+                               title=self.name,\
+                               grid=self.grid,\
+                               legend=self.legend)
 
     def save_to_file(self, data_dir):
         '''
@@ -613,10 +687,12 @@ def plot_in_one_figure(x, y, logx=False, logy=False,\
     Create a figure and plot x/y in this figure.
     Args:
         x: x axis data, np.array of size (n,) or (n,1)
-        y: y axis data, np.array of size (n,dim)
+        y: y axis data, np.array of size (n,m)
         title: figure title
+        xlabel: x axis label
+        ylabel: y axis label
         gird: if this is not 'off', it will be changed to 'on'
-        legend: tuple or list of strings of length dim.
+        legend: tuple or list of strings of length m.
     '''
     # create figure and axis
     fig = plt.figure(title)
@@ -659,6 +735,44 @@ def plot_in_one_figure(x, y, logx=False, logy=False,\
     # legend
     if legend is not None:
         plt.legend(lines, legend)
+    # grid
+    if grid.lower() != 'off':
+        plt.grid()
+
+def plot3d_in_one_figure(y, title='Figure', grid='on', legend=None):
+    '''
+    Create a figure and plot 3d trajectory in this figure.
+    Args:
+        y: y axis data, np.array of size (n,3)
+        title: figure title
+        gird: if this is not 'off', it will be changed to 'on'
+        legend: tuple or list of strings of length 3.
+    '''
+    # create figure and axis
+    fig = plt.figure(title)
+    axis = fig.add_subplot(111, projection='3d', aspect='equal')
+    try:
+        dim = y.ndim
+        if dim == 2:    # y must be an numpy array of size (n,3), dim=2
+            if y.shape[1] != 3:
+                raise ValueError
+            else:
+                axis.plot(y[:, 0], y[:, 1], y[:, 2])
+        else:
+            raise ValueError
+    except:
+        print(y.shape)
+        raise ValueError('Check input data y.')
+    # label
+    if isinstance(legend, (tuple, list)):
+        n = len(legend)
+        if n != 3:
+            legend = ['x', 'y', 'z']
+    else:
+        legend = ['x', 'y', 'z']
+    axis.set_xlabel(legend[0])
+    axis.set_ylabel(legend[1])
+    axis.set_zlabel(legend[2])
     # grid
     if grid.lower() != 'off':
         plt.grid()

@@ -83,6 +83,179 @@ def quat_multiply(q1, q2):
     q[3] = q1[0]*q2[3] + q1[1]*q2[2] - q1[2]*q2[1] + q1[3]*q2[0]
     return q
 
+def quat2euler(q, rot_seq='zyx'):
+    '''
+    Convert quaternion to Euler angles
+    Args:
+        q: quaternion, [q0, q1, q2, q3], q0 is the scalar
+        rot_seq: rotation sequence corresponding to the angles.
+    Return:
+        angles: 3x1 Euler angles, rad.
+    '''
+    rot_seq = rot_seq.lower()
+    if rot_seq == 'zyx':
+        [r1, r2, r3] = three_axis_rot(2.0*(q[1]*q[2] + q[0]*q[3]),
+                                      q[0]**2.0 + q[1]**2.0 - q[2]**2.0 - q[3]**2.0,
+                                      -2.0*(q[1]*q[3] - q[0]*q[2]),
+                                      2.0*(q[2]*q[3] + q[0]*q[1]),
+                                      q[0]**2.0 - q[1]**2.0 - q[2]**2.0 + q[3]**2.0)
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'zyz':
+        [r1, r2, r3] = two_axis_rot(2.0*(q[2]*q[3] - q[0]*q[1]),
+                                    2.0*(q[1]*q[3] + q[0]*q[2]),
+                                    q[0]**2.0 - q[1]**2.0 - q[2]**2.0 + q[3]**2.0,
+                                    2.0*(q[2]*q[3] + q[0]*q[1]),
+                                    -2.0*(q[1]*q[3] - q[0]*q[2]))
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'zxy':
+        [r1, r2, r3] = three_axis_rot(-2.0*(q[1]*q[2] - q[0]*q[3]),
+                                      q[0]**2.0 - q[1]**2.0 + q[2]**2.0 - q[3]**2.0,
+                                      2.0*(q[2]*q[3] + q[0]*q[1]),
+                                      -2.0*(q[1]*q[3] - q[0]*q[2]),
+                                      q[0]**2.0 - q[1]**2.0 - q[2]**2.0 + q[3]**2.0)
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'zxz':
+        [r1, r2, r3] = two_axis_rot(2.0*(q[1]*q[3] + q[0]*q[2]),
+                                    -2.0*(q[2]*q[3] - q[0]*q[1]),
+                                    q[0]**2.0 - q[1]**2.0 - q[2]**2.0 + q[3]**2.0,
+                                    2.0*(q[1]*q[3] - q[0]*q[2]),
+                                    2.0*(q[2]*q[3] + q[0]*q[1]))
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'yxz':
+        [r1, r2, r3] = three_axis_rot(2.0*(q[1]*q[3] + q[0]*q[2]),
+                                      q[0]**2.0 - q[1]**2.0 - q[2]**2.0 + q[3]**2.0,
+                                      -2.0*(q[2]*q[3] - q[0]*q[1]),
+                                      2.0*(q[1]*q[2] + q[0]*q[3]),
+                                      q[0]**2.0 - q[1]**2.0 + q[2]**2.0 - q[3]**2.0)
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'yxy':
+        [r1, r2, r3] = two_axis_rot(2.0*(q[1]*q[2] - q[0]*q[3]),
+                                    2.0*(q[2]*q[3] + q[0]*q[1]),
+                                    q[0]**2.0 - q[1]**2.0 + q[2]**2.0 - q[3]**2.0,
+                                    2.0*(q[1]*q[2] + q[0]*q[3]),
+                                    -2.0*(q[2]*q[3] - q[0]*q[1]))
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'yzx':
+        [r1, r2, r3] = three_axis_rot(-2.0*(q[1]*q[3] - q[0]*q[2]),
+                                      q[0]**2.0 + q[1]**2.0 - q[2]**2.0 - q[3]**2.0,
+                                      2.0*(q[1]*q[2] + q[0]*q[3]),
+                                      -2.0*(q[2]*q[3] - q[0]*q[1]),
+                                      q[0]**2.0 - q[1]**2.0 + q[2]**2.0 - q[3]**2.0)
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'yzy':
+        [r1, r2, r3] = two_axis_rot(2.0*(q[2]*q[3] + q[0]*q[1]),
+                                    -2.0*(q[1]*q[2] - q[0]*q[3]),
+                                    q[0]**2.0 - q[1]**2.0 + q[2]**2.0 - q[3]**2.0,
+                                    2.0*(q[2]*q[3] - q[0]*q[1]),
+                                    2.0*(q[1]*q[2] + q[0]*q[3]))
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'xyz':
+        [r1, r2, r3] = three_axis_rot(-2.0*(q[2]*q[3] - q[0]*q[1]),
+                                      q[0]**2.0 - q[1]**2.0 - q[2]**2.0 + q[3]**2.0,
+                                      2.0*(q[1]*q[3] + q[0]*q[2]),
+                                      -2.0*(q[1]*q[2] - q[0]*q[3]),
+                                      q[0]**2.0 + q[1]**2.0 - q[2]**2.0 - q[3]**2.0)
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'xyx':
+        [r1, r2, r3] = two_axis_rot(2.0*(q[1]*q[2] + q[0]*q[3]),
+                                    -2.0*(q[1]*q[3] - q[0]*q[2]),
+                                    q[0]**2.0 + q[1]**2.0 - q[2]**2.0 - q[3]**2.0,
+                                    2.0*(q[1]*q[2] - q[0]*q[3]),
+                                    2.0*(q[1]*q[3] + q[0]*q[2]))
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'xzy':
+        [r1, r2, r3] = three_axis_rot(2.0*(q[2]*q[3] + q[0]*q[1]),
+                                      q[0]**2.0 - q[1]**2.0 + q[2]**2.0 - q[3]**2.0,
+                                      -2.0*(q[1]*q[2] - q[0]*q[3]),
+                                      2.0*(q[1]*q[3] + q[0]*q[2]),
+                                      q[0]**2.0 + q[1]**2.0 - q[2]**2.0 - q[3]**2.0)
+        return np.array([r1, r2, r3])
+    elif rot_seq == 'xzx':
+        [r1, r2, r3] = two_axis_rot(2.0*(q[1]*q[3] - q[0]*q[2]),
+                                    2.0*(q[1]*q[2] + q[0]*q[3]),
+                                    q[0]**2.0 + q[1]**2.0 - q[2]**2.0 - q[3]**2.0,
+                                    2.0*(q[1]*q[3] + q[0]*q[2]),
+                                    -2.0*(q[1]*q[2] - q[0]*q[3]))
+        return np.array([r1, r2, r3])
+    else:
+        return False
+
+def euler2quat(angles, rot_seq='zyx'):
+    '''
+    Convert Euler angles to quaternion.
+    Args:
+        angles: 3x1 Euler angles, rad.
+        rot_seq: rotation sequence corresponding to the angles.
+    Return:
+        q: quaternion, [q0, q1, q2, q3], q0 is the scalar
+    """
+    '''
+    cangle = np.cos(angles)
+    sangle = np.sin(angles)
+    rot_seq = rot_seq.lower()
+    if rot_seq == 'zyx':
+        return np.array([cangle[0]*cangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] - sangle[0]*sangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*cangle[1]*sangle[2],
+                         sangle[0]*cangle[1]*cangle[2] - cangle[0]*sangle[1]*sangle[2]])
+    elif rot_seq == 'zyz':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*sangle[2] - sangle[0]*sangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         sangle[0]*cangle[1]*cangle[2] + cangle[0]*cangle[1]*sangle[2]])
+    elif rot_seq == 'zxy':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*sangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2]])
+    elif rot_seq == 'zxz':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         sangle[0]*sangle[1]*cangle[2] - cangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2]])
+    elif rot_seq == 'yxz':
+        return np.array([cangle[0]*cangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*cangle[1]*sangle[2],
+                         sangle[0]*cangle[1]*cangle[2] - cangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] - sangle[0]*sangle[1]*cangle[2]])
+    elif rot_seq == 'yxy':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         sangle[0]*cangle[1]*cangle[2] + cangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*sangle[2] - sangle[0]*sangle[1]*cangle[2]])
+    elif rot_seq == 'yzx':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*sangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2]])
+    elif rot_seq == 'yzy':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         sangle[0]*sangle[1]*cangle[2] - cangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2]])
+    elif rot_seq == 'xyz':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*sangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*sangle[1]*cangle[2]])
+    elif rot_seq == 'xyx':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         sangle[0]*sangle[1]*cangle[2] - cangle[0]*sangle[1]*sangle[2]])
+    elif rot_seq == 'xzy':
+        return np.array([cangle[0]*cangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
+                         sangle[0]*cangle[1]*cangle[2] - cangle[0]*sangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] - sangle[0]*sangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*cangle[1]*sangle[2]])
+    elif rot_seq == 'xzx':
+        return np.array([cangle[0]*cangle[1]*cangle[2] - sangle[0]*cangle[1]*sangle[2],
+                         cangle[0]*cangle[1]*sangle[2] + sangle[0]*cangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*sangle[2] - sangle[0]*sangle[1]*cangle[2],
+                         cangle[0]*sangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2]])
+    else:
+        return False
+
 def quat2dcm(q):
     """
     Convert quaternion to direction cosine matrix
@@ -489,6 +662,30 @@ def quat_update(q, w, dt):
     q = quat_normalize(q)
     return q
 
+def euler_update_zyx(x, w, dt):
+    '''
+    Update Euler angles.
+    Rotation sequence is zyx [phi theta psi], rad.
+    Args:
+        x: input Euler angles, rad
+        w: angular velocity, rad/s
+        dt: time interval, sec
+    Returns:
+        y: propagate x according to angular velocity w for dt seconds
+    '''
+    # Euler angle rate
+    c_psi = math.cos(x[2])
+    s_psi = math.sin(x[2])
+    phi_dot = (w[2]*c_psi + w[1]*s_psi) / math.cos(x[1])
+    theta_dot = w[1]*c_psi - w[2]*s_psi
+    psi_dot = w[0] + (w[2]*c_psi + w[1]*s_psi) * math.tan(x[1])
+
+    y = np.copy(x)          # y = x will cause x modified when modifying y
+    y[0] += phi_dot * dt
+    y[1] += theta_dot * dt
+    y[2] += psi_dot * dt
+    return y
+
 def rotation_quat(w, dt):
     '''
     Args:
@@ -523,3 +720,17 @@ def get_cross_mtx(a):
                         [a[2], 0.0, -a[0]],
                         [-a[1], a[0], 0.0]])
     return a_cross
+
+def cross3(a, b):
+    '''
+    cross product of array of size 3.
+    Args:
+        a: array of size 3.
+        b: array of size 3.
+    Returns:
+        c: c = cross(a,b), of size 3.
+    '''
+    c = np.array([a[1]*b[2] - a[2]*b[1],
+                  a[2]*b[0] - a[0]*b[2],
+                  a[0]*b[1] - a[1]*b[0]])
+    return c

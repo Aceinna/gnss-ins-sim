@@ -2,7 +2,7 @@
 # Filename: free_integration.py
 
 """
-IMU free integration.
+IMU free integration in a virtual inertial frame.
 This is a demo algorithm for Sim.
 Created on 2017-12-20
 @author: dongxiaoguang
@@ -10,26 +10,38 @@ Created on 2017-12-20
 
 import numpy as np
 from attitude import attitude
+from geoparams import geoparams
 
 class FreeIntegration(object):
     '''
     Integrate gyro to get attitude, double integrate linear acceleration to get position.
     '''
-    def __init__(self):
+    def __init__(self, ini_pos_vel_att):
         '''
-        vars
+        Args 9x1 initial position, velocity and attitude.
+            3x1 position in the form of LLA, units: [rad, rad, m];
+            3x1 velocity in the navigation frame, units: m/s;
+            4x1 attitude quaternion, scalar first.
         '''
         # algorithm description
         self.input = ['fs', 'gyro', 'accel']
-        self.output = ['att_quat', 'pos', 'vel']
+        self.output = ['att_euler', 'pos', 'vel']
         self.batch = True
         self.results = None
         # algorithm vars
-        self.ini = 0
         self.dt = 1.0
-        self.q = None
+        self.att = None
         self.pos = None
         self.vel = None
+        # ini state
+        c_nb = attitude.euler2dcm(ini_pos_vel_att[6:9]).T
+        self.r0 = geoparams.lla2xyz(ini_pos_vel_att[0:3])
+        self.v0 = c_nb.dot(ini_pos_vel_att[3:6])
+        self.att0 = ini_pos_vel_att[6:9]
+        # Earth gravity
+        earth_param = geoparams.geo_param(ini_pos_vel_att[0:3])    # geo parameters
+        self.g_n = np.array([0, 0, earth_param[2]])
+        # self.g_n = np.array([0, 0, 9.794841972265036389])
 
     def run(self, set_of_input):
         '''
@@ -42,14 +54,33 @@ class FreeIntegration(object):
         gyro = set_of_input[1]
         accel = set_of_input[2]
         n = accel.shape[0]
-        # calculate
-        self.q = np.zeros((n, 4))
+        # Free IMU integration
+        self.att = np.zeros((n, 3))
         self.pos = np.zeros((n, 3))
         self.vel = np.zeros((n, 3))
         for i in range(n):
-            pass
+            # initialize
+            if i == 0:
+                self.att[i, :] = self.att0
+                self.vel[i, :] = self.v0
+                self.pos[i, :] = self.r0
+                continue
+            # loop
+            self.att[i, :] = attitude.euler_update_zyx(self.att[i-1, :], gyro[i-1, :], self.dt)
+            c_bn = attitude.euler2dcm(self.att[i-1, :])
+            #### propagate velocity in the navigation frame
+            # accel_n = c_nb.dot(accel[i-1, :])
+            # self.vel[i, :] = self.vel[i-1, :] + (accel_n + self.g_n) * self.dt
+            #### propagate velocity in the body frame
+            self.vel[i, :] = c_bn.dot(self.vel[i-1, :]) +\
+                             (accel[i-1, :] + c_bn.dot(self.g_n)) * self.dt -\
+                             attitude.cross3(gyro[i-1, :], c_bn.dot(self.vel[i-1, :])) * self.dt
+            c_bn = attitude.euler2dcm(self.att[i, :])
+            self.vel[i, :] = c_bn.T.dot(self.vel[i, :])
+            self.pos[i, :] = self.pos[i-1, :] + self.vel[i-1, :] * self.dt
+
         # results
-        self.results = [self.q, self.pos, self.vel]
+        self.results = [self.att, self.pos, self.vel]
 
     def get_results(self):
         '''
@@ -61,4 +92,4 @@ class FreeIntegration(object):
         '''
         Reset the fusion process to uninitialized state.
         '''
-        self.ini = False
+        pass

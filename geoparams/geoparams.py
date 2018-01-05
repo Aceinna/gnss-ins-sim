@@ -73,7 +73,7 @@ def lla2xyz(lla):
     Args:
         lla: [Lat, Lon, Alt], [rad, rad, meter], numpy array of size (3,)
     return:
-        [x, y, z], [m, m, m], numpy array of size (3,)
+        WGS-84 position, [x, y, z], [m, m, m], numpy array of size (3,)
     '''
     sl = math.sin(lla[0])
     cl = math.cos(lla[0])

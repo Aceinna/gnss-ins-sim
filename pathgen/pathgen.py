@@ -208,7 +208,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     form is [m m m], units for angles are rad, time unit is sec, unless specified otherwise.
     Args:
         ini_pos_vel_att: 9x1 initial position, velocity and attitude.
-            3x1 position in the form of [Lat, Log, Alt].
+            3x1 position in the form of [Lat, Lon, Alt].
             3x1 velocity in the body frame.
             3x1 attitude in Euler angles [yaw, pitch, roll], rotation sequency is zyx.
         motion_def: nx6 motion definitions. Each row defines command of a motion segment.
@@ -257,11 +257,13 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                     'mag': [],
                     'gps': [],
                     'odo': []}
+
     ### sim freq and data output freq
     out_freq = output_def[0, 1]     # IMU output frequency
     sim_osr = output_def[0, 0]      # simulation over sample ratio w.r.t IMU output freq
     sim_freq = sim_osr * out_freq   # simulation frequency
     dt = 1.0 / sim_freq             # simulation period
+
     ### Path gen command filter to make trajectory smoother
     alpha = 0.9                     # for the low pass filter of the motion commands
     filt_a = alpha * np.eye(3)
@@ -275,13 +277,15 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     vel_converge_threshold = 1e-4
     att_dot = np.zeros(3)           # Euler angle change rate
     vel_dot_b = np.zeros(3)         # Velocity change rate in the body frame
+
     ### convert time duration to simulation cycles
     sim_count_max = 0
     for i in range(0, motion_def.shape[0]):
         seg_count = motion_def[i, 5] * out_freq         # max count for this segment
         sim_count_max += seg_count                      # data count of all segments
         motion_def[i, 5] = round(seg_count * sim_osr)   # simulation count
-    ### create output files. Todo: check if files are created successfully
+
+    ### create output arrays
     sim_count_max = int(sim_count_max)
     imu_data = np.zeros((sim_count_max, 7))
     nav_data = np.zeros((sim_count_max, 10))
@@ -299,6 +303,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             output_def[1, 0] = -1
     if magnet:
         mag_data = np.zeros((sim_count_max, 4))
+
     ### start computations
     sim_count = 0               # number of total simulation data
     acc_sum = np.zeros(3)       # accum of over sampled simulated acc data
@@ -322,8 +327,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             geo_mag_n[0] = math.sqrt(geo_mag_n[0]*geo_mag_n[0] + geo_mag_n[1]*geo_mag_n[1])
             geo_mag_n[1] = 0.0
     ## start trajectory generation
-    if ref_frame == 1:      # if using virtual inertial frame, convert LLA to xyz
-        pass
+    if ref_frame == 1:      # if using virtual inertial frame, convert LLA to ECEF xyz
+        pos_n = geoparams.lla2xyz(pos_n)
     idx_high_freq = 0       # data index for imu, nav, mag
     idx_low_freq = 0        # data index for gps, odo
     for i in range(0, motion_def.shape[0]):
@@ -380,19 +385,15 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                                                   att_dot, ref_frame, g)
             acc = imu_results[0]
             gyro = imu_results[1]
-            pos_dot_n = imu_results[3]
+            pos_dot_n = imu_results[3]  # lla change rate if NED, vel_n if virtual inertial
             # update IMU results
             acc_sum = acc_sum + acc
             gyro_sum = gyro_sum + gyro
             # update GPS results
-            pos_delta_n = pos_delta_n + pos_dot_n*dt    # accumulated pos change
-            att = att + att_dot*dt
-            c_nb = attitude.euler2dcm(att, 'zyx').T     # b to n
-            vel_b = vel_b + vel_dot_b*dt
-            vel_n = c_nb.dot(vel_b)
+
             # update odometer results
             odo_vel = vel_b
-            odo_dist = odo_dist + np.sqrt(np.dot(vel_b, vel_b))*dt
+
             # Write the results. Simulation data are down sampled according to freq specified
             # in output_def.
             # IMU measurement and navigation results
@@ -454,6 +455,13 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                         odo_data[idx_low_freq, 4] = odo_vel[2]
                     # index increment
                     idx_low_freq += 1
+            pos_delta_n = pos_delta_n + pos_dot_n*dt    # accumulated pos change
+            odo_dist = odo_dist + np.sqrt(np.dot(vel_b, vel_b))*dt
+            vel_b = vel_b + vel_dot_b*dt
+            att = att + att_dot*dt
+            c_nb = attitude.euler2dcm(att, 'zyx').T     # b to n
+            vel_n = c_nb.dot(vel_b)
+
         # if command is completed, att_dot and vel_dot should be set to zero
         if com_complete == 1:
             att_dot = np.zeros(3)
@@ -472,7 +480,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
 def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_frame, g):
     """
     Calculate true IMU results from attitude change rate and velocity
-    change rate.abs
+    change rate.
     attitude change rate is input in the form of Euler angle derivatives and
     converted into angular velocity. Velocity change rate is expressed in
     the body frame. Position change rate is also calculated. If simulation is
@@ -496,7 +504,7 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
     """
     # velocity in N
     vel_n = c_nb.dot(vel_b)
-    # Calculate ellipsoid Earth parameters.
+
     # Calculate rotation rate of n w.r.t e in n and e w.r.t i in n
     # For the NED frame, the NED frame rotation and Earth rotation rate is calculated
     # For the virtual inertial frame, they are not needed and simply set to zeros.
@@ -520,6 +528,7 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
         w_ie_n[2] = -w_ie * sl
     else:
         gravity = [0, 0, -g]
+
     # Calculate rotation rate of b w.r.t n expressed in n.
     # Calculate rotation rate from Euler angle derivative using ZYX rot seq.
     sh = math.sin(att[0])
@@ -528,8 +537,11 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
     w_nb_n[0] = -sh*att_dot[1] + c_nb[0, 0]*att_dot[2]
     w_nb_n[1] = ch*att_dot[1] + c_nb[1, 0]*att_dot[2]
     w_nb_n[2] = att_dot[0] + c_nb[2, 0]*att_dot[2]
+    # Calculate rotation rate from rotation quaternion
+    # w_nb_n = np.zeros(3)
+
     # Velocity derivative
-    vel_dot_n = c_nb.dot(vel_dot_b) + cross3(w_nb_n, vel_n)
+    vel_dot_n = c_nb.dot(vel_dot_b) + attitude.cross3(w_nb_n, vel_n)
     # Position derivative
     pos_dot_n = np.zeros(3)
     if ref_frame == 0:
@@ -544,7 +556,7 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
     gyro = c_nb.T.dot(w_nb_n + w_en_n + w_ie_n)
     # Acceleration output
     w_ie_b = c_nb.T.dot(w_ie_n)
-    acc = vel_dot_b + cross3(w_ie_b+gyro, vel_b) + c_nb.T.dot(gravity)
+    acc = vel_dot_b + attitude.cross3(w_ie_b+gyro, vel_b) + c_nb.T.dot(gravity)
     return acc, gyro, vel_dot_n, pos_dot_n
 
 def write_array_to_file(fobj, data):
@@ -587,17 +599,3 @@ def parse_motion_def(motion_def_seg, att, vel):
         att_com = att + [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
         vel_com = [motion_def_seg[4], 0, 0]
     return att_com, vel_com
-
-def cross3(a, b):
-    '''
-    cross product of array of size 3.
-    Args:
-        a: array of size 3.
-        b: array of size 3.
-    Returns:
-        c: c = cross(a,b), of size 3.
-    '''
-    c = np.array([a[1]*b[2] - a[2]*b[1],
-                  a[2]*b[0] - a[0]*b[2],
-                  a[0]*b[1] - a[1]*b[0]])
-    return c

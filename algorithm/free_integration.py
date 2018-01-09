@@ -18,10 +18,11 @@ class FreeIntegration(object):
     '''
     def __init__(self, ini_pos_vel_att):
         '''
-        Args 9x1 initial position, velocity and attitude.
-            3x1 position in the form of LLA, units: [rad, rad, m];
-            3x1 velocity in the navigation frame, units: m/s;
-            4x1 attitude quaternion, scalar first.
+        Args:
+            ini_pos_vel_att: 9x1 initial position, velocity and attitude.
+                3x1 position in the form of LLA, units: [rad, rad, m];
+                3x1 velocity in the navigation frame, units: m/s;
+                3x1 Euler anels [yaw, pitch, roll], rotation sequency is ZYX, rad.
         '''
         # algorithm description
         self.input = ['fs', 'gyro', 'accel']

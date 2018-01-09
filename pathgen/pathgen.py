@@ -34,12 +34,18 @@ def acc_gen(fs, ref_a, acc_err, vib_def=None):
             'b': 3x1 acc constant bias, m/s2.
             'b_drift': 3x1 acc bias drift, m/s2.
             'vrw': 3x1 velocity random walk, m/s2/root-Hz.
-        vib_def: Single-sided PSD of vibrating accelerations. Generated vibrating acc is expressed
-                 in the body frame.
-            'freq':  frequency, in unit of Hz
-            'x': x axis, in unit of m2/s4/Hz.
-            'y': y axis, in unit of m2/s4/Hz.
-            'z': z axis, in unit of m2/s4/Hz.
+        vib_def: Vibration model and parameters. Vibration type can be random, sinunoida or
+            specified by single-sided PSD.
+            Generated vibrating acc is expressed in the body frame.
+            'type' == 'random':
+                Normal distribution. 'amp' gives the 1sigma values, units: m/s2
+            'type' == 'sinunoidal'
+                Sinunoidal vibration. 'amp' gives the amplitude of the sine wave, units: m/s2.
+            'type' == 'psd'. Single sided PSD.
+                'freq':  frequency, in unit of Hz
+                'x': x axis, in unit of m2/s4/Hz.
+                'y': y axis, in unit of m2/s4/Hz.
+                'z': z axis, in unit of m2/s4/Hz.
     Returns:
         a_mea: nx3 measured acc data
     """
@@ -49,17 +55,22 @@ def acc_gen(fs, ref_a, acc_err, vib_def=None):
     ## simulate sensor error
     # static bias
     acc_bias = acc_err['b']
-    # bias drift Todo: first-order Gauss-Markov model
+    # bias drift
     acc_bias_drift = bias_drift(acc_err['b_corr'], acc_err['b_drift'], n, fs)
     # vibrating acceleration
     acc_vib = np.zeros((n, 3))
     if vib_def is not None:
-        acc_vib[:, 0] = time_series_from_psd.time_series_from_psd(vib_def['x'],
-                                                                  vib_def['freq'], fs, n)[1]
-        acc_vib[:, 1] = time_series_from_psd.time_series_from_psd(vib_def['y'],
-                                                                  vib_def['freq'], fs, n)[1]
-        acc_vib[:, 2] = time_series_from_psd.time_series_from_psd(vib_def['z'],
-                                                                  vib_def['freq'], fs, n)[1]
+        if vib_def['type'].lower() == 'psd':
+            acc_vib[:, 0] = time_series_from_psd.time_series_from_psd(vib_def['x'],
+                                                                      vib_def['freq'], fs, n)[1]
+            acc_vib[:, 1] = time_series_from_psd.time_series_from_psd(vib_def['y'],
+                                                                      vib_def['freq'], fs, n)[1]
+            acc_vib[:, 2] = time_series_from_psd.time_series_from_psd(vib_def['z'],
+                                                                      vib_def['freq'], fs, n)[1]
+        elif vib_def['type'] == 'random':
+            acc_vib[:, 2] = vib_def['amp'] * np.random.randn(n)
+        elif vib_def['type'] == 'sinusoidal':
+            acc_vib[:, 2] = vib_def['amp'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
     # accelerometer white noise
     acc_noise = np.random.randn(n, 3)
     acc_noise[:, 0] = acc_err['vrw'][0] / math.sqrt(dt) * acc_noise[:, 0]
@@ -356,6 +367,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             if com_type == 1:
                 att_dot = filt_a.dot(att_dot) + filt_b.dot(att_dot_com)         # filter input
                 vel_dot_b = filt_a.dot(vel_dot_b) + filt_b.dot(vel_dot_com)
+                # vel_dot_b = np.array(vel_dot_com)
             else:
                 att_com_filt = filt_a.dot(att_com_filt) + filt_b.dot(att_com)   # filter command
                 vel_com_b_filt = filt_a.dot(vel_com_b_filt) + filt_b.dot(vel_com_b)
@@ -558,19 +570,6 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
     w_ie_b = c_nb.T.dot(w_ie_n)
     acc = vel_dot_b + attitude.cross3(w_ie_b+gyro, vel_b) + c_nb.T.dot(gravity)
     return acc, gyro, vel_dot_n, pos_dot_n
-
-def write_array_to_file(fobj, data):
-    """
-    Write elements in an array to one line in a file
-    Args:
-        fobj: File to write data into. fobj is returned by open()
-        data: array
-    Returns:
-        True:
-        False:
-    """
-    str_data = ','.join(str(i) for i in data)
-    fobj.write(str_data+'\n')
 
 def parse_motion_def(motion_def_seg, att, vel):
     """

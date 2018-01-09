@@ -54,7 +54,7 @@ def time_series_from_psd(sxx, freq, fs, n):
     xk = ax * np.exp(1j*phi)                    # single-sided frequency spectrum
     xk = np.hstack([xk, xk[-2:0:-1].conj()])    # double-sided frequency spectrum
     xm = np.fft.ifft(xk)                        # inverse fft
-    x_tmp = xm.real                                 # real part
+    x_tmp = xm.real                             # real part
     ### repeat x to output time series of desired lenght n
     if repeat_output is True:
         repeat_num = n // N

@@ -27,7 +27,7 @@ mag_low_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                     'hi': np.array([10.0, 10.0, 10.0])*0.0,
                     'std': np.array([0.1, 0.1, 0.1])}
 # mid accuracy, from ADIS16490
-#http://www.analog.com/media/en/technical-documentation/data-sheets/ADIS16490.pdf
+# http://www.analog.com/media/en/technical-documentation/data-sheets/ADIS16490.pdf
 gyro_mid_accuracy = {'b': np.array([0.0, 0.0, 0.0]) * D2R,
                      'b_drift': np.array([1.8, 1.8, 1.8]) * D2R/3600.0,
                      'b_corr':np.array([100.0, 100.0, 100.0]),
@@ -38,9 +38,9 @@ accel_mid_accuracy = {'b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
                       'vrw': np.array([0.008, 0.008, 0.008]) / 60}
 mag_mid_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                     'hi': np.array([10.0, 10.0, 10.0])*0.0,
-                    'std': np.array([0.1, 0.1, 0.1])}
+                    'std': np.array([0.01, 0.01, 0.01])}
 # high accuracy, partly from HG9900, partly from
-#http://www.dtic.mil/get-tr-doc/pdf?AD=ADA581016
+# http://www.dtic.mil/get-tr-doc/pdf?AD=ADA581016
 gyro_high_accuracy = {'b': np.array([0.0, 0.0, 0.0]) * D2R,
                       'b_drift': np.array([0.1, 0.1, 0.1]) * D2R/3600.0,
                       'b_corr':np.array([100.0, 100.0, 100.0]),
@@ -51,7 +51,7 @@ accel_high_accuracy = {'b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
                        'vrw': np.array([2.5e-5, 2.5e-5, 2.5e-5]) / 60}
 mag_high_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                      'hi': np.array([10.0, 10.0, 10.0])*0.0,
-                     'std': np.array([0.5, 0.5, 0.5])}
+                     'std': np.array([0.001, 0.001, 0.001])}
 
 ## built-in GPS error profiles
 gps_low_accuracy = {'stdm': np.array([5.0, 5.0, 7.0]),
@@ -111,7 +111,7 @@ class IMU(object):
                 self.accel_err = accel_high_accuracy
                 self.mag_err = mag_high_accuracy
             else:                                           # not a valid string
-                raise TypeError('accuracy is not a valid string.')
+                raise ValueError('accuracy is not a valid string.')
         # accuracy is a dict, user defined models
         elif isinstance(accuracy, dict):
             # set IMU and mag error params

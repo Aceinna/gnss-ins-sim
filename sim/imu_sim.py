@@ -443,7 +443,7 @@ class Sim(object):
                     self.fs.units[0] + '\n'
         # simulation time duration
         self.sum += 'Simulation time duration: ' + \
-                    str(self.time.data[-1]) + ' s' + '\n'
+                    str(len(self.time.data)/self.fs.data) + ' s' + '\n'
         # simulation times
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
         if data_dir is not None:

@@ -67,7 +67,7 @@ def test_sim():
                       mode=np.array([1.0, 0.5, 2.0]),
                       env=None,#np.genfromtxt(data_path + '//vib_psd.csv', delimiter=','),
                       algorithm=algo)
-    sim.run(1000)
+    sim.run(2000)
     # generate simulation results, summary, and save data to files
     # sim.results('./data/')  # save data files
     sim.results()  # do not save data

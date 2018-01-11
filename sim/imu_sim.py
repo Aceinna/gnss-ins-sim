@@ -22,13 +22,13 @@ class Sim(object):
     '''
     Simulation class.
     '''
-    def __init__(self, fs, imu, path, ref_frame=0,\
+    def __init__(self, fs, imu, motion_def, ref_frame=0,\
                  mode=None, env=None, algorithm=None):
         '''
         Args:
             fs: [fs_imu, fs_gps, fs_mag], Hz
             imu: See IMU in imu_model.py
-            path: a .csv file to define the waypoints
+            motion_def: a .csv file to define the waypoints
                 row 1: initial states.
                     3 initial position (LLA, deg, meter),
                     3 initial velocity in body frame(m/s),
@@ -236,17 +236,11 @@ class Sim(object):
         self.sum = ''
 
         ########## read motion definition ##########
-        waypoints = np.genfromtxt(path, delimiter=',')
-        if waypoints.shape[0] < 2 or waypoints.shape[1] != 9:
-            raise ValueError('motion definition file must have nine columns \
-                              and at least two rows.')
-        self.ini_pos_n = waypoints[0, 0:3]
-        self.ini_pos_n[0] = self.ini_pos_n[0] * D2R
-        self.ini_pos_n[1] = self.ini_pos_n[1] * D2R
-        self.ini_vel_b = waypoints[0, 3:6]
-        self.ini_att = waypoints[0, 6:9]
-        self.motion_def = waypoints[1:, [0, 1, 2, 3, 4, 7]]
-        self.motion_def[:, 1:4] = self.motion_def[:, 1:4] * D2R
+        self.ini_pos_n = None
+        self.ini_vel_b = None
+        self.ini_att = None
+        self.motion_def = None
+        self.parse_motion(motion_def)
 
         ########## generate GPS or not ##########
         # output definitions
@@ -268,48 +262,7 @@ class Sim(object):
 
         ########## environment-->vibraition params ##########
         self.vib_def = None
-        if env is not None:
-            self.vib_def = {}
-            if isinstance(env, str):                # specify simple vib model
-                if 'random' in env:         # normal distribution
-                    self.vib_def['type'] = 'random'
-                    env = env.replace('-random', '')
-                elif 'sinusoidal' in env:   # sinusoidal vibration
-                    self.vib_def['type'] = 'sinusoidal'
-                    env = env.replace('-sinusoidal', '')
-                    if env[-2:].lower() == 'hz':
-                        try:
-                            idx_first_mark = env.find('-')
-                            self.vib_def['freq'] = math.fabs(float(env[idx_first_mark+1:-2]))
-                            env = env[:idx_first_mark]
-                        except:
-                            raise ValueError('env = \'%s\' is not valid (invalid vib freq).'% env)
-                    else:
-                        raise ValueError('env = \'%s\' is not valid (No vib freq).'% env)
-                else:
-                    raise ValueError('env = \'%s\' is not valid.'% env)
-                vib_amp = 1.0   # vibration amplitude, 1sigma for random, peak value for sinusoidal
-                if env[-1] == 'g' or env[-1] == 'G':
-                    vib_amp = 9.8
-                    env = env[:-1]  # remove 'g' or 'G'
-                try:
-                    vib_amp *= float(env)
-                    self.vib_def['amp'] = vib_amp
-                except:
-                    raise ValueError('Cannot convert \'%s\' to float'% env)
-            elif isinstance(env, np.ndarray):           # customize the vib model with PSD
-                if env.ndim == 2 and env.shape[1] == 4: # env is a np.array of size (n,4)
-                    self.vib_def['type'] = 'psd'
-                    n = env.shape[0]
-                    half_fs = 0.5*self.fs.data
-                    if env[-1, 0] > half_fs:
-                        n = np.where(env[:, 0] > half_fs)[0][0]
-                    self.vib_def['freq'] = env[:n, 0]
-                    self.vib_def['x'] = env[:n, 1]
-                    self.vib_def['y'] = env[:n, 2]
-                    self.vib_def['z'] = env[:n, 3]
-            else:
-                raise TypeError('env should be a string or a numpy array of size (n,2)')
+        self.parse_env(env)
 
         # check algorithm
         self.algo = algorithm
@@ -476,34 +429,6 @@ class Sim(object):
             except:
                 raise IOError('Unable to save summary to %s.'% data_dir)
 
-    def check_algo(self):
-        '''
-        Generate expressions to handle algorithm input and output.
-        Args:
-            algorithm: user specified algorithm class
-        Returns:
-            Raise ValueError if algorithm has no input or output;
-            Raise ValueError if algorithm input and output have unsupported elements
-            Raise TypeError if algorithm input or output is not a list or tuple
-        '''
-        try:
-            n_in = len(self.algo.input)
-            n_out = len(self.algo.output)
-            # algorithm must have at least one input and one output
-            if n_in < 1 or n_out < 1:
-                raise ValueError
-            # prepare algorithm input and output
-            for i in self.algo.input:
-                if not i in self.supported_in_constant and not i in self.supported_in_varying:
-                    raise ValueError
-            for i in self.algo.output:
-                if not i in self.supported_out:
-                    raise ValueError
-        except ValueError:
-            raise ValueError('check input and output definitions of the algorithm.')
-        except:
-            raise TypeError('algorithm input or output is not a valid list or tuple.')
-
     def plot(self, what_to_plot, sim_idx=None, opt=None):
         '''
         Plot specified results.
@@ -566,6 +491,106 @@ class Sim(object):
                 # raise ValueError("Unsupported data to plot: %s."%data)
         # show figures
         plt.show()
+
+    def parse_motion(self, motion_def):
+        '''
+        Get initial pos/vel/att and motion command from a .csv file.
+        Args:
+            motion_def: initial state and motion command file.
+        '''
+        try:
+            ini_state = np.genfromtxt(motion_def, delimiter=',', skip_header=1, max_rows=1)
+            waypoints = np.genfromtxt(motion_def, delimiter=',', skip_header=3)
+        except:
+            raise ValueError('motion definition file must have nine columns \
+                              and at least four rows (two header rows + at least two data rows).')
+        self.ini_pos_n = ini_state[0:3]
+        self.ini_pos_n[0] = self.ini_pos_n[0] * D2R
+        self.ini_pos_n[1] = self.ini_pos_n[1] * D2R
+        self.ini_vel_b = ini_state[3:6]
+        self.ini_att = ini_state[6:9] * D2R
+        if waypoints.ndim == 1:
+            waypoints = waypoints.reshape((1, len(waypoints)))
+        self.motion_def = waypoints[:, [0, 1, 2, 3, 4, 7]]
+        self.motion_def[:, 1:4] = self.motion_def[:, 1:4] * D2R
+
+    def parse_env(self, env):
+        '''
+        Parse env.
+        Args:
+            env: vibration model
+        '''
+        if env is not None:
+            self.vib_def = {}
+            if isinstance(env, str):                # specify simple vib model
+                if 'random' in env:         # normal distribution
+                    self.vib_def['type'] = 'random'
+                    env = env.replace('-random', '')
+                elif 'sinusoidal' in env:   # sinusoidal vibration
+                    self.vib_def['type'] = 'sinusoidal'
+                    env = env.replace('-sinusoidal', '')
+                    if env[-2:].lower() == 'hz':
+                        try:
+                            idx_first_mark = env.find('-')
+                            self.vib_def['freq'] = math.fabs(float(env[idx_first_mark+1:-2]))
+                            env = env[:idx_first_mark]
+                        except:
+                            raise ValueError('env = \'%s\' is not valid (invalid vib freq).'% env)
+                    else:
+                        raise ValueError('env = \'%s\' is not valid (No vib freq).'% env)
+                else:
+                    raise ValueError('env = \'%s\' is not valid.'% env)
+                vib_amp = 1.0   # vibration amplitude, 1sigma for random, peak value for sinusoidal
+                if env[-1] == 'g' or env[-1] == 'G':
+                    vib_amp = 9.8
+                    env = env[:-1]  # remove 'g' or 'G'
+                try:
+                    vib_amp *= float(env)
+                    self.vib_def['amp'] = vib_amp
+                except:
+                    raise ValueError('Cannot convert \'%s\' to float'% env)
+            elif isinstance(env, np.ndarray):           # customize the vib model with PSD
+                if env.ndim == 2 and env.shape[1] == 4: # env is a np.array of size (n,4)
+                    self.vib_def['type'] = 'psd'
+                    n = env.shape[0]
+                    half_fs = 0.5*self.fs.data
+                    if env[-1, 0] > half_fs:
+                        n = np.where(env[:, 0] > half_fs)[0][0]
+                    self.vib_def['freq'] = env[:n, 0]
+                    self.vib_def['x'] = env[:n, 1]
+                    self.vib_def['y'] = env[:n, 2]
+                    self.vib_def['z'] = env[:n, 3]
+            else:
+                raise TypeError('env should be a string or a numpy array of size (n,2)')
+
+
+    def check_algo(self):
+        '''
+        Generate expressions to handle algorithm input and output.
+        Args:
+            algorithm: user specified algorithm class
+        Returns:
+            Raise ValueError if algorithm has no input or output;
+            Raise ValueError if algorithm input and output have unsupported elements
+            Raise TypeError if algorithm input or output is not a list or tuple
+        '''
+        try:
+            n_in = len(self.algo.input)
+            n_out = len(self.algo.output)
+            # algorithm must have at least one input and one output
+            if n_in < 1 or n_out < 1:
+                raise ValueError
+            # prepare algorithm input and output
+            for i in self.algo.input:
+                if not i in self.supported_in_constant and not i in self.supported_in_varying:
+                    raise ValueError
+            for i in self.algo.output:
+                if not i in self.supported_out:
+                    raise ValueError
+        except ValueError:
+            raise ValueError('check input and output definitions of the algorithm.')
+        except:
+            raise TypeError('algorithm input or output is not a valid list or tuple.')
 
 class Sim_data(object):
     '''

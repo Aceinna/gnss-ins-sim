@@ -52,9 +52,11 @@ def test_sim():
 
     # Free integration in a virtual inertial frame
     from algorithm import free_integration
-    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-0to100.csv", delimiter=',')[0, :]
+    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-0to100.csv",\
+                                    delimiter=',', skip_header=1, max_rows=1)
     ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
     ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
+    ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
     inv_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
     inv_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
     ini_pos_vel_att[3:6] += inv_vel_err
@@ -66,8 +68,9 @@ def test_sim():
                       ref_frame=1,
                       mode=np.array([1.0, 0.5, 2.0]),
                       env=None,#np.genfromtxt(data_path + '//vib_psd.csv', delimiter=','),
+                      #env=np.genfromtxt(data_path+'//vib_psd.csv', delimiter=',', skip_header=1),
                       algorithm=algo)
-    sim.run(2000)
+    sim.run(10)
     # generate simulation results, summary, and save data to files
     # sim.results('./data/')  # save data files
     sim.results()  # do not save data

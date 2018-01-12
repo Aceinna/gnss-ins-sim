@@ -26,16 +26,15 @@ accel_low_accuracy = {'b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
 mag_low_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                     'hi': np.array([10.0, 10.0, 10.0])*0.0,
                     'std': np.array([0.1, 0.1, 0.1])}
-# mid accuracy, from ADIS16490
-# http://www.analog.com/media/en/technical-documentation/data-sheets/ADIS16490.pdf
+# mid accuracy, partly from IMU381
 gyro_mid_accuracy = {'b': np.array([0.0, 0.0, 0.0]) * D2R,
-                     'b_drift': np.array([1.8, 1.8, 1.8]) * D2R/3600.0,
+                     'b_drift': np.array([3.5, 3.5, 3.5]) * D2R/3600.0,
                      'b_corr':np.array([100.0, 100.0, 100.0]),
-                     'arw': np.array([0.09, 0.09, 0.09]) * D2R/60}
+                     'arw': np.array([0.25, 0.25, 0.25]) * D2R/60}
 accel_mid_accuracy = {'b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
-                      'b_drift': np.array([3.6e-5, 3.6e-5, 3.6e-5]),
+                      'b_drift': np.array([5.0e-5, 5.0e-5, 5.0e-5]),
                       'b_corr': np.array([100.0, 100.0, 100.0]),
-                      'vrw': np.array([0.008, 0.008, 0.008]) / 60}
+                      'vrw': np.array([0.03, 0.03, 0.03]) / 60}
 mag_mid_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                     'hi': np.array([10.0, 10.0, 10.0])*0.0,
                     'std': np.array([0.01, 0.01, 0.01])}

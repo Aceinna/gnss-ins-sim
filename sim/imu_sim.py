@@ -74,7 +74,7 @@ class Sim(object):
         if ref_frame == 0 or ref_frame == 1:
             self.ref_frame.data = ref_frame
         else:
-            self.ref_frame = 0      # default frame is NED
+            self.ref_frame.data = 0      # default frame is NED
         # IMU model
         self.imu = imu              # imu config
 
@@ -95,9 +95,11 @@ class Sim(object):
         self.ref_pos = Sim_data(name='ref_pos',\
                                 description='true pos in the navigation frame',\
                                 units=['rad', 'rad', 'm'],\
+                                output_units=['deg', 'deg', 'm'],\
                                 legend=['ref_pos_x', 'ref_pos_y', 'ref_pos_z'])
         if self.ref_frame.data == 1:
             self.ref_pos.units = ['m', 'm', 'm']
+            self.ref_pos.output_units = ['m', 'm', 'm']
         self.ref_vel = Sim_data(name='ref_vel',\
                                 description='true vel in the body frame',\
                                 units=['m/s', 'm/s', 'm/s'],\
@@ -105,10 +107,12 @@ class Sim(object):
         self.ref_att_euler = Sim_data(name='ref_att_euler',\
                                 description='true attitude (Euler angles, ZYX)',\
                                 units=['rad', 'rad', 'rad'],\
+                                output_units=['deg', 'deg', 'deg'],\
                                 legend=['ref_Yaw', 'ref_Pitch', 'ref_Roll'])
         self.ref_gyro = Sim_data(name='ref_gyro',\
                                  description='true angular velocity',\
                                  units=['rad/s', 'rad/s', 'rad/s'],\
+                                 output_units=['deg/s', 'deg/s', 'deg/s'],\
                                  legend=['ref_gyro_x', 'ref_gyro_y', 'ref_gyro_z'])
         self.ref_accel = Sim_data(name='ref_accel',\
                                   description='True accel',\
@@ -117,10 +121,14 @@ class Sim(object):
         self.ref_gps = Sim_data(name='ref_gps',\
                                 description='true GPS pos/vel',\
                                 units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
+                                output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                                 legend=['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
                                         'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz'])
                                 # downsampled true pos/vel, first row is sample index,
                                 # sync with self.time
+        if self.ref_frame.data == 1:
+            self.ref_gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
+            self.ref_gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
         self.ref_mag = Sim_data(name='ref_mag',\
                                 description='true magnetic field',\
                                 units=['uT', 'uT', 'uT'],\
@@ -141,10 +149,12 @@ class Sim(object):
         self.att_euler = Sim_data(name='att_euler',
                                   description='simulation attitude (Euler, ZYX)  from algo',\
                                   units=['rad', 'rad', 'rad'],\
+                                  output_units=['deg', 'deg', 'deg'],\
                                   legend=['Yaw', 'Pitch', 'Roll'])
         self.gyro = Sim_data(name='gyro',\
                              description='gyro measurements',\
                              units=['rad/s', 'rad/s', 'rad/s'],\
+                             output_units=['deg/s', 'deg/s', 'deg/s'],\
                              legend=['gyro_x', 'gyro_y', 'gyro_z'])
         self.accel = Sim_data(name='accel',\
                               description='accel measurements',\
@@ -152,7 +162,8 @@ class Sim(object):
                               legend=['accel_x', 'accel_y', 'accel_z'])
         self.gps = Sim_data(name='gps',\
                             description='GPS measurements',\
-                            units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
+                            units=self.ref_gps.units,\
+                            output_units=self.ref_gps.output_units,\
                             legend=['gps_x', 'gps_y', 'gps_z', 'gps_vx', 'gps_vy', 'gps_vz'])
         self.mag = Sim_data(name='mag',\
                             description='magnetometer measurements',\
@@ -161,6 +172,7 @@ class Sim(object):
         self.wb = Sim_data(name='wb',\
                            description='gyro bias estimation',\
                            units=['rad/s', 'rad/s', 'rad/s'],\
+                           output_units=['deg/s', 'deg/s', 'deg/s'],\
                            legend=['gyro_bias_x', 'gyro_bias_y', 'gyro_bias_z'])
         self.ab = Sim_data(name='ab',\
                            description='accel bias estimation',\
@@ -411,15 +423,18 @@ class Sim(object):
                 for j in range(self.sim_count):
                     err[j, :] = self.res[i].data[j][-1, :] - self.res[ref_name].data[-1, :]
                 # print(err)
+                scale = 1.0
+                if self.res[i].output_units[0] == 'deg' and self.res[i].units[0] == 'rad':
+                    scale = 1.0/D2R
                 self.sum += '--Max error: ' +\
-                            str(np.max(np.abs(err), 0)) +\
-                            ' ' + self.res[i].units[0] + '\n'
+                            str(scale * np.max(np.abs(err), 0)) +\
+                            ' ' + self.res[i].output_units[0] + '\n'
                 self.sum += '--Avg error: ' +\
-                            str(np.average(err, 0)) +\
-                            ' ' + self.res[i].units[0] + '\n'
+                            str(scale * np.average(err, 0)) +\
+                            ' ' + self.res[i].output_units[0] + '\n'
                 self.sum += '--STD of error: ' +\
-                            str(np.std(err, 0))  +\
-                            ' ' + self.res[i].units[0] + '\n'
+                            str(scale * np.std(err, 0))  +\
+                            ' ' + self.res[i].output_units[0] + '\n'
         print(self.sum)
         #### save summary to file
         if data_dir is not None:
@@ -563,7 +578,6 @@ class Sim(object):
             else:
                 raise TypeError('env should be a string or a numpy array of size (n,2)')
 
-
     def check_algo(self):
         '''
         Generate expressions to handle algorithm input and output.
@@ -596,7 +610,8 @@ class Sim_data(object):
     '''
     Simulation data
     '''
-    def __init__(self, name, description, units=None,\
+    def __init__(self, name, description,\
+                 units=None, output_units=None,\
                  plottable=True, logx=False, logy=False,\
                  grid='on', legend=None, pre_func=None):
         '''
@@ -609,6 +624,11 @@ class Sim_data(object):
             description: string description of the data
             units: a tuple or list of strings to specify units of data.
                 The length of units is the same as columns of each set of data in self.data.
+            output_units: a tuple or list of strings to specify units of data when we plot or
+                save the data to files. Sim_data.plot and Sim_data.save_to_file will automatically
+                convert units if necessary.
+                If this is set to None, output_units will be the same as units, and no unit
+                conversion is needed.
             logx: plot this data with log scaling on x axis
             logy: plot this data with log scaling on y axis
             grid: if this is not 'off', it will be changed to 'on'
@@ -618,9 +638,24 @@ class Sim_data(object):
         '''
         self.name = name
         self.description = description
-        self.units = units
-        if self.units is None:
+        # units of self.data
+        if units is None:
             self.units = []
+        else:
+            self.units = list(units)
+        # output units should have same length as units
+        if output_units is None:
+            self.output_units = self.units
+        else:
+            self.output_units = list(output_units)
+            len_in = len(self.units)
+            len_out = len(self.output_units)
+            if len_in > len_out:
+                for i in range(len_out, len_in):
+                    self.output_units.append(self.units[i])
+            elif len_in < len_out:
+                for i in range(len_in, len_out):
+                    self.units.append(self.output_units[i])
         self.plottable = plottable
         self.logx = logx
         self.logy = logy
@@ -674,6 +709,8 @@ class Sim_data(object):
                     print(ref_data.shape)
                     print(y_data.shape)
                     raise ValueError('Check input data ref and self.data dimension.')
+            # unit conversion
+            y_data = self.convert_unit(y_data)
             # plot
             if plot3d:
                 plot3d_in_one_figure(y_data,\
@@ -684,8 +721,8 @@ class Sim_data(object):
                 plot_in_one_figure(x_data, y_data,\
                                    logx=self.logx, logy=self.logy,\
                                    title=self.name + '_' + str(i),\
-                                   xlabel=x.name + ' (' + x.units[0] + ')',\
-                                   ylabel=self.name + ' (' + str(self.units) + ')',\
+                                   xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                   ylabel=self.name + ' (' + str(self.output_units) + ')',\
                                    grid=self.grid,\
                                    legend=self.legend)
 
@@ -707,6 +744,8 @@ class Sim_data(object):
                 print(ref.shape)
                 print(self.data.shape)
                 raise ValueError('Check input data ref and self.data dimension.')
+        # unit conversion
+        y_data = self.convert_unit(y_data)
         # plot
         if plot3d:
             plot3d_in_one_figure(y_data,\
@@ -716,8 +755,8 @@ class Sim_data(object):
         else:
             plot_in_one_figure(x_data, y_data,\
                                logx=self.logx, logy=self.logy,\
-                               xlabel=x.name + ' (' + x.units[0] + ')',\
-                               ylabel=self.name + ' (' + str(self.units) + ')',\
+                               xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                               ylabel=self.name + ' (' + str(self.output_units) + ')',\
                                title=self.name,\
                                grid=self.grid,\
                                legend=self.legend)
@@ -745,8 +784,8 @@ class Sim_data(object):
             for i in range(cols):
                 # units
                 str_unit = ''
-                if i < len(self.units):
-                    str_unit = ' (' + self.units[i] + ')'
+                if i < len(self.output_units):
+                    str_unit = ' (' + self.output_units[i] + ')'
                 # add a column
                 if cols == len(self.legend):    # legend available
                     header_line += self.legend[i] + str_unit + ','
@@ -756,17 +795,64 @@ class Sim_data(object):
             header_line = header_line[0:-1]
         else:           # only one column
             str_unit = ''
-            if len(self.units) > 0:
-                str_unit = ' (' + self.units[0] + ')'
+            if len(self.output_units) > 0:
+                str_unit = ' (' + self.output_units[0] + ')'
             header_line = self.name + str_unit
         #### save data and header to .csv files
         if isinstance(self.data, dict):
             for i in self.data:
                 file_name = data_dir + '//' + self.name + '_' + str(i) + '.csv'
-                np.savetxt(file_name, self.data[i], header=header_line, delimiter=',', comments='')
+                np.savetxt(file_name, self.convert_unit(self.data[i]),\
+                           header=header_line, delimiter=',', comments='')
         else:
             file_name = data_dir + '//' + self.name + '.csv'
-            np.savetxt(file_name, self.data, header=header_line, delimiter=',', comments='')
+            np.savetxt(file_name, self.convert_unit(self.data),\
+                       header=header_line, delimiter=',', comments='')
+
+    def convert_unit(self, data):
+        '''
+        Unit conversion.
+        Args:
+            data: convert data units from units to output_units,\
+                data should be a numpy array of size(n,) or (n,m).
+                n is data length, m is data dimension.
+        Returns:
+            data: data after unit conversion.
+        '''
+        # check if unit conversion is needed and calculate the scale
+        m = len(self.output_units)
+        scale = self.unit_conversion_scale()
+        # unit conversion
+        x = data.copy()
+        if x.ndim == 2:
+            for i in range(min(m, x.shape[1])):
+                if scale[i] != 0.0:
+                    x[:, i] = x[:, i] * scale[i]
+        elif x.ndim == 1:
+            if scale[0] != 0.0:
+                x = x * scale[0]
+        else:
+            raise ValueError('data should a 1D or 2D array, ndim = %s'% data.ndim)
+        return x
+
+    def unit_conversion_scale(self):
+        '''
+        Calculate unit conversion scale.
+        '''
+        m = len(self.output_units)
+        scale = np.zeros((m,))
+        for i in range(m):
+            # deg to rad
+            if self.units[i] == 'deg' and self.output_units[i] == 'rad':
+                scale[i] = D2R
+            elif self.units[i] == 'deg/s' and self.output_units[i] == 'rad/s':
+                scale[i] = D2R
+            # rad to deg
+            elif self.units[i] == 'rad' and self.output_units[i] == 'deg':
+                scale[i] = 1.0/D2R
+            elif self.units[i] == 'rad/s' and self.output_units[i] == 'deg/s':
+                scale[i] = 1.0/D2R
+        return scale
 
 def plot_in_one_figure(x, y, logx=False, logy=False,\
                        title='Figure', xlabel=None, ylabel=None,\

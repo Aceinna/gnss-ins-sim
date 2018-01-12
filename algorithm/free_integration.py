@@ -21,7 +21,7 @@ class FreeIntegration(object):
         Args:
             ini_pos_vel_att: 9x1 initial position, velocity and attitude.
                 3x1 position in the form of LLA, units: [rad, rad, m];
-                3x1 velocity in the navigation frame, units: m/s;
+                3x1 velocity in the body frame, units: m/s;
                 3x1 Euler anels [yaw, pitch, roll], rotation sequency is ZYX, rad.
         '''
         # algorithm description
@@ -34,15 +34,14 @@ class FreeIntegration(object):
         self.att = None
         self.pos = None
         self.vel = None
+        self.vel_b = None
         # ini state
-        c_nb = attitude.euler2dcm(ini_pos_vel_att[6:9]).T
         self.r0 = geoparams.lla2xyz(ini_pos_vel_att[0:3])
-        self.v0 = c_nb.dot(ini_pos_vel_att[3:6])
+        self.v0 = ini_pos_vel_att[3:6]
         self.att0 = ini_pos_vel_att[6:9]
         # Earth gravity
         earth_param = geoparams.geo_param(ini_pos_vel_att[0:3])    # geo parameters
         self.g_n = np.array([0, 0, earth_param[2]])
-        # self.g_n = np.array([0, 0, 9.794841972265036389])
 
     def run(self, set_of_input):
         '''
@@ -59,29 +58,34 @@ class FreeIntegration(object):
         self.att = np.zeros((n, 3))
         self.pos = np.zeros((n, 3))
         self.vel = np.zeros((n, 3))
+        self.vel_b = np.zeros((n, 3))
+        c_bn = np.eye((3))
         for i in range(n):
-            # initialize
+            #### initialize
             if i == 0:
                 self.att[i, :] = self.att0
-                self.vel[i, :] = self.v0
                 self.pos[i, :] = self.r0
+                self.vel_b[i, :] = self.v0
+                c_bn = attitude.euler2dcm(self.att[i, :])
+                self.vel[i, :] = c_bn.T.dot(self.v0)
                 continue
-            # loop
+            #### propagate Euler angles
             self.att[i, :] = attitude.euler_update_zyx(self.att[i-1, :], gyro[i-1, :], self.dt)
-            c_bn = attitude.euler2dcm(self.att[i-1, :])
             #### propagate velocity in the navigation frame
             # accel_n = c_nb.dot(accel[i-1, :])
             # self.vel[i, :] = self.vel[i-1, :] + (accel_n + self.g_n) * self.dt
             #### propagate velocity in the body frame
-            self.vel[i, :] = c_bn.dot(self.vel[i-1, :]) +\
+            # c_bn here is from last loop (i-1), and used to project gravity
+            self.vel_b[i, :] = self.vel_b[i-1, :] +\
                              (accel[i-1, :] + c_bn.dot(self.g_n)) * self.dt -\
-                             attitude.cross3(gyro[i-1, :], c_bn.dot(self.vel[i-1, :])) * self.dt
+                             attitude.cross3(gyro[i-1, :], self.vel_b[i-1, :]) * self.dt
+            # c_bn (i)
             c_bn = attitude.euler2dcm(self.att[i, :])
-            self.vel[i, :] = c_bn.T.dot(self.vel[i, :])
+            self.vel[i, :] = c_bn.T.dot(self.vel_b[i, :])   # velocity in navigation frame
             self.pos[i, :] = self.pos[i-1, :] + self.vel[i-1, :] * self.dt
 
         # results
-        self.results = [self.att, self.pos, self.vel]
+        self.results = [self.att, self.pos, self.vel_b]
 
     def get_results(self):
         '''

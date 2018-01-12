@@ -36,7 +36,7 @@ def test_sim():
                'accel_vrw': np.array([0.03119, 0.03009, 0.04779]) * 1.0,
                'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0,
                'accel_b_corr': np.array([200.0, 200.0, 200.0]),
-               'mag_std': np.array([0.2, 0.2, 0.2]) * 0.0
+               'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0
               }
     # imu_err = 'high-accuracy'
     imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True)
@@ -52,30 +52,30 @@ def test_sim():
 
     # Free integration in a virtual inertial frame
     from algorithm import free_integration
-    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-0to100.csv",\
+    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-90deg_turn.csv",\
                                     delimiter=',', skip_header=1, max_rows=1)
     ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
     ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
     ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
-    inv_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
-    inv_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
-    ini_pos_vel_att[3:6] += inv_vel_err
-    ini_pos_vel_att[6:9] += inv_att_err * D2R
+    ini_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
+    ini_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
+    ini_pos_vel_att[3:6] += ini_vel_err
+    ini_pos_vel_att[6:9] += ini_att_err * D2R
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-0to100.csv",
+    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-90deg_turn.csv",
                       ref_frame=1,
                       mode=np.array([1.0, 0.5, 2.0]),
                       env=None,#np.genfromtxt(data_path + '//vib_psd.csv', delimiter=','),
                       #env=np.genfromtxt(data_path+'//vib_psd.csv', delimiter=',', skip_header=1),
                       algorithm=algo)
-    sim.run(10)
+    sim.run(2000)
     # generate simulation results, summary, and save data to files
     # sim.results('./data/')  # save data files
     sim.results()  # do not save data
     # plot data
-    # sim.plot(['ref_pos', 'pos'], opt={'ref_pos': '3d', 'pos': 'error'})
+    # sim.plot(['ref_pos', 'gyro'], opt={'ref_pos': '3d'})
     print('test sim OK.')
 
 if __name__ == '__main__':

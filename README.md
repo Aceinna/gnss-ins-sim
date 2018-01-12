@@ -5,9 +5,7 @@ GPS output, odometer output and magnetometer output. Trajectory generation is de
 
 The project contains the following modules.
 
-## Usage
-
-### Step 1 Define the IMU model
+## Step 1 Define the IMU model
 
 ### Step 1.1 Define the IMU error model
 

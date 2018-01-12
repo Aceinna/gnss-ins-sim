@@ -67,10 +67,10 @@ def test_sim():
     sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-90deg_turn.csv",
                       ref_frame=1,
                       mode=np.array([1.0, 0.5, 2.0]),
-                      env=None,#np.genfromtxt(data_path + '//vib_psd.csv', delimiter=','),
+                      env=None,
                       #env=np.genfromtxt(data_path+'//vib_psd.csv', delimiter=',', skip_header=1),
                       algorithm=algo)
-    sim.run(2000)
+    sim.run(1)
     # generate simulation results, summary, and save data to files
     # sim.results('./data/')  # save data files
     sim.results()  # do not save data

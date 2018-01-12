@@ -221,7 +221,7 @@ class Sim(object):
             self.accel.name: self.accel}
         if self.imu.gps:    # optional GPS
             self.supported_in_constant[self.ref_gps.name] = self.ref_gps
-            self.supported_in_constant[self.gps_time] = self.gps_time
+            self.supported_in_constant[self.gps_time.name] = self.gps_time
             self.supported_in_varying[self.gps.name] = self.gps
         if self.imu.magnetometer:   # optional mag
             self.supported_in_constant[self.ref_mag.name] = self.ref_mag

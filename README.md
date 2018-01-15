@@ -3,7 +3,10 @@
 GNSS-IMU-SIM is an IMU simulation project, which generates reference trajectories, IMU sensor output, 
 GPS output, odometer output and magnetometer output. Trajectory generation is designed based on [MRepo](http://www.instk.org/). Users can provide algorithms, and gnss-imu-sim can generated required data for the algorithms, run the algorithms, plot simulation results, save simulations results, and generate a brief summary.
 
-The project contains the following modules.
+## Requirements
+
+- Numpy (version>1.10)
+- Matplotlib
 
 ## Step 1 Define the IMU model
 

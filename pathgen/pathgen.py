@@ -12,7 +12,6 @@ Created on 2017-09-12
 """
 
 # import
-import os
 import math
 import numpy as np
 from attitude import attitude
@@ -23,190 +22,6 @@ from psd import time_series_from_psd
 # global
 VERSION = '1.0'
 D2R = math.pi/180
-
-def acc_gen(fs, ref_a, acc_err, vib_def=None):
-    """
-    Add error to true acc data according to acclerometer model parameters
-    Args:
-        fs: sample frequency, Hz.
-        ref_a: nx3 true acc data, m/s2.
-        acc_err: accelerometer error parameters.
-            'b': 3x1 acc constant bias, m/s2.
-            'b_drift': 3x1 acc bias drift, m/s2.
-            'vrw': 3x1 velocity random walk, m/s2/root-Hz.
-        vib_def: Vibration model and parameters. Vibration type can be random, sinunoida or
-            specified by single-sided PSD.
-            Generated vibrating acc is expressed in the body frame.
-            'type' == 'random':
-                Normal distribution. 'amp' gives the 1sigma values, units: m/s2
-            'type' == 'sinunoidal'
-                Sinunoidal vibration. 'amp' gives the amplitude of the sine wave, units: m/s2.
-            'type' == 'psd'. Single sided PSD.
-                'freq':  frequency, in unit of Hz
-                'x': x axis, in unit of m2/s4/Hz.
-                'y': y axis, in unit of m2/s4/Hz.
-                'z': z axis, in unit of m2/s4/Hz.
-    Returns:
-        a_mea: nx3 measured acc data
-    """
-    dt = 1.0/fs
-    # total data count
-    n = ref_a.shape[0]
-    ## simulate sensor error
-    # static bias
-    acc_bias = acc_err['b']
-    # bias drift
-    acc_bias_drift = bias_drift(acc_err['b_corr'], acc_err['b_drift'], n, fs)
-    # vibrating acceleration
-    acc_vib = np.zeros((n, 3))
-    if vib_def is not None:
-        if vib_def['type'].lower() == 'psd':
-            acc_vib[:, 0] = time_series_from_psd.time_series_from_psd(vib_def['x'],
-                                                                      vib_def['freq'], fs, n)[1]
-            acc_vib[:, 1] = time_series_from_psd.time_series_from_psd(vib_def['y'],
-                                                                      vib_def['freq'], fs, n)[1]
-            acc_vib[:, 2] = time_series_from_psd.time_series_from_psd(vib_def['z'],
-                                                                      vib_def['freq'], fs, n)[1]
-        elif vib_def['type'] == 'random':
-            acc_vib[:, 2] = vib_def['amp'] * np.random.randn(n)
-        elif vib_def['type'] == 'sinusoidal':
-            acc_vib[:, 2] = vib_def['amp'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
-    # accelerometer white noise
-    acc_noise = np.random.randn(n, 3)
-    acc_noise[:, 0] = acc_err['vrw'][0] / math.sqrt(dt) * acc_noise[:, 0]
-    acc_noise[:, 1] = acc_err['vrw'][1] / math.sqrt(dt) * acc_noise[:, 1]
-    acc_noise[:, 2] = acc_err['vrw'][2] / math.sqrt(dt) * acc_noise[:, 2]
-    # true + constant_bias + bias_drift + noise
-    a_mea = ref_a + acc_bias + acc_bias_drift + acc_noise + acc_vib
-    return a_mea
-
-def gyro_gen(fs, ref_w, gyro_err):
-    """
-    Add error to true gyro data according to gyroscope model parameters
-    Args:
-        fs: sample frequency, Hz.
-        ref_w: nx3 true acc data, rad/s.
-        gyro_err: gyroscope error parameters.
-            'b': 3x1 constant gyro bias, rad/s.
-            'b_drift': 3x1 gyro bias drift, rad/s.
-            'arw': 3x1 angle random walk, rad/s/root-Hz.
-    Returns:
-        w_mea: nx3 measured gyro data
-    """
-    dt = 1.0/fs
-    # total data count
-    n = ref_w.shape[0]
-    ## simulate sensor error
-    # static bias
-    gyro_bias = gyro_err['b']
-    # bias drift Todo: first-order Gauss-Markov model
-    gyro_bias_drift = bias_drift(gyro_err['b_corr'], gyro_err['b_drift'], n, fs)
-    # gyroscope white noise
-    gyro_noise = np.random.randn(n, 3)
-    gyro_noise[:, 0] = gyro_err['arw'][0] / math.sqrt(dt) * gyro_noise[:, 0]
-    gyro_noise[:, 1] = gyro_err['arw'][1] / math.sqrt(dt) * gyro_noise[:, 1]
-    gyro_noise[:, 2] = gyro_err['arw'][2] / math.sqrt(dt) * gyro_noise[:, 2]
-    # true + constant_bias + bias_drift + noise
-    w_mea = ref_w + gyro_bias + gyro_bias_drift + gyro_noise
-    return w_mea
-
-def bias_drift(corr_time, drift, n, fs):
-    """
-    Bias drift (instability) model for accelerometers or gyroscope.
-    If correlation time is valid (positive and finite), a first-order Gauss-Markov model is used.
-    Otherwise, a simple normal distribution model is used.
-    Args:
-        corr_time: 3x1 correlation time, sec.
-        drift: 3x1 bias drift std, rad/s.
-        n: total data count
-        fs: sample frequency, Hz.
-    Returns
-        sensor_bias_drift: drift of sensor bias
-    """
-    # 3 axis
-    sensor_bias_drift = np.zeros((n, 3))
-    for i in range(0, 3):
-        if not math.isinf(corr_time[i]):
-            # First-order Gauss-Markov
-            a = 1 - 1/fs/corr_time[i]
-            b = 1/fs*drift[i]
-            #sensor_bias_drift[0, :] = np.random.randn(3) * drift
-            drift_noise = np.random.randn(n-1, 3)
-            for j in range(1, n):
-                sensor_bias_drift[j, i] = a*sensor_bias_drift[j-1, i] + b*drift_noise[j-1, i]
-        else:
-            # normal distribution
-            sensor_bias_drift[:, i] = drift[i] * np.random.randn(n)
-    return sensor_bias_drift
-
-def gps_gen(ref_gps, gps_err, gps_type=0):
-    '''
-    Add error to true GPS data according to GPS receiver error parameters
-    Args:
-        ref_gps: If gps_type is 0, [Lat, Lon, Alt, vx, vy, vz], [rad, rad, m].
-                 If gps_type is 1, [x, y, z, vx, vy, vz], [m, m, m].
-                 ref_gps data are expressed in the navigation frame.
-        gps_err: GPS reeceiver parameters.
-            'stdm': RMS position error, [m, m, m].
-            'stdv': RMS velocity error, [m/s, m/s, m/s].
-        gps_type: GPS data type.
-            0: default, position is in the form of [Lat, Lon, Alt], rad, m
-            1: position is in the form of [x, y, z], m
-    Returns:
-        gps_mea: ref_gps with error.
-    '''
-    # total data count
-    n = ref_gps.shape[0]
-    # If position is in the form of LLA, convert gps_err['stdm'] to LLA error
-    if gps_type == 0:   # GPS is in the form of LLA, stdm meter to rad
-        earth_param = geoparams.geo_param(ref_gps[0, 1:4])
-        gps_err['stdm'][0] = gps_err['stdm'][0] / earth_param[0]
-        gps_err['stdm'][1] = gps_err['stdm'][1] / earth_param[1] / earth_param[4]
-    ## simulate GPS error
-    pos_noise = gps_err['stdm'] * np.random.randn(n, 3)
-    vel_noise = gps_err['stdv'] * np.random.randn(n, 3)
-    gps_mea = np.hstack([ref_gps[:, 0:3] + pos_noise,
-                         ref_gps[:, 3:6] + vel_noise])
-    return gps_mea
-
-def odo_gen(ref_odo, odo_err):
-    '''
-    Add error to true odometer data.
-    Args:
-        ref_odo: nx3, true odometer data, m/s.
-        odo_err: odometer error profile.
-            'scale': 3x1, scale factor error.
-            'std': 3x1, RMS velocity error.
-    Returns:
-        odo_mea: nx3, measured odometer output.
-    '''
-    n = ref_odo.shape[0]
-    odo_noise = np.random.randn(n, 3)
-    scale_factor = odo_err['scale']
-    odo_noise[:, 0] = scale_factor[0]*ref_odo[:, 0] + odo_err['std'][0]*odo_noise[:, 0]
-    odo_noise[:, 1] = scale_factor[1]*ref_odo[:, 1] + odo_err['std'][1]*odo_noise[:, 1]
-    odo_noise[:, 2] = scale_factor[2]*ref_odo[:, 2] + odo_err['std'][2]*odo_noise[:, 2]
-    return odo_noise
-
-def mag_gen(ref_mag, mag_err):
-    """
-    Add error to magnetic data.
-    Args:
-        ref_mag: nx3 true magnetic data, uT.
-        mag_err: Magnetometer error parameters.
-            'si': 3x3 soft iron matrix
-            'hi': hard iron array, [ox, oy, oz], uT
-            'std': RMS of magnetometer noise, uT
-    Returns:
-        mag_mea: ref_mag with error, mag_mea = si * (ref_mag + hi) + noise
-    """
-    # total data count
-    n = ref_mag.shape[0]
-    # add error
-    mag_mea = ref_mag + mag_err['hi']
-    mag_mea = mag_mea.dot(mag_err['si'].T)
-    mag_noise = mag_err['std'] * np.random.randn(n, 3)
-    return mag_mea + mag_noise
 
 def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, magnet=False):
     """
@@ -598,3 +413,188 @@ def parse_motion_def(motion_def_seg, att, vel):
         att_com = att + [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
         vel_com = [motion_def_seg[4], 0, 0]
     return att_com, vel_com
+
+
+def acc_gen(fs, ref_a, acc_err, vib_def=None):
+    """
+    Add error to true acc data according to acclerometer model parameters
+    Args:
+        fs: sample frequency, Hz.
+        ref_a: nx3 true acc data, m/s2.
+        acc_err: accelerometer error parameters.
+            'b': 3x1 acc constant bias, m/s2.
+            'b_drift': 3x1 acc bias drift, m/s2.
+            'vrw': 3x1 velocity random walk, m/s2/root-Hz.
+        vib_def: Vibration model and parameters. Vibration type can be random, sinunoida or
+            specified by single-sided PSD.
+            Generated vibrating acc is expressed in the body frame.
+            'type' == 'random':
+                Normal distribution. 'amp' gives the 1sigma values, units: m/s2
+            'type' == 'sinunoidal'
+                Sinunoidal vibration. 'amp' gives the amplitude of the sine wave, units: m/s2.
+            'type' == 'psd'. Single sided PSD.
+                'freq':  frequency, in unit of Hz
+                'x': x axis, in unit of m2/s4/Hz.
+                'y': y axis, in unit of m2/s4/Hz.
+                'z': z axis, in unit of m2/s4/Hz.
+    Returns:
+        a_mea: nx3 measured acc data
+    """
+    dt = 1.0/fs
+    # total data count
+    n = ref_a.shape[0]
+    ## simulate sensor error
+    # static bias
+    acc_bias = acc_err['b']
+    # bias drift
+    acc_bias_drift = bias_drift(acc_err['b_corr'], acc_err['b_drift'], n, fs)
+    # vibrating acceleration
+    acc_vib = np.zeros((n, 3))
+    if vib_def is not None:
+        if vib_def['type'].lower() == 'psd':
+            acc_vib[:, 0] = time_series_from_psd.time_series_from_psd(vib_def['x'],
+                                                                      vib_def['freq'], fs, n)[1]
+            acc_vib[:, 1] = time_series_from_psd.time_series_from_psd(vib_def['y'],
+                                                                      vib_def['freq'], fs, n)[1]
+            acc_vib[:, 2] = time_series_from_psd.time_series_from_psd(vib_def['z'],
+                                                                      vib_def['freq'], fs, n)[1]
+        elif vib_def['type'] == 'random':
+            acc_vib[:, 2] = vib_def['amp'] * np.random.randn(n)
+        elif vib_def['type'] == 'sinusoidal':
+            acc_vib[:, 2] = vib_def['amp'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+    # accelerometer white noise
+    acc_noise = np.random.randn(n, 3)
+    acc_noise[:, 0] = acc_err['vrw'][0] / math.sqrt(dt) * acc_noise[:, 0]
+    acc_noise[:, 1] = acc_err['vrw'][1] / math.sqrt(dt) * acc_noise[:, 1]
+    acc_noise[:, 2] = acc_err['vrw'][2] / math.sqrt(dt) * acc_noise[:, 2]
+    # true + constant_bias + bias_drift + noise
+    a_mea = ref_a + acc_bias + acc_bias_drift + acc_noise + acc_vib
+    return a_mea
+
+def gyro_gen(fs, ref_w, gyro_err):
+    """
+    Add error to true gyro data according to gyroscope model parameters
+    Args:
+        fs: sample frequency, Hz.
+        ref_w: nx3 true acc data, rad/s.
+        gyro_err: gyroscope error parameters.
+            'b': 3x1 constant gyro bias, rad/s.
+            'b_drift': 3x1 gyro bias drift, rad/s.
+            'arw': 3x1 angle random walk, rad/s/root-Hz.
+    Returns:
+        w_mea: nx3 measured gyro data
+    """
+    dt = 1.0/fs
+    # total data count
+    n = ref_w.shape[0]
+    ## simulate sensor error
+    # static bias
+    gyro_bias = gyro_err['b']
+    # bias drift Todo: first-order Gauss-Markov model
+    gyro_bias_drift = bias_drift(gyro_err['b_corr'], gyro_err['b_drift'], n, fs)
+    # gyroscope white noise
+    gyro_noise = np.random.randn(n, 3)
+    gyro_noise[:, 0] = gyro_err['arw'][0] / math.sqrt(dt) * gyro_noise[:, 0]
+    gyro_noise[:, 1] = gyro_err['arw'][1] / math.sqrt(dt) * gyro_noise[:, 1]
+    gyro_noise[:, 2] = gyro_err['arw'][2] / math.sqrt(dt) * gyro_noise[:, 2]
+    # true + constant_bias + bias_drift + noise
+    w_mea = ref_w + gyro_bias + gyro_bias_drift + gyro_noise
+    return w_mea
+
+def bias_drift(corr_time, drift, n, fs):
+    """
+    Bias drift (instability) model for accelerometers or gyroscope.
+    If correlation time is valid (positive and finite), a first-order Gauss-Markov model is used.
+    Otherwise, a simple normal distribution model is used.
+    Args:
+        corr_time: 3x1 correlation time, sec.
+        drift: 3x1 bias drift std, rad/s.
+        n: total data count
+        fs: sample frequency, Hz.
+    Returns
+        sensor_bias_drift: drift of sensor bias
+    """
+    # 3 axis
+    sensor_bias_drift = np.zeros((n, 3))
+    for i in range(0, 3):
+        if not math.isinf(corr_time[i]):
+            # First-order Gauss-Markov
+            a = 1 - 1/fs/corr_time[i]
+            b = 1/fs*drift[i]
+            #sensor_bias_drift[0, :] = np.random.randn(3) * drift
+            drift_noise = np.random.randn(n-1, 3)
+            for j in range(1, n):
+                sensor_bias_drift[j, i] = a*sensor_bias_drift[j-1, i] + b*drift_noise[j-1, i]
+        else:
+            # normal distribution
+            sensor_bias_drift[:, i] = drift[i] * np.random.randn(n)
+    return sensor_bias_drift
+
+def gps_gen(ref_gps, gps_err, gps_type=0):
+    '''
+    Add error to true GPS data according to GPS receiver error parameters
+    Args:
+        ref_gps: If gps_type is 0, [Lat, Lon, Alt, vx, vy, vz], [rad, rad, m].
+                 If gps_type is 1, [x, y, z, vx, vy, vz], [m, m, m].
+                 ref_gps data are expressed in the navigation frame.
+        gps_err: GPS reeceiver parameters.
+            'stdm': RMS position error, [m, m, m].
+            'stdv': RMS velocity error, [m/s, m/s, m/s].
+        gps_type: GPS data type.
+            0: default, position is in the form of [Lat, Lon, Alt], rad, m
+            1: position is in the form of [x, y, z], m
+    Returns:
+        gps_mea: ref_gps with error.
+    '''
+    # total data count
+    n = ref_gps.shape[0]
+    # If position is in the form of LLA, convert gps_err['stdm'] to LLA error
+    if gps_type == 0:   # GPS is in the form of LLA, stdm meter to rad
+        earth_param = geoparams.geo_param(ref_gps[0, 1:4])
+        gps_err['stdm'][0] = gps_err['stdm'][0] / earth_param[0]
+        gps_err['stdm'][1] = gps_err['stdm'][1] / earth_param[1] / earth_param[4]
+    ## simulate GPS error
+    pos_noise = gps_err['stdm'] * np.random.randn(n, 3)
+    vel_noise = gps_err['stdv'] * np.random.randn(n, 3)
+    gps_mea = np.hstack([ref_gps[:, 0:3] + pos_noise,
+                         ref_gps[:, 3:6] + vel_noise])
+    return gps_mea
+
+def odo_gen(ref_odo, odo_err):
+    '''
+    Add error to true odometer data.
+    Args:
+        ref_odo: nx3, true odometer data, m/s.
+        odo_err: odometer error profile.
+            'scale': 3x1, scale factor error.
+            'std': 3x1, RMS velocity error.
+    Returns:
+        odo_mea: nx3, measured odometer output.
+    '''
+    n = ref_odo.shape[0]
+    odo_noise = np.random.randn(n, 3)
+    scale_factor = odo_err['scale']
+    odo_noise[:, 0] = scale_factor[0]*ref_odo[:, 0] + odo_err['std'][0]*odo_noise[:, 0]
+    odo_noise[:, 1] = scale_factor[1]*ref_odo[:, 1] + odo_err['std'][1]*odo_noise[:, 1]
+    odo_noise[:, 2] = scale_factor[2]*ref_odo[:, 2] + odo_err['std'][2]*odo_noise[:, 2]
+    return odo_noise
+
+def mag_gen(ref_mag, mag_err):
+    """
+    Add error to magnetic data.
+    Args:
+        ref_mag: nx3 true magnetic data, uT.
+        mag_err: Magnetometer error parameters.
+            'si': 3x3 soft iron matrix
+            'hi': hard iron array, [ox, oy, oz], uT
+            'std': RMS of magnetometer noise, uT
+    Returns:
+        mag_mea: ref_mag with error, mag_mea = si * (ref_mag + hi) + noise
+    """
+    # total data count
+    n = ref_mag.shape[0]
+    # add error
+    mag_mea = ref_mag + mag_err['hi']
+    mag_mea = mag_mea.dot(mag_err['si'].T)
+    mag_noise = mag_err['std'] * np.random.randn(n, 3)
+    return mag_mea + mag_noise

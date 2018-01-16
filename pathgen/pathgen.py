@@ -245,9 +245,10 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 nav_data[idx_high_freq, 4] = vel_b[0]
                 nav_data[idx_high_freq, 5] = vel_b[1]
                 nav_data[idx_high_freq, 6] = vel_b[2]
-                nav_data[idx_high_freq, 7] = att[0]
-                nav_data[idx_high_freq, 8] = att[1]
-                nav_data[idx_high_freq, 9] = att[2]
+                euler_angles = attitude.euler_angle_range_three_axis(att)
+                nav_data[idx_high_freq, 7] = euler_angles[0] # yaw [-pi, pi]
+                nav_data[idx_high_freq, 8] = euler_angles[1] # pitch [-pi/2, pi/2]
+                nav_data[idx_high_freq, 9] = euler_angles[2] # roll [-pi, pi]
                 # next cycle
                 acc_sum = np.zeros(3)
                 gyro_sum = np.zeros(3)
@@ -413,7 +414,6 @@ def parse_motion_def(motion_def_seg, att, vel):
         att_com = att + [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
         vel_com = [motion_def_seg[4], 0, 0]
     return att_com, vel_com
-
 
 def acc_gen(fs, ref_a, acc_err, vib_def=None):
     """

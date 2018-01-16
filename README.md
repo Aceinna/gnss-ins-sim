@@ -94,9 +94,9 @@ Each element in 'output' corresponds to a set of data that can be understood by 
 
 | name | description |
 |-|-|
-| 'av_t' | Allan var time, units: ['s'] |
-| 'av_gyro' | Allan var of gyro, units: ['rad/s', 'rad/s', 'rad/s'] |
-| 'av_accel' | Allan var of accel, units: ['m/s2', 'm/s2', 'm/s2'] |
+| 'allan_t' | Time series of Allan analysis, units: ['s'] |
+| 'allan_std_gyro' | Allan std of gyro, units: ['rad/s', 'rad/s', 'rad/s'] |
+| 'allan_std_accel' | Allan std of accel, units: ['m/s2', 'm/s2', 'm/s2'] |
 | 'pos' | Simulation position from algo, units: ['rad', 'rad', 'm'] for NED (LLA), ['m', 'm', 'm'] for virtual inertial frame (xyz). |
 | 'vel' | Simulation velocity from algo, units: ['m/s', 'm/s', 'm/s'] |
 | 'att_euler' | Simulation attitude (Euler, ZYX)  from algo, units: ['rad', 'rad', 'rad'] |

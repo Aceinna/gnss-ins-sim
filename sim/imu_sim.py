@@ -411,29 +411,34 @@ class Sim(object):
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
         if data_dir is not None:
             self.sum += 'Simulation results are saved to ' + data_dir + '\n'
+
         #### error of algorithm output
-        for i in self.algo.output:
-            ref_name = 'ref_' + i
-            if ref_name in self.res:
-                self.sum += '\n----------------statistics for ' +\
-                            self.res[i].description + '\n'
-                err = np.zeros((self.sim_count, 3))
-                for j in range(self.sim_count):
-                    err[j, :] = self.res[i].data[j][-1, :] - self.res[ref_name].data[-1, :]
-                # print(err)
-                scale = 1.0
-                if self.res[i].output_units[0] == 'deg' and self.res[i].units[0] == 'rad':
-                    scale = 1.0/D2R
-                self.sum += '--Max error: ' +\
-                            str(scale * np.max(np.abs(err), 0)) +\
-                            ' ' + self.res[i].output_units[0] + '\n'
-                self.sum += '--Avg error: ' +\
-                            str(scale * np.average(err, 0)) +\
-                            ' ' + self.res[i].output_units[0] + '\n'
-                self.sum += '--STD of error: ' +\
-                            str(scale * np.std(err, 0))  +\
-                            ' ' + self.res[i].output_units[0] + '\n'
+        if self.algo is not None:
+            for i in self.algo.output:
+                ref_name = 'ref_' + i
+                if ref_name in self.res:
+                    self.sum += '\n----------------statistics for ' +\
+                                self.res[i].description + '\n'
+                    err = np.zeros((self.sim_count, 3))
+                    for j in range(self.sim_count):
+                        err[j, :] = self.res[i].data[j][-1, :] - self.res[ref_name].data[-1, :]
+                    # print(err)
+                    scale = 1.0
+                    if self.res[i].output_units[0] == 'deg' and self.res[i].units[0] == 'rad':
+                        scale = 1.0/D2R
+                    self.sum += '--Max error: ' +\
+                                str(scale * np.max(np.abs(err), 0)) +\
+                                ' ' + self.res[i].output_units[0] + '\n'
+                    self.sum += '--Avg error: ' +\
+                                str(scale * np.average(err, 0)) +\
+                                ' ' + self.res[i].output_units[0] + '\n'
+                    self.sum += '--STD of error: ' +\
+                                str(scale * np.std(err, 0))  +\
+                                ' ' + self.res[i].output_units[0] + '\n'
         print(self.sum)
+
+        #### Allan analysis results ####
+
         #### save summary to file
         if data_dir is not None:
             try:
@@ -471,12 +476,14 @@ class Sim(object):
                       (i, sim_idx[i], self.sim_count))
         for i in invalid_idx:
             sim_idx.remove(i)
-        # dict of data to plot
+
+        # data to plot
         for i in what_to_plot:
             # print("data to plot: %s"% i)
             # get plot options
             ref = None
             plot3d = None
+            # this data has plot options?
             if isinstance(opt, dict):
                 if i in opt:
                     if opt[i].lower() == '3d':
@@ -485,19 +492,24 @@ class Sim(object):
                         ref_name = 'ref_' + i   # this data have reference, error can be calculated
                         if ref_name in self.supported_plot:
                             ref = self.supported_plot[ref_name]
+                        else:
+                            print(i + ' has no reference.')
+            # x axis data
             x_axis = self.time
             if i in self.supported_plot:
+                # plot only once
                 if i in self.supported_in_constant:
                     if i == self.ref_gps.name or i == self.gps_time.name:
                         x_axis = self.gps_time
-                    self.supported_plot[i].plot(x_axis, ref=ref, plot3d=plot3d)
+                    # self.supported_plot[i].plot(x_axis, ref=ref, plot3d=plot3d)
+                # plot data of all simulation counts
                 else:
                     if i == self.allan_std_gyro.name or i == self.allan_std_accel.name or\
                        i == self.allan_t.name:
                         x_axis = self.allan_t
                     elif i == self.gps.name:
                         x_axis = self.gps_time
-                    self.supported_plot[i].plot(x_axis, key=sim_idx, ref=ref, plot3d=plot3d)
+                self.supported_plot[i].plot(x_axis, key=sim_idx, ref=ref, plot3d=plot3d)
             else:
                 print('Unsupported plot: %s.'% i)
                 # print("Only the following data are available for plot:")

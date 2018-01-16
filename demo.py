@@ -43,14 +43,13 @@ def test_sim():
 
     #### Algorithm
     # Allan analysis
-    from algorithm import allan_analysis
-    algo = allan_analysis.Allan()
+    # from algorithm import allan_analysis
+    # algo = allan_analysis.Allan()
 
     # ECF based inclinometer
     # from algorithm import inclinometer_mahony
     # algo = inclinometer_mahony.MahonyFilter()
 
-    '''
     # Free integration in a virtual inertial frame
     from algorithm import free_integration
     ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-90deg_turn.csv",\
@@ -63,21 +62,20 @@ def test_sim():
     ini_pos_vel_att[3:6] += ini_vel_err
     ini_pos_vel_att[6:9] += ini_att_err * D2R
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
-    '''
 
     #### start simulation
-    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-Allan.csv",
+    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-90deg_turn.csv",
                       ref_frame=1,
                       mode=np.array([1.0, 0.5, 2.0]),
                       env=None,
                       #env=np.genfromtxt(data_path+'//vib_psd.csv', delimiter=',', skip_header=1),
                       algorithm=algo)
-    sim.run(1)
+    sim.run(10)
     # generate simulation results, summary, and save data to files
     # sim.results('./data/')  # save data files
     sim.results()  # do not save data
     # plot data
-    sim.plot(['allan_t', 'allan_std_accel', 'allan_std_gyro'])
+    sim.plot(['ref_att_euler', 'pos'], opt={'pos':'3d'})
     print('test sim OK.')
 
 if __name__ == '__main__':

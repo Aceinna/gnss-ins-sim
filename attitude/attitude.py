@@ -734,3 +734,47 @@ def cross3(a, b):
                   a[2]*b[0] - a[0]*b[2],
                   a[0]*b[1] - a[1]*b[0]])
     return c
+
+def euler_angle_range_three_axis(angles):
+    '''
+    Limit Euler angle range.
+    For three-axis rotation, the angle ranges are [-pi, pi], [-pi/2, pi/2] and [-pi, pi]
+    For two-axis rotation, the angle ranges are [-pi, pi], [0, pi] and [-pi, pi]
+    Args:
+        angles: numpy array of (3,) or (3,1)
+        rot_seq: only 'ZYX' is supported now.
+    '''
+    half_pi = 0.5 * math.pi
+    # convert the second angle in range [-pi, pi]
+    a1 = angles[0]
+    a2 = angle_range_pi(angles[1])
+    a3 = angles[2]
+    # the second angle is not within [-pi/2, pi/2]?
+    if a2 > half_pi:
+        a2 = math.pi - a2
+        a1 = a1 + math.pi
+        a3 = a3 + math.pi
+    elif a2 < -half_pi:
+        a2 = -math.pi - a2
+        a1 = a1 + math.pi
+        a3 = a3 + math.pi
+    a1 = angle_range_pi(a1)
+    a3 = angle_range_pi(a3)
+    return np.array([a1, a2, a3])
+
+def angle_range_pi(x):
+    '''
+    Limit angle range within [-pi, pi]
+    Args：
+        x: rad
+    Return:
+        equivalent angle of x, [-pi, pi], rad
+    '''
+    two_pi = 2.0*math.pi
+    # [0, 2pi]
+    x = x % (two_pi)
+    # [-pi, pi]
+    if x > math.pi:
+        x = x - two_pi
+
+    return x

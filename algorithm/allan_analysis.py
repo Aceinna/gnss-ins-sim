@@ -44,7 +44,7 @@ class Allan(object):
         algorithm description
         '''
         self.input = ['fs', 'accel', 'gyro']
-        self.output = ['av_t', 'av_accel', 'av_gyro']
+        self.output = ['allan_t', 'allan_std_accel', 'allan_std_gyro']
         self.batch = True   # Put all data from t0 to tf if True (default)
                             # Sequentially put data from t0 to tf if False
         self.results = None # results must be a list or tuple of data as explained in self.out
@@ -68,8 +68,8 @@ class Allan(object):
         avar_wz = allan.allan_var(gyro[:, 2], fs)[0]
         # generate results, must be a tuple or list consistent with self.output
         self.results = [tau,\
-                        np.array([avar_ax, avar_ay, avar_az]).T,\
-                        np.array([avar_wx, avar_wy, avar_wz]).T]
+                        np.sqrt(np.array([avar_ax, avar_ay, avar_az]).T),\
+                        np.sqrt(np.array([avar_wx, avar_wy, avar_wz]).T)]
 
     def get_results(self):
         '''

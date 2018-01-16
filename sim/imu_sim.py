@@ -178,27 +178,25 @@ class Sim(object):
                            description='accel bias estimation',\
                            units=['m/s2', 'm/s2', 'm/s2'],\
                            legend=['accel_bias_x', 'accel_bias_y', 'accel_bias_z'])
-        self.av_t = Sim_data(name='av_t',\
+        self.allan_t = Sim_data(name='allan_t',\
                              description='Allan var time',\
                              units=['s'])
-        self.av_gyro = Sim_data(name='av_gyro',\
-                                description='Allan var of gyro',\
+        self.allan_std_gyro = Sim_data(name='allan_std_gyro',\
+                                description='Allan STD of gyro',\
                                 units=['rad/s', 'rad/s', 'rad/s'],\
                                 logx=True, logy=True,\
-                                legend=['av_wx', 'av_wy', 'av_wz'],\
-                                pre_func=np.sqrt)
-        self.av_accel = Sim_data(name='av_accel',\
+                                legend=['av_wx', 'av_wy', 'av_wz'])
+        self.allan_std_accel = Sim_data(name='allan_std_accel',\
                                  description='Allan var of accel',\
                                  units=['m/s2', 'm/s2', 'm/s2'],\
                                  logx=True, logy=True,\
-                                 legend=['av_ax', 'av_ay', 'av_az'],\
-                                 pre_func=np.sqrt)
+                                 legend=['av_ax', 'av_ay', 'av_az'])
 
         ########## supported data ##########
         '''
         each item in the supported data should be either scalar or numpy.array of size(n, dim).
         n is the sample number, dim is a set of data at time tn. For example, accel is nx3,
-        att_quat is nx4, av_t is (n,)
+        att_quat is nx4, allan_t is (n,)
         '''
         # data that can be used as input to the algorithm
         '''
@@ -235,9 +233,9 @@ class Sim(object):
             self.att_euler.name: self.att_euler,
             self.wb.name: self.wb,
             self.ab.name: self.ab,
-            self.av_t.name: self.av_t,
-            self.av_gyro.name: self.av_gyro,
-            self.av_accel.name: self.av_accel}
+            self.allan_t.name: self.allan_t,
+            self.allan_std_gyro.name: self.allan_std_gyro,
+            self.allan_std_accel.name: self.allan_std_accel}
 
         # all available data
         self.res = {}
@@ -263,7 +261,7 @@ class Sim(object):
         else:
             self.output_def[1, 0] = -1.0
 
-        ########## flight mode ##########
+        ########## sim mode ##########
         if isinstance(mode, str):               # choose built-in mode
             pass
         elif isinstance(mode, np.ndarray):      # customize the sim mode
@@ -276,7 +274,7 @@ class Sim(object):
         self.vib_def = None
         self.parse_env(env)
 
-        # check algorithm
+        ########## check algorithm ##########
         self.algo = algorithm
         if algorithm is not None:
             self.check_algo()
@@ -494,8 +492,9 @@ class Sim(object):
                         x_axis = self.gps_time
                     self.supported_plot[i].plot(x_axis, ref=ref, plot3d=plot3d)
                 else:
-                    if i == self.av_gyro.name or i == self.av_accel.name or i == self.av_t.name:
-                        x_axis = self.av_t
+                    if i == self.allan_std_gyro.name or i == self.allan_std_accel.name or\
+                       i == self.allan_t.name:
+                        x_axis = self.allan_t
                     elif i == self.gps.name:
                         x_axis = self.gps_time
                     self.supported_plot[i].plot(x_axis, key=sim_idx, ref=ref, plot3d=plot3d)
@@ -613,7 +612,7 @@ class Sim_data(object):
     def __init__(self, name, description,\
                  units=None, output_units=None,\
                  plottable=True, logx=False, logy=False,\
-                 grid='on', legend=None, pre_func=None):
+                 grid='on', legend=None):
         '''
         Set up data properties and plot properties. All data are stored in a dict: self.data.
         Each key of this dict corresponds to a set of data. self.data[key] is of size mxn.
@@ -634,7 +633,6 @@ class Sim_data(object):
             grid: if this is not 'off', it will be changed to 'on'
             legend: tuple or list of strings to specify legend of data.
                 The length of units is the same as columns of each set of data in self.data.
-            pre_func: a function to process the data before plot.
         '''
         self.name = name
         self.description = description
@@ -663,7 +661,6 @@ class Sim_data(object):
         if grid.lower() == 'off':
             self.grid = grid
         self.legend = legend
-        self.pre_func = pre_func
         # a dict to store data, each key corresponds to a set of data
         # or a numpy array of size(m,n)
         # or a scalar
@@ -687,11 +684,7 @@ class Sim_data(object):
         self.data is a dict. plot self.data according to key
         '''
         for i in key:
-            # pre-process data
-            if self.pre_func is not None:
-                y_data = self.pre_func(self.data[i])
-            else:
-                y_data = self.data[i]
+            y_data = self.data[i]
             # x axis
             if isinstance(x.data, dict):
                 x_data = x.data[i]

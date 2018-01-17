@@ -719,7 +719,7 @@ class Sim_data(object):
             # plot
             if plot3d:
                 plot3d_in_one_figure(y_data,\
-                                     title=self.name,\
+                                     title=self.name + '_' + str(i),\
                                      grid=self.grid,\
                                      legend=self.legend)
             else:

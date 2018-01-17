@@ -76,6 +76,7 @@ Each string in 'input' corresponds to a set of data generated and provided by **
 | 'ref_pos' | True position in the navigation frame. When users choose NED (ref_frame=0) as the navigation frame, positions will be given in the form of [Latitude, Longitude, Altitude], units: ['rad', 'rad', 'm']. When users choose the virtual inertial frame, positions (initial position + positions relative to the  origin of the frame) will be given in the form of [x, y, z], units:  ['m', 'm', 'm']. |
 | 'ref_vel' | True velocity w.r.t the navigation/reference frame expressed in the body frame, units: ['m/s', 'm/s', 'm/s']. |
 | 'ref_att_euler' | True attitude (Euler angles, ZYX rotation sequency), units: ['rad', 'rad', 'rad'] |
+| 'ref_att_quat' | True attitude (quaternions) |
 | 'ref_gyro' | True angular velocity in the body frame, units: ['rad/s', 'rad/s', 'rad/s'] |
 | 'ref_accel' | True acceleration in the body frame, units: ['m/s^2', 'm/s^2', 'm/s^2'] |
 | 'ref_mag' | True geomagnetic field in the body frame, units: ['uT', 'uT', 'uT'] (only available when axis=9 in IMU object) |

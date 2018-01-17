@@ -52,7 +52,7 @@ def test_sim():
 
     # Free integration in a virtual inertial frame
     from algorithm import free_integration
-    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-0to100.csv",\
+    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-static.csv",\
                                     delimiter=',', skip_header=1, max_rows=1)
     ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
     ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
@@ -64,7 +64,7 @@ def test_sim():
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-0to100.csv",
+    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def-static.csv",
                       ref_frame=1,
                       mode=np.array([1.0, 0.5, 2.0]),
                       env=None,
@@ -75,7 +75,7 @@ def test_sim():
     # sim.results('./data/')  # save data files
     sim.results()  # do not save data
     # plot data
-    # sim.plot(['ref_att_euler', 'pos'], opt={'pos':'3d'})
+    # sim.plot(['att_euler', 'ref_att_euler'], opt={'pos': '3d'})
     print('test sim OK.')
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ Created on 2017-12-19
 import math
 import numpy as np
 from pathgen import pathgen
+from attitude import attitude
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from mpl_toolkits.mplot3d import Axes3D
@@ -109,6 +110,9 @@ class Sim(object):
                                 units=['rad', 'rad', 'rad'],\
                                 output_units=['deg', 'deg', 'deg'],\
                                 legend=['ref_Yaw', 'ref_Pitch', 'ref_Roll'])
+        self.ref_att_quat = Sim_data(name='ref_att_quat',\
+                                     description='true attitude (quaternion)',\
+                                     legend=['q0', 'q1', 'q2', 'q3'])
         self.ref_gyro = Sim_data(name='ref_gyro',\
                                  description='true angular velocity',\
                                  units=['rad/s', 'rad/s', 'rad/s'],\
@@ -241,6 +245,15 @@ class Sim(object):
         self.res = {}
         # all available data for plot
         self.supported_plot = {}
+        # error terms we are interested in
+        self.interested_error = {self.att_euler.name: 'angle',
+                                 self.pos.name: None,
+                                 self.vel.name: None}
+        # associated data mapping
+        self.data_map = {self.ref_att_euler.name: [self.ref_att_quat, self.__euler2quat_zyx],
+                         self.ref_att_quat.name: [self.ref_att_euler, self.__quat2euler_zyx],
+                         self.att_euler.name: [self.att_quat, self.__euler2quat_zyx],
+                         self.att_quat.name: [self.att_euler, self.__quat2euler_zyx]}
 
         # summary
         self.sum = ''
@@ -355,6 +368,7 @@ class Sim(object):
             generate a dict to tell what simulation results can be acquired, and what results
             can be plotted.
             '''
+            #### generate results containing all available data
             # data from pathgen are available after simulation
             self.res = self.supported_in_constant.copy()
             self.res.update(self.supported_in_varying)
@@ -362,12 +376,17 @@ class Sim(object):
             if self.algo is not None:
                 for i in self.algo.output:
                     self.res[i] = self.supported_out[i]
-            # generate supported plot
+            # add associated data.
+            # for example, if quaternion is available, Euler angles will be generated
+            self.__add_associated_data_to_results()
+
+            #### generate supported plot
             self.supported_plot = self.res.copy()
             self.supported_plot.pop('fs')
             self.supported_plot.pop('ref_frame')
             # print(self.res)
             # print(self.supported_plot)
+
             '''
             Save results to file.
             Simulation results include a summary file containing statistics of the simulation
@@ -415,13 +434,21 @@ class Sim(object):
         #### error of algorithm output
         if self.algo is not None:
             for i in self.algo.output:
+                # is is not in interested data but has associated data?
+                if i not in self.interested_error and i in self.data_map:
+                    i = self.data_map[i][0].name
                 ref_name = 'ref_' + i
-                if ref_name in self.res:
+                if i in self.interested_error and ref_name in self.res:
                     self.sum += '\n----------------statistics for ' +\
                                 self.res[i].description + '\n'
                     err = np.zeros((self.sim_count, 3))
                     for j in range(self.sim_count):
                         err[j, :] = self.res[i].data[j][-1, :] - self.res[ref_name].data[-1, :]
+                        # angle error should be within [-pi, pi]
+                        if self.interested_error[i] == 'angle':
+                            err[j, 0] = attitude.angle_range_pi(err[j, 0])
+                            err[j, 1] = attitude.angle_range_pi(err[j, 1])
+                            err[j, 2] = attitude.angle_range_pi(err[j, 2])
                     # print(err)
                     scale = 1.0
                     if self.res[i].output_units[0] == 'deg' and self.res[i].units[0] == 'rad':
@@ -616,6 +643,63 @@ class Sim(object):
             raise ValueError('check input and output definitions of the algorithm.')
         except:
             raise TypeError('algorithm input or output is not a valid list or tuple.')
+
+    def __add_associated_data_to_results(self):
+        '''
+        Check if some data in self.res have associated data. If so, calculate the associated data
+        and add the data in self.res.
+        For example, pathgen generates Euler angles, this procedure will calculate the
+        coresponding quaternions and add those in self.res.
+        '''
+        # search for data to add to results and generate associated data
+        data_to_add = []
+        for i in self.res:
+            if i in self.data_map:
+                self.data_map[i][1](self.res[i], self.data_map[i][0])
+                data_to_add.append(i)
+        # add generated associated data to results
+        for i in data_to_add:
+            self.res[self.data_map[i][0].name] = self.data_map[i][0]
+
+    def __quat2euler_zyx(self, src, dst):
+        '''
+        quaternion to Euler angles (zyx)
+        '''
+        if isinstance(src.data, np.ndarray):
+            n = src.data.shape[0]
+            dst.data = np.zeros((n, 3))
+            for j in range(n):
+                dst.data[j, :] = attitude.quat2euler(src.data[j, :])
+        elif isinstance(src.data, dict):
+            for i in src.data:
+                n = src.data[i].shape[0]
+                euler = np.zeros((n, 3))
+                for j in range(n):
+                    euler[j, :] = attitude.quat2euler(src.data[i][j, :])
+                dst.data[i] = euler
+        else:
+            raise ValueError('%s is not a dict or numpy array.'% src.name)
+
+    def __euler2quat_zyx(self, src, dst):
+        '''
+        Euler angles (zyx) to quaternion
+        '''
+        # array
+        if isinstance(src.data, np.ndarray):
+            n = src.data.shape[0]
+            dst.data = np.zeros((n, 4))
+            for j in range(n):
+                dst.data[j, :] = attitude.euler2quat(src.data[j, :])
+        # dict
+        elif isinstance(src.data, dict):
+            for i in src.data:
+                n = src.data[i].shape[0]
+                quat = np.zeros((n, 4))
+                for j in range(n):
+                    quat[j, :] = attitude.euler2quat(src.data[i][j, :])
+                dst.data[i] = quat
+        else:
+            raise ValueError('%s is not a dict or numpy array.'% src.name)
 
 class Sim_data(object):
     '''

@@ -776,5 +776,20 @@ def angle_range_pi(x):
     # [-pi, pi]
     if x > math.pi:
         x = x - two_pi
-
     return x
+
+
+# def angle_range_180(x):
+#     '''
+#     Limit angle range within [-180, 180]
+#     Args：
+#         x: deg
+#     Return:
+#         equivalent angle of x, [-180, 180], deg
+#     '''
+#     # [0, 360]
+#     x = x % 360.0
+#     # [-180, 180]
+#     if x > 180.0:
+#         x = x - 360.0
+#     return x

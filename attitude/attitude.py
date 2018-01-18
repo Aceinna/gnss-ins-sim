@@ -14,6 +14,8 @@ import numpy as np
 
 # global
 VERSION = '1.0'
+TWO_PI = 2.0*math.pi
+
 
 def get_cn2b_acc_mag_ned(acc, mag):
     '''
@@ -770,12 +772,11 @@ def angle_range_pi(x):
     Return:
         equivalent angle of x, [-pi, pi], rad
     '''
-    two_pi = 2.0*math.pi
     # [0, 2pi]
-    x = x % (two_pi)
+    x = x % (TWO_PI)
     # [-pi, pi]
     if x > math.pi:
-        x = x - two_pi
+        x = x - TWO_PI
     return x
 
 

@@ -115,8 +115,8 @@ class MahonyFilter(object):
         v[2] = -q1[0]*q1[0] + q1[1]*q1[1] + q1[2]*q1[2] - q1[3]*q1[3]
         acc_err = np.cross(acc, v)
         for i in range(0, 3):                   # limite error
-            if math.fabs(acc_err[i]) > 0.1:
-                acc_err[i] = np.sign(acc_err[i]) * 0.1
+            if math.fabs(acc_err[i]) > 0.01:
+                acc_err[i] = np.sign(acc_err[i]) * 0.01
         #print(acc_err)
         # integral of the error
         self.err_int = self.err_int + self.ki_acc * acc_err * self.dt

@@ -120,7 +120,7 @@ class Sim(object):
                                  legend=['ref_gyro_x', 'ref_gyro_y', 'ref_gyro_z'])
         self.ref_accel = Sim_data(name='ref_accel',\
                                   description='True accel',\
-                                  units=['m/s2', 'm/s2', 'm/s2'],\
+                                  units=['m/s^2', 'm/s^2', 'm/s^2'],\
                                   legend=['ref_accel_x', 'ref_accel_y', 'ref_accel_z'])
         self.ref_gps = Sim_data(name='ref_gps',\
                                 description='true GPS pos/vel',\
@@ -128,8 +128,7 @@ class Sim(object):
                                 output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                                 legend=['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
                                         'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz'])
-                                # downsampled true pos/vel, first row is sample index,
-                                # sync with self.time
+                                # downsampled true pos/vel
         if self.ref_frame.data == 1:
             self.ref_gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.ref_gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
@@ -162,7 +161,7 @@ class Sim(object):
                              legend=['gyro_x', 'gyro_y', 'gyro_z'])
         self.accel = Sim_data(name='accel',\
                               description='accel measurements',\
-                              units=['m/s2', 'm/s2', 'm/s2'],\
+                              units=['m/s^2', 'm/s^2', 'm/s^2'],\
                               legend=['accel_x', 'accel_y', 'accel_z'])
         self.gps = Sim_data(name='gps',\
                             description='GPS measurements',\
@@ -180,7 +179,7 @@ class Sim(object):
                            legend=['gyro_bias_x', 'gyro_bias_y', 'gyro_bias_z'])
         self.ab = Sim_data(name='ab',\
                            description='accel bias estimation',\
-                           units=['m/s2', 'm/s2', 'm/s2'],\
+                           units=['m/s^2', 'm/s^2', 'm/s^2'],\
                            legend=['accel_bias_x', 'accel_bias_y', 'accel_bias_z'])
         self.allan_t = Sim_data(name='allan_t',\
                              description='Allan var time',\
@@ -192,13 +191,14 @@ class Sim(object):
                                 legend=['av_wx', 'av_wy', 'av_wz'])
         self.allan_std_accel = Sim_data(name='allan_std_accel',\
                                  description='Allan var of accel',\
-                                 units=['m/s2', 'm/s2', 'm/s2'],\
+                                 units=['m/s^2', 'm/s^2', 'm/s^2'],\
                                  logx=True, logy=True,\
                                  legend=['av_ax', 'av_ay', 'av_az'])
 
         ########## supported data ##########
         '''
-        each item in the supported data should be either scalar or numpy.array of size(n, dim).
+        each item in the supported data should be either scalar or numpy.array of size(n, dim),
+        or a dict of the above two, dict keys are simulatoin count: 0, 1, 2, 3, ...
         n is the sample number, dim is a set of data at time tn. For example, accel is nx3,
         att_quat is nx4, allan_t is (n,)
         '''
@@ -794,6 +794,10 @@ class Sim_data(object):
                     ref_data = ref.data
                 try:
                     y_data = y_data - ref_data
+                    if self.units == ['rad', 'rad', 'rad']:
+                        y_data = y_data % attitude.TWO_PI
+                        idx = y_data > math.pi
+                        y_data[idx] = y_data[idx] - attitude.TWO_PI
                 except:
                     print(ref_data.shape)
                     print(y_data.shape)
@@ -829,6 +833,10 @@ class Sim_data(object):
         if ref is not None:
             try:
                 y_data = self.data - ref
+                if self.units == ['rad', 'rad', 'rad']:
+                        y_data = y_data % attitude.TWO_PI
+                        idx = y_data > math.pi
+                        y_data[idx] = y_data[idx] - attitude.TWO_PI
             except:
                 print(ref.shape)
                 print(self.data.shape)

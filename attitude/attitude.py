@@ -192,8 +192,8 @@ def euler2quat(angles, rot_seq='zyx'):
         q: quaternion, [q0, q1, q2, q3], q0 is the scalar
     """
     '''
-    cangle = np.cos(angles)
-    sangle = np.sin(angles)
+    cangle = np.cos(0.5*angles)
+    sangle = np.sin(0.5*angles)
     rot_seq = rot_seq.lower()
     if rot_seq == 'zyx':
         return np.array([cangle[0]*cangle[1]*cangle[2] + sangle[0]*sangle[1]*sangle[2],
@@ -278,13 +278,13 @@ def quat2dcm(q):
     q3q3 = q[3] * q[3]
     dcm = np.zeros((3, 3))
     dcm[0, 0] = q0q0 + q1q1 - q2q2 - q3q3
-    dcm[0, 1] = 2*(q1q2 + q0q3)
-    dcm[0, 2] = 2*(q1q3 - q0q2)
-    dcm[1, 0] = 2*(q1q2 - q0q3)
+    dcm[0, 1] = 2.0*(q1q2 + q0q3)
+    dcm[0, 2] = 2.0*(q1q3 - q0q2)
+    dcm[1, 0] = 2.0*(q1q2 - q0q3)
     dcm[1, 1] = q0q0 - q1q1 + q2q2 - q3q3
-    dcm[1, 2] = 2*(q2q3 + q0q1)
-    dcm[2, 0] = 2*(q1q3 + q0q2)
-    dcm[2, 1] = 2*(q2q3 - q0q1)
+    dcm[1, 2] = 2.0*(q2q3 + q0q1)
+    dcm[2, 0] = 2.0*(q1q3 + q0q2)
+    dcm[2, 1] = 2.0*(q2q3 - q0q1)
     dcm[2, 2] = q0q0 - q1q1 - q2q2 + q3q3
     return dcm
 

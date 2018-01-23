@@ -24,7 +24,7 @@ class MahonyFilter(object):
         vars
         '''
         # algorithm description
-        self.input = ['fs', 'gyro', 'accel', 'mag']
+        self.input = ['fs', 'gyro', 'accel']#, 'mag']
         self.output = ['att_quat']
         self.batch = True
         self.results = None

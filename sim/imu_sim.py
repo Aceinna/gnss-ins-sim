@@ -184,16 +184,16 @@ class Sim(object):
         self.allan_t = Sim_data(name='allan_t',\
                              description='Allan var time',\
                              units=['s'])
-        self.allan_std_gyro = Sim_data(name='allan_std_gyro',\
-                                description='Allan STD of gyro',\
+        self.ad_gyro = Sim_data(name='ad_gyro',\
+                                description='Allan deviation of gyro',\
                                 units=['rad/s', 'rad/s', 'rad/s'],\
                                 logx=True, logy=True,\
-                                legend=['av_wx', 'av_wy', 'av_wz'])
-        self.allan_std_accel = Sim_data(name='allan_std_accel',\
-                                 description='Allan var of accel',\
+                                legend=['AD_wx', 'AD_wy', 'AD_wz'])
+        self.ad_accel = Sim_data(name='ad_accel',\
+                                 description='Allan deviation of accel',\
                                  units=['m/s^2', 'm/s^2', 'm/s^2'],\
                                  logx=True, logy=True,\
-                                 legend=['av_ax', 'av_ay', 'av_az'])
+                                 legend=['AD_ax', 'AD_ay', 'AD_az'])
 
         ########## supported data ##########
         '''
@@ -238,8 +238,8 @@ class Sim(object):
             self.wb.name: self.wb,
             self.ab.name: self.ab,
             self.allan_t.name: self.allan_t,
-            self.allan_std_gyro.name: self.allan_std_gyro,
-            self.allan_std_accel.name: self.allan_std_accel}
+            self.ad_gyro.name: self.ad_gyro,
+            self.ad_accel.name: self.ad_accel}
 
         # all available data
         self.res = {}
@@ -275,12 +275,16 @@ class Sim(object):
             self.output_def[1, 0] = -1.0
 
         ########## sim mode ##########
-        if isinstance(mode, str):               # choose built-in mode
-            pass
-        elif isinstance(mode, np.ndarray):      # customize the sim mode
-            pass                                # maneuver capability
+        # to be implemented
+        if mode is not None:
+            if isinstance(mode, str):               # choose built-in mode
+                pass
+            elif isinstance(mode, np.ndarray):      # customize the sim mode
+                pass                                # maneuver capability
+            else:
+                raise TypeError('mode should be a string or a numpy array of size (3,)')
         else:
-            raise TypeError('mode should be a string or a numpy array of size (3,)')
+            pass
         self.mobility = high_mobility
 
         ########## environment-->vibraition params ##########
@@ -430,6 +434,10 @@ class Sim(object):
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
         if data_dir is not None:
             self.sum += 'Simulation results are saved to ' + data_dir + '\n'
+        #### supported plot
+        self.sum += "\nPlots of the following results are supported:\n"
+        for i in self.supported_plot:
+            self.sum += '\t' + i + ': ' + self.supported_plot[i].description + '\n'
 
         #### error of algorithm output
         if self.algo is not None:
@@ -531,7 +539,7 @@ class Sim(object):
                     # self.supported_plot[i].plot(x_axis, ref=ref, plot3d=plot3d)
                 # plot data of all simulation counts
                 else:
-                    if i == self.allan_std_gyro.name or i == self.allan_std_accel.name or\
+                    if i == self.ad_gyro.name or i == self.ad_accel.name or\
                        i == self.allan_t.name:
                         x_axis = self.allan_t
                     elif i == self.gps.name:
@@ -635,9 +643,11 @@ class Sim(object):
             # prepare algorithm input and output
             for i in self.algo.input:
                 if not i in self.supported_in_constant and not i in self.supported_in_varying:
+                    print('Unsupported algorithm input: %s'% i)
                     raise ValueError
             for i in self.algo.output:
                 if not i in self.supported_out:
+                    print('Unsupported algorithm output: %s'% i)
                     raise ValueError
         except ValueError:
             raise ValueError('check input and output definitions of the algorithm.')

@@ -63,6 +63,7 @@ def test_free_integration():
                       mode=None,
                       env=None,
                       algorithm=algo)
+    # run the simulation for 1000 times
     sim.run(1000)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results

@@ -10,7 +10,7 @@ Created on 2017-09-27
 # import
 import math
 import numpy as np
-from attitude import attitude
+from gnss_ins_sim.attitude import attitude
 
 # globals
 VERSION = '1.0'

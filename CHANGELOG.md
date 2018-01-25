@@ -8,3 +8,6 @@
 
 ## 20180123
 - split demos in demo.py into different files: demo_xxx.py
+
+## 20180125
+- separate demos from gnss-ins-sim

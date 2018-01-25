@@ -14,10 +14,10 @@ Created on 2017-09-12
 # import
 import math
 import numpy as np
-from attitude import attitude
-from geoparams import geoparams
-from geoparams import geomag
-from psd import time_series_from_psd
+from ..attitude import attitude
+from ..geoparams import geoparams
+from ..geoparams import geomag
+from ..psd import time_series_from_psd
 
 # global
 VERSION = '1.0'

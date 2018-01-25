@@ -9,13 +9,13 @@ Created on 2018-01-23
 
 import os
 import math
-from sim import imu_model
-from sim import imu_sim
+from gnss_ins_sim.sim import imu_model
+from gnss_ins_sim.sim import imu_sim
 
 # globals
 D2R = math.pi/180
 
-data_path = os.path.abspath('.//motion_def_files//')
+motion_def_path = os.path.abspath('.//demo_motion_def_files//')
 fs = 100.0          # IMU sample frequency
 
 def test_inclinometer_mahony():
@@ -29,11 +29,11 @@ def test_inclinometer_mahony():
 
     #### Algorithm
     # ECF based inclinometer
-    from algorithm import inclinometer_mahony
+    from demo_algorithms import inclinometer_mahony
     algo = inclinometer_mahony.MahonyFilter()
 
     #### start simulation
-    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, data_path+"//motion_def.csv",
+    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, motion_def_path+"//motion_def.csv",
                       ref_frame=1,
                       mode=None,
                       env=None,

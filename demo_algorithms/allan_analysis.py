@@ -11,7 +11,7 @@ Created on 2017-12-20
 
 # import
 import numpy as np
-from allan import allan
+from gnss_ins_sim.allan import allan
 
 '''
 The algorithm should be a Python class with three memeber functions.

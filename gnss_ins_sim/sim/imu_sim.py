@@ -9,11 +9,11 @@ Created on 2017-12-19
 
 import math
 import numpy as np
-from pathgen import pathgen
-from attitude import attitude
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from mpl_toolkits.mplot3d import Axes3D
+from ..pathgen import pathgen
+from ..attitude import attitude
 
 D2R = math.pi/180
 # built-in mobility
@@ -401,7 +401,7 @@ class Sim(object):
                 import time
                 # check data dir
                 if not os.path.exists(data_dir):
-                    data_dir = os.path.abspath('.//data//')
+                    data_dir = os.path.abspath('.//demo_saved_data//')
                 else:
                     data_dir = os.path.abspath(data_dir)
                 if data_dir[-1] != '//':

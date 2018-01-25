@@ -9,8 +9,8 @@ Created on 2017-12-20
 """
 
 import numpy as np
-from attitude import attitude
-from geoparams import geoparams
+from gnss_ins_sim.attitude import attitude
+from gnss_ins_sim.geoparams import geoparams
 
 class FreeIntegration(object):
     '''

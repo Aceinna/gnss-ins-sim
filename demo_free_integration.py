@@ -10,13 +10,13 @@ Created on 2018-01-23
 import os
 import math
 import numpy as np
-from sim import imu_model
-from sim import imu_sim
+from gnss_ins_sim.sim import imu_model
+from gnss_ins_sim.sim import imu_sim
 
 # globals
 D2R = math.pi/180
 
-data_path = os.path.abspath('.//motion_def_files//')
+motion_def_path = os.path.abspath('.//demo_motion_def_files//')
 fs = 100.0          # IMU sample frequency
 
 def test_free_integration():
@@ -39,12 +39,12 @@ def test_free_integration():
 
     #### Algorithm
     # Free integration in a virtual inertial frame
-    from algorithm import free_integration
+    from demo_algorithms import free_integration
     '''
     Free integration requires initial states (position, velocity and attitude). You should provide
     theses values when you create the algorithm object.
     '''
-    ini_pos_vel_att = np.genfromtxt(data_path+"//motion_def-90deg_turn.csv",\
+    ini_pos_vel_att = np.genfromtxt(motion_def_path+"//motion_def-90deg_turn.csv",\
                                     delimiter=',', skip_header=1, max_rows=1)
     ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
     ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
@@ -58,7 +58,7 @@ def test_free_integration():
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, data_path+"//motion_def-90deg_turn.csv",
+    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, motion_def_path+"//motion_def-90deg_turn.csv",
                       ref_frame=1,
                       mode=None,
                       env=None,

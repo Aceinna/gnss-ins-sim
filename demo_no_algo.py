@@ -10,13 +10,13 @@ Created on 2018-01-23
 
 import os
 import math
-from sim import imu_model
-from sim import imu_sim
+from gnss_ins_sim.sim import imu_model
+from gnss_ins_sim.sim import imu_sim
 
 # globals
 D2R = math.pi/180
 
-data_path = os.path.abspath('.//motion_def_files//')
+motion_def_path = os.path.abspath('.//demo_motion_def_files//')
 fs = 100.0          # IMU sample frequency
 fs_gps = 10.0       # GPS sample frequency
 fs_mag = fs         # magnetometer sample frequency, not used for now
@@ -31,14 +31,14 @@ def test_path_gen():
     imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, data_path+"//motion_def.csv",
+    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, motion_def_path+"//motion_def.csv",
                       ref_frame=1,
                       mode=None,
                       env=None,
                       algorithm=None)
     sim.run(1)
     # save simulation data to files
-    sim.results('./data/')
+    sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
     sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
 

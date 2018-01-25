@@ -196,6 +196,7 @@ sim.plot(['ref_pos', 'gyro'], opt={'ref_pos': '3d'})
 
 ## Demos
 We provide the following demos:
+
 | file name | description |
 |---|---|
 | demo_no_algo.py | A demo of generating data, saving generated data to files and plotting (2D/3D)interested data, no user specified algorithm. |

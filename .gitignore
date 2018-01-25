@@ -1,5 +1,5 @@
 !.gitignore
-/data/
+/demo_saved_data/
 __pycache__/
 *.cprofile
 *.pyc

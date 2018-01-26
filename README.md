@@ -7,6 +7,16 @@
 - Numpy ( version>1.10 )
 - Matplotlib
 
+## Demos
+We provide the following demos:
+
+| file name | description |
+|---|---|
+| demo_no_algo.py | A demo of generating data, saving generated data to files and plotting (2D/3D)interested data, no user specified algorithm. |
+| demo_allan.py | A demo of Allan analysis of gyroscope and accelerometer data. The generated Allan deviation is shown in figures.|
+| demo_free_integration.py | A demo of a simple strapdown system. The simulation runs for 1000 times. The statistics of the INS results of the 1000 simulations are generated.|
+| demo_inclinometer_mahony.py | A demo of an dynamic inclinometer algorithm based on Mahony's theory. This demos shows how to generate error plot of interested data.|
+
 ## Step 1 Define the IMU model
 
 ### Step 1.1 Define the IMU error model
@@ -193,16 +203,6 @@ sim.results()
 # plot interested data
 sim.plot(['ref_pos', 'gyro'], opt={'ref_pos': '3d'})
 ```
-
-## Demos
-We provide the following demos:
-
-| file name | description |
-|---|---|
-| demo_no_algo.py | A demo of generating data, saving generated data to files and plotting (2D/3D)interested data, no user specified algorithm. |
-| demo_allan.py | A demo of Allan analysis of gyroscope and accelerometer data. The generated Allan deviation is shown in figures.|
-| demo_free_integration.py | A demo of a simple strapdown system. The simulation runs for 1000 times. The statistics of the INS results of the 1000 simulations are generated.|
-| demo_inclinometer_mahony.py | A demo of an dynamic inclinometer algorithm based on Mahony's theory. This demos shows how to generate error plot of interested data.|
 
 ## Acknowledgement
 - Geomagnetic field model [https://github.com/cmweiss/geomag/tree/master/geomag](https://github.com/cmweiss/geomag/tree/master/geomag)

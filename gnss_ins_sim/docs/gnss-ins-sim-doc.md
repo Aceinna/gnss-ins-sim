@@ -35,7 +35,7 @@ The ECEF frame is an Earth-Centered, Earth-Fixed reference system. Its origin is
 Obviously, the ECEF is not an inertial reference system.
 
 <div align=center>
-<img width="500"  src="https://github.com/dxg-aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/ECEF.png"/>
+<img width="500"  src="https://github.com/Aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/ECEF.png"/>
 </div>
 
 #### 2.1.2 NED frame
@@ -43,7 +43,7 @@ For a device near or on the surface of the Earth, it is more convenient to descr
 Its origin is fixed at the device. Its x axis is in the local horizontal plane and point to the true north. Its z axis is perpendicular to the local horizontal plane and point downwards, and its y axis completes the right-handed coordinate frame.
 
 <div align=center>
-<img width="400"  src="https://github.com/dxg-aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/NED.png"/>
+<img width="400"  src="https://github.com/Aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/NED.png"/>
 </div>
 
 #### 2.1.3 Virtual Inertial frame
@@ -168,7 +168,7 @@ where, <img src="https://latex.codecogs.com/gif.latex?m"> is the true magnetic f
 
 If we take measurements of an ideal magnetometer while rotating the sensor arbitrarily and make a 3D plot of the measurement, all data points will be located on the surface of a sphere. The center of the spehre will be at [0, 0, 0] and the radius of the sphere is the amplitude of the local geomagnetic field. The hard iron will shift the sphere center and the linear soft iron will distor the sphere into an ellipsoid.
 <div align=center>
-<img width="500"  src="https://github.com/dxg-aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/mag_si_hi.png"/>
+<img width="500"  src="https://github.com/Aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/mag_si_hi.png"/>
 </div>
 
 ## 4 Algorithm
@@ -193,7 +193,7 @@ To determine the characteristics of the underlying noise processes, Allan Deviat
 is plotted as a function of t on a log-log scale. Different types of random process cause slopes with
 different gradients to appear on the plot.
 <div align=center>
-<img width="800"  src="https://github.com/dxg-aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/allan_deviation.png"/>
+<img width="800"  src="https://github.com/Aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/allan_deviation.png"/>
 </div>
 
 ## 4.2 Strapdown inertial system

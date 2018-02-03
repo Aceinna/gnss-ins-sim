@@ -16,15 +16,12 @@ def kml_gen_from_lla(lla, template_file):
     '''
     Generate .kml file contents from lla.
     Args:
-        lla: nx3 [lat, lon, alt], rad, m.
+        lla: nx3 [lat, lon, alt], deg, m.
         template_file: template kml file. The line 'REPALCE THIS WITH COORDINATES'
                        will be replaced by coordinates defined in lla.
     Returns:
         kml_contents: string contents of kml file.
     '''
-    # data conversion
-    lla[:, 0] = lla[:, 0]*R2D   # rad to deg
-    lla[:, 1] = lla[:, 1]*R2D
     # gen kml according to data and template
     fp = open(template_file)
     lines = ''

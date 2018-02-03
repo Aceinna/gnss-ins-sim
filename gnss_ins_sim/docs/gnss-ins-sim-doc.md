@@ -1,10 +1,13 @@
 # **gnss-ins-sim**
+
 ------
 
 **gnss-ins-sim** is an open-source GNSS + inertial navigation, sensor fusion simulator. It consists of a trajectory generatro, sensor (gyroscope, accelerometer, magnetometer and GPS) data generator and a fusion algorithm simulator. 
 
 ## Contents
+
 ------
+
 * [1 Introduction](#1-introduction)
 * [2 Preliminary](#2-preliminary)
     * [2.1 Cordinate systems](#21-coordinate-systems)
@@ -21,16 +24,20 @@
 * [6 References](#6-references)
 
 ## 1 Introduction
+
 ------
-This doc is for better understanding and usage of **gnss-ins_sim**
+This doc is for better understanding and usage of **gnss-ins_sim**.
 
 ## 2 Preliminary
+
 ------
 
 ### 2.1 Coordinate systems
+
 This section gives the definitions of the coordinate system used in **gnss-ins-sim**.
 
 #### 2.1.1 ECEF frame
+
 The ECEF frame is an Earth-Centered, Earth-Fixed reference system. Its origin is the Earth’s CoM. Its z axis points to the true north. Its x axis points to the intersection of the Greenwich meridian and the equator, and its y axis complete the right-handed coordinate frame. We use the WGS-84 reference ellipsoid in the simulation since it is used in GPS.
 Obviously, the ECEF is not an inertial reference system.
 
@@ -39,6 +46,7 @@ Obviously, the ECEF is not an inertial reference system.
 </div>
 
 #### 2.1.2 NED frame
+
 For a device near or on the surface of the Earth, it is more convenient to describe its motion (especially rotations) in the NED (North-East-Downward) or ENU (East-North-Upward) frame. We choose the NED frame in gnss-ins-imu.
 Its origin is fixed at the device. Its x axis is in the local horizontal plane and point to the true north. Its z axis is perpendicular to the local horizontal plane and point downwards, and its y axis completes the right-handed coordinate frame.
 
@@ -47,21 +55,27 @@ Its origin is fixed at the device. Its x axis is in the local horizontal plane a
 </div>
 
 #### 2.1.3 Virtual Inertial frame
+
 For local-area or short-time applications, it may be more convenient to choose a virtual inertial frame as the reference frame especially when the sensor is of low accuracy. In these cases, the shape and rotation of the Earth will be ignored.
 The virtual inertial frame can be considered as an NED frame fixed at a known point.
 
 #### 2.1.4 Body frame
+
 The body coordinate system is fixed at the device. Its origin is located at the center of device. Its x axis points forward, lying in the symmetric plane of the device. Its y axis points to the right side of the device. Its z axis points downward to complete the right-hand coordinate system.
 
 ## 2.2 Attitude representation
+
 Two representations of the device attitude are adopted in **gnss-ins-sim**:
+
 * quaternions (scalar first);
 * Euler angles corresponding to the ZYX rotation sequence.
 
 ## 3 Sensor model
+
 ------
 
 ### 3.1 Gyroscope
+
 The mathematical model of a gyro in **gnss-ins-sim** is
 <div align=center>
 <img src="https://latex.codecogs.com/gif.latex?\omega_m=\omega&plus;b_{\omega}&plus;n_{\omega}" title="\omega_m=\omega+b_{\omega}+n_{\omega}" />
@@ -77,9 +91,11 @@ the subscript "m" means measurement,
 and <img src="https://latex.codecogs.com/gif.latex?b_\omega" title="b_\omega" /> is the gyro bias which includes a constant bias <img src="https://latex.codecogs.com/gif.latex?b_{\omega&space;c}" title="b_{\omega c}" /> and a varying bias <img src="https://latex.codecogs.com/gif.latex?b_{\omega&space;v}" title="b_{\omega v}" />.
 
 #### 3.1.1 Constant Bias
+
 For a rate gyro, its constant bias is the average output from the gyroscope when it is not undergoing any rotation. When the rate gyro output is integrated to get angles, the constant bias causes the angles to grow linearly with time.
 
 #### 3.1.2 White Noise / Angle Random Walk
+
 Besides the bias, the gyro measurements are also perturbed by a white noise sequence, which can be modelled as a sequence of zero-mean uncorrelated random variables. All the random variables are iid (independent and identically distributed) and have the same finite variance <img src="https://latex.codecogs.com/gif.latex?{\sigma}^2" title="{\sigma}^2" />.
 
 When integrating the angular rate measurements from the gyro, the white noise introduces a zero-mean random walk error into the angles, whose standard deviation is:
@@ -97,6 +113,7 @@ Since we usually integrate angular rate to get angles, it is common to specify t
 The units of ARW are usually <img src="https://latex.codecogs.com/gif.latex?^\circ/\sqrt{h}" title="^\circ/\sqrt{h}" /> .
 
 #### 3.1.3 Bias Stability
+
 The bias stability describes how the bias of a gyro may change over a specified period of time. It reflects the best possible estimate of the gyro bias.
 There are two models for the varying bias:
 <div align=center>
@@ -110,32 +127,40 @@ The first is a random walk model, and the second is a first-order Gauss-Markov m
 In reality, bias fluctuations do not really behave as a random walk or a first-order Gauss-Markov model, and therefore the random walk model and the Gauss-Markov model are only good approximations to the true process of bias fluctuations.
 
 #### 3.1.4 Calibration Errors
+
 Calibration errors refer to errors in the scale factors, alignments, and linearities of the gyros. Such errors tend to produce bias errors that are only observed when the device is undergoing rotations. Since theses errors can be accurately calibrated during factory calibration, we ignore such erros in **gnss-ins-sim**.
 
 ### 3.2 Accelerometer
+
 The mathematical model of an accelerometer in **gnss-ins-sim** is
 <div align=center>
 <img src="https://latex.codecogs.com/gif.latex?a_m=a&plus;b_a&plus;n_a" title="a_m=a+b_a+n_a" />
 </div>
 
 where, <img src="https://latex.codecogs.com/gif.latex?a_m" title="a_m" /> is the accelerometer measurement, <img src="https://latex.codecogs.com/gif.latex?a" title="a" /> is the true  acceleration which inludes linear acceleration and gravitational acceleration, <img src="https://latex.codecogs.com/gif.latex?b_a" title="b_a" /> is the accelerometer bias which includes a constant bias and a varying bias, and <img src="https://latex.codecogs.com/gif.latex?n_a" title="n_a" /> is the accelerometer noise.
+
 #### 3.2.1 Constant Bias
+
 If the accelerometer measurements are used to determine the tilt angle of the device w.r.t the local horizontal plane, a constant bias error of <img src="https://latex.codecogs.com/gif.latex?\epsilon" /> will cause errors in pitch and roll angles. When double integrated to get positions, a constant bias error causes an error in position which grows quadratically with time. The accumulated error in position is
 <div align=center>
 <img src="https://latex.codecogs.com/gif.latex?r(t)=\frac{\epsilon}{2}&space;\cdot&space;t^2" />
 </div>
 
 #### 3.2.2 White Noise / Velocity Random Walk
+
 Similar to a gyro ARW, the white noise sequence in the accelerometer measurements introduce a velocity random walk (VRW) that is usually specified with units of <img src="https://latex.codecogs.com/gif.latex?m/s/\sqrt{h}" />.
 
 #### 3.2.3 Bias Stability
+
 Similar to a gyro, the bias stability of an accelerometer can also be modelled by a random walk model or a frist-order Gauss-Markov model.
 
 #### 3.2.4 Calibration Errors
+
 Calibration errors (errors in the scale factors, alignments and linearities of the accelerometers) tend to produce bias errors that are only observed when the device is undergoing accelerations (including gravitational acceleration).
 
 ### 3.3 GPS
-A GPS receiver can provide device position and velocity in the ECEF frame (WGS-84). It accuracy is usually specified as horizontal accuracy and vertical accuracy.
+
+A GPS receiver can provide device position and velocity in the ECEF frame (WGS-84). Its accuracy is usually specified as horizontal accuracy and vertical accuracy.
 
 There are various statistical methods of describing specifications for GPS receivers.
 
@@ -148,6 +173,7 @@ There are various statistical methods of describing specifications for GPS recei
 | 2DRMS | <img src="https://latex.codecogs.com/gif.latex?2\sqrt{\sigma_x^2&plus;\sigma_y^2}" /> | 95% | Twice the DRMS of the horizontal position errors. |
 
 ### 3.3.2 3D accuracy
+
 | Accuracy measures | Formula | Probability | Definition |
 |------------|--------|-----------|-----------|
 | <div align=center> SEP <br>(Spherical Error Probable) </div>| <img src="https://latex.codecogs.com/gif.latex?0.51(\sigma_x&plus;\sigam_y&plus;\sigma_z)" /> | 50% | The radius of sphere centered at the true position, containing the position estimate in 3D with probability of 50%. |
@@ -157,6 +183,7 @@ There are various statistical methods of describing specifications for GPS recei
 We can see that GPS error characteristis are complicaetd<sup>[1]</sup>. To simplify the simulation, we use <img src="https://latex.codecogs.com/gif.latex?[\sigma_{NorthPos},\sigma_{EastPos},\sigma_{DownPos},\sigma_{NorthVel},\sigma_{EastVel},\sigma_{DownVel}]"> to specify the position and velocity error statistics of a GPS receiver.
 
 ### 3.4 Magnetometer
+
 Unlike IMU, when we talk about the errors of a magnetometer, we also include environmental inteferences around the sensor, besides inherent errors of the magnetometer.
 There are two kinds of interferences: hard iron error and soft iron error. The former introduces in the sensor output a constant offset from the true value, which has the same effect as the sensor bias. The latter is caused by soft iron materials around the sensor and distort the environmental magnetic field to be measured.
 The model of the magnetometer can be given by
@@ -172,9 +199,11 @@ If we take measurements of an ideal magnetometer while rotating the sensor arbit
 </div>
 
 ## 4 Algorithm
+
 ------
 
 ## 4.1 Allan analysis
+
 In the previous sections we described a number of noise processes which arise in accelerometer and gyroscope signals. In this section we describe a technique known as Allan Variance, which can be used to detect and determine the properties of such processes.
 The Allan Variance of a signal is a function of averaging time. For an averaging time t, the Allan Variance is computed as follows<sup>[2]</sup>:
 
@@ -199,6 +228,7 @@ different gradients to appear on the plot.
 ## 4.2 Strapdown inertial system
 
 ### 4.2.1 Rotation
+
 We adotp two attitude representations in **gnss-ins-sim**: Euler angles and quaternions. Since Euler angles are more straightforward, they are more suitable for input and output. In motion definitions files, Euler angles are used to specify device attitude.
 
 In **gnss-ins-sim**, Euler angles correspon to the ZYX rotation sequence (yaw, pitch and roll), denoted by <img src="https://latex.codecogs.com/gif.latex?\psi,\theta,&space;&space;\phi"> respectively. 
@@ -224,6 +254,7 @@ The Euler angles derivatives are used to propagate attitude in the path generati
 Besides the coordinate transfromation matrix (the Direction Cosine Matrix, DCM) and the Euler angles, quaternions can also be used to represent attitude.
 
 ### 4.2.2 Translation
+
 According to Newton's second law of motion, positions and velocities can be calculated by integrating acceleration with known initial states:
 <div align=center>
 <img src="https://latex.codecogs.com/gif.latex?\begin{align*}&&space;a^n(t)=C_b^na^b(t)&space;\\&space;&&space;\dot{v}^n(t)=a^n(t)\\&space;&&space;\dot{r}^n(t)=v^n(t)&space;\end{align*}" />
@@ -232,6 +263,7 @@ According to Newton's second law of motion, positions and velocities can be calc
 where, <img src="https://latex.codecogs.com/gif.latex?C_b^n" /> is the coordinate transformation matrix from the body frame to the navigation frame, which can be calculated according to formula in [4.2.1 Rotation](#421-rotation)
 
 ## 5 Simulation design and implementation
+
 ------
 **gnss-ins-sim** is composed of the following modules:
 
@@ -244,12 +276,18 @@ where, <img src="https://latex.codecogs.com/gif.latex?C_b^n" /> is the coordinat
 | pathgen | The pathgen module generates true postions, velocities, Euler angles, angular rates and accelerations accroding to motion definition files. It also generate sensor measurement according to given IMU, magnetometer and GPS error profiles. |
 | kml_gen | The kml_gen module generates .kml files with given series of latitude, longitude and altitude. The generated .kml files can be imported into Google Earth to visualize the trajectories. |
 | sim | The sim module provides interfaces to the users. Most users would just use sim to do simulations. If you want more control, please refer to the above modules. |
- 
+
+ A diagram of **gnss-ins-sim** is shown below.
+
+ <div align=center>
+<img width="500"  src="https://github.com/Aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/simulator.png"/>
+</div>
 
 Please refer to doc strings of the functions in each module.
 
 ## 6 References
-______
 
-* [1] http://www.navipedia.net/index.php/Positioning_Error
+------
+
+* [1] [http://www.navipedia.net/index.php/Positioning_Error](http://www.navipedia.net/index.php/Positioning_Error)
 * [2] Woodman, Oliver J. An introduction to inertial navigation. No. UCAM-CL-TR-696. University of Cambridge, Computer Laboratory, 2007.

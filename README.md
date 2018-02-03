@@ -8,6 +8,7 @@
 - Matplotlib
 
 ## Demos
+
 We provide the following demos:
 
 | file name | description |
@@ -28,8 +29,9 @@ IMU error model can be specified in two ways:
 There are three built-in IMU models: 'low-accuracy', 'mid-accuracy' and 'high accuracy'.
 
 #### Manually define the model
-```
-imu_err = { 
+
+```python
+imu_err = {
             # gyro bias, deg/hr
             'gyro_b': np.array([0.0, 0.0, 0.0]),
             # gyro angle random walk, deg/rt-hr
@@ -54,10 +56,12 @@ imu_err = {
 ```
 
 ### Step 1.2 Create an IMU object
-```
+
+```python
 imu = imu_model.IMU(accuracy=imu_err, axis=6, gps=False)
 imu = imu_model.IMU(accuracy='low accuracy', axis=9, gps=True)
 ```
+
 axis = 6 to generate only gyro and accelerometer data.
 
 axis = 9 to generate magnetometer data besides gyro and accelerometer data.
@@ -66,9 +70,10 @@ gps = True to generate GPS data, gps = False not.
 
 ## Step 2 Create your algorithm
 
-```
+```python
 algo = allan_analysis.Allan() # an Allan analysis demo algorithm
 ```
+
 An algorithm is an object of a Python class. It should at least include the following members:
 
 ### self.input
@@ -76,7 +81,7 @@ An algorithm is an object of a Python class. It should at least include the foll
 The member variable 'input' tells **gnss-imu-sim** what data the algorithm need. 'input' is a tuple or list of strings.
 Each string in 'input' corresponds to a set of data generated and provided by **gnss-imu-sim**.
 
-**Supported input**
+Supported input:
 
 | name | description |
 |-|-|
@@ -98,10 +103,11 @@ Each string in 'input' corresponds to a set of data generated and provided by **
 | 'gps' | GPS measurements, 'ref_gps' with errors |
 
 ### self.output
+
 The member variable 'output' tells **gnss-imu-sim** what data the algorithm returns. 'output' is a tuple or list of strings.
 Each element in 'output' corresponds to a set of data that can be understood by **gnss-imu-sim**.
 
-**Supported output**
+Supported output:
 
 | name | description |
 |-|-|
@@ -127,18 +133,21 @@ Each element in 'output' corresponds to a set of data that can be understood by 
 This is the main procedure of the algorithm. **gnss-imu-sim** will call this procedure to run the algorithm.
 'set_of_input' is a list of data that is consistent with self.input.
 For example, if you set self.input = ['fs', 'accel', 'gyro'], you should get the corresponding data this way:
-```
+
+```python
   def run(self, set_of_input):
       # get input
       fs = set_of_input[0]
       accel = set_of_input[1]
       gyro = set_of_input[2]
 ```
+
 ### self.get_results(self)
 
 **gnss-imu-sim** will call this procedure to get resutls from the algorithm. The return should be consistent with self.output.
 For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_gyro'], you should return the results this way:
-```
+
+```python
   def get_results(self):
       self.results = [tau,
                       np.array([avar_ax, avar_ay, avar_az]).T,
@@ -153,7 +162,8 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 ## Step 3 Run the simulation
 
 ### step 3.1 Create the simulation object:
-```
+
+```python
   sim = imu_sim.Sim(
         # sample rate of imu (gyro and accel), GPS and magnetometer
         [fs, fs_gps, fs_mag],
@@ -173,6 +183,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
         # the algorithm object created at step 2
         algorithm=algo)
 ```
+
 There are three kinds of vibration models:
 
 | vibration model | description |
@@ -184,14 +195,16 @@ There are three kinds of vibration models:
 | numpy array of size (n,4) | single-sided PSD. [freqency, x, y, z], m^2/s^4/Hz |
 
 ### Step 3.2 Run the simulation:
-```
+
+```python
 sim.run()     # run for 1 time
 sim.run(1)    # run for 1 time
 sim.run(100)  # run for 100 times
 ```
 
 ### Step 3.3 Show results
-```
+
+```python
 # generate a simulation summary,
 # and save the summary and all data in directory './data'.
 # You can specify the directory.
@@ -205,5 +218,6 @@ sim.plot(['ref_pos', 'gyro'], opt={'ref_pos': '3d'})
 ```
 
 ## Acknowledgement
+
 - Geomagnetic field model [https://github.com/cmweiss/geomag/tree/master/geomag](https://github.com/cmweiss/geomag/tree/master/geomag)
 - MRepo [http://www.instk.org](http://www.instk.org/)

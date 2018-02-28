@@ -176,9 +176,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
         sim_count_max = sim_count + motion_def[i, 5]    # max cycles to execute command of this seg
         com_complete = 0                                # complete command of this seg, go to next
         while (sim_count < sim_count_max) and (com_complete == 0):
-            # update simulation counter
-            sim_count += 1
-            # determine the inputs
+            # handle the input motion commands
             if com_type == 1:
                 att_dot = filt_a.dot(att_dot) + filt_b.dot(att_dot_com)         # filter input
                 vel_dot_b = filt_a.dot(vel_dot_b) + filt_b.dot(vel_dot_com)
@@ -207,7 +205,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                     com_complete = 1
                     #att_dot = (att_com - att) / dt
                     #vel_dot_b = (vel_com_b - vel_b) / dt
-            # compute IMU outputs
+
+            # compute IMU outputs according to pos/vel/att changes
             imu_results = calc_true_sensor_output(pos_n+pos_delta_n, vel_b, att, c_nb, vel_dot_b,
                                                   att_dot, ref_frame, g)
             acc = imu_results[0]
@@ -230,15 +229,15 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 gyro_avg = gyro_sum / sim_osr
                 # write to files
                 #imu_data[idx_high_freq, :] = np.hstack((idx_high_freq, acc_avg, gyro_avg))
-                imu_data[idx_high_freq, 0] = idx_high_freq
+                imu_data[idx_high_freq, 0] = sim_count
                 imu_data[idx_high_freq, 1] = acc_avg[0]
                 imu_data[idx_high_freq, 2] = acc_avg[1]
                 imu_data[idx_high_freq, 3] = acc_avg[2]
                 imu_data[idx_high_freq, 4] = gyro_avg[0]
                 imu_data[idx_high_freq, 5] = gyro_avg[1]
                 imu_data[idx_high_freq, 6] = gyro_avg[2]
-                nav_data[idx_high_freq, 0] = idx_high_freq
                 # nav data
+                nav_data[idx_high_freq, 0] = sim_count
                 nav_data[idx_high_freq, 1] = pos_n[0] + pos_delta_n[0]
                 nav_data[idx_high_freq, 2] = pos_n[1] + pos_delta_n[1]
                 nav_data[idx_high_freq, 3] = pos_n[2] + pos_delta_n[2]
@@ -256,7 +255,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 if magnet:
                     geo_mag_b = c_nb.T.dot(geo_mag_n)
                     #mag_data[idx_high_freq, :] = np.hstack((idx_high_freq, geo_mag_b))
-                    mag_data[idx_high_freq, 0] = idx_high_freq
+                    mag_data[idx_high_freq, 0] = sim_count
                     mag_data[idx_high_freq, 1] = geo_mag_b[0]
                     mag_data[idx_high_freq, 2] = geo_mag_b[1]
                     mag_data[idx_high_freq, 3] = geo_mag_b[2]
@@ -266,7 +265,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             if enable_gps_or_odo:
                 if (sim_count % output_def[1, 1]) == 0:     # measurement period
                     if output_def[1, 0] == 1:               # GPS
-                        gps_data[idx_low_freq, 0] = idx_low_freq
+                        gps_data[idx_low_freq, 0] = sim_count
                         gps_data[idx_low_freq, 1] = pos_n[0] + pos_delta_n[0]
                         gps_data[idx_low_freq, 2] = pos_n[1] + pos_delta_n[1]
                         gps_data[idx_low_freq, 3] = pos_n[2] + pos_delta_n[2]
@@ -276,19 +275,24 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                     elif output_def[1, 0] == 2:             # odometer
                         #odo_data[idx_low_freq, :] = np.hstack((idx_low_freq,
                         #                                       odo_dist, odo_vel))
-                        odo_data[idx_low_freq, 0] = idx_low_freq
+                        odo_data[idx_low_freq, 0] = sim_count
                         odo_data[idx_low_freq, 1] = odo_dist
                         odo_data[idx_low_freq, 2] = odo_vel[0]
                         odo_data[idx_low_freq, 3] = odo_vel[1]
                         odo_data[idx_low_freq, 4] = odo_vel[2]
                     # index increment
                     idx_low_freq += 1
+
+            # accumulate pos/vel/att change
             pos_delta_n = pos_delta_n + pos_dot_n*dt    # accumulated pos change
             odo_dist = odo_dist + np.sqrt(np.dot(vel_b, vel_b))*dt
             vel_b = vel_b + vel_dot_b*dt
             att = att + att_dot*dt
             c_nb = attitude.euler2dcm(att, 'zyx').T     # b to n
             vel_n = c_nb.dot(vel_b)
+
+            # update simulation counter
+            sim_count += 1
 
         # if command is completed, att_dot and vel_dot should be set to zero
         if com_complete == 1:

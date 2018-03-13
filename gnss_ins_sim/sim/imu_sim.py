@@ -14,6 +14,7 @@ import matplotlib.mlab as mlab
 from mpl_toolkits.mplot3d import Axes3D
 from ..pathgen import pathgen
 from ..attitude import attitude
+from ..kml_gen import kml_gen
 
 D2R = math.pi/180
 # built-in mobility
@@ -358,13 +359,14 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
-    def results(self, data_dir=None):
+    def results(self, data_dir=None, gen_kml=False):
         '''
         simulation results.
         Args:
             data_dir: if not None, save simulation data to files.
                 if data_dir is a valid directory, data files will be saved in data_idr,
                 else, data files will be saved in the default directory './data/'
+            gen_kml: generate .kml files using the reference position and simulation position
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:
@@ -396,26 +398,46 @@ class Sim(object):
             Simulation results include a summary file containing statistics of the simulation
             and .csv files containing all data generated.
             '''
-            if data_dir is not None:    # save to files
-                import os
-                import time
-                # check data dir
-                if not os.path.exists(data_dir):
-                    data_dir = os.path.abspath('.//demo_saved_data//')
-                else:
-                    data_dir = os.path.abspath(data_dir)
-                if data_dir[-1] != '//':
-                    data_dir = data_dir + '//'
-                data_dir = data_dir + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '//'
-                data_dir = os.path.abspath(data_dir)
-                if not os.path.exists(data_dir):
-                    os.makedirs(data_dir)
-                # save data
+            # check data dir
+            if data_dir is not None:    # data_dir specified, meaning to save .csv files
+                data_dir = self.check_data_dir(data_dir)
+                # save data files
                 for i in self.supported_plot:
                     self.supported_plot[i].save_to_file(data_dir)
+            if gen_kml is True:       # want to gen kml without specifying the data_dir
+                if data_dir is None:
+                    data_dir = self.check_data_dir(data_dir)
+                self.__save_kml_files(data_dir)
             # simulation summary and save summary to file
             self.__summary(data_dir)  # generate summary
         return self.res
+
+    def __save_kml_files(self, data_dir):
+        '''
+        generate kml files from reference position and simulation position.
+        Args:
+            data_dir: kml files are saved in data_dir
+        '''
+        convert_xyz_to_lla = False
+        if self.ref_frame.data == 1:
+            convert_xyz_to_lla = True
+        # ref position
+        if 'ref_pos' in self.res:
+            kml_contents = kml_gen.kml_gen(self.res['ref_pos'].data,\
+                                    convert_to_lla=convert_xyz_to_lla)
+            kml_file = data_dir + '//ref_pos.kml'
+            fp = open(kml_file, 'w')
+            fp.write(kml_contents)
+            fp.close()
+        # simulation position
+        if 'pos' in self.res:
+            for i in range(0, len(self.res['pos'].data)):
+                kml_contents = kml_gen.kml_gen(self.res['pos'].data[i],\
+                                        convert_to_lla=convert_xyz_to_lla)
+                kml_file = data_dir + '//pos_' + str(i) + '.kml'
+                fp = open(kml_file, 'w')
+                fp.write(kml_contents)
+                fp.close()
 
     def __summary(self, data_dir):
         '''
@@ -653,6 +675,32 @@ class Sim(object):
             raise ValueError('check input and output definitions of the algorithm.')
         except:
             raise TypeError('algorithm input or output is not a valid list or tuple.')
+
+    def check_data_dir(self, data_dir):
+        '''
+        check if data_dir is a valid dir. If not, use the default dir.
+        check if the data_dir exists. If not, create it.
+        Args:
+            data_dir: all generated files are saved in data_dir
+        Returns:
+            data_dir: valid data dir.
+        '''
+        import os
+        import time
+        # check data dir
+        if data_dir is None:
+            data_dir = os.path.abspath('.//demo_saved_data//')
+        if not os.path.exists(data_dir):
+            data_dir = os.path.abspath('.//demo_saved_data//')
+        else:
+            data_dir = os.path.abspath(data_dir)
+        if data_dir[-1] != '//':
+            data_dir = data_dir + '//'
+        data_dir = data_dir + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '//'
+        data_dir = os.path.abspath(data_dir)
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        return data_dir
 
     def __add_associated_data_to_results(self):
         '''

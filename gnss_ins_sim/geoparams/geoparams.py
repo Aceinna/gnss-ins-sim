@@ -86,3 +86,39 @@ def lla2xyz(lla):
     z = (r*(1.0-E_SQR) + lla[2]) * sl
 
     return np.array([x, y, z])
+
+def xyz2lla(xyz):
+    '''
+    [x y z] position in ECEF to [Lat Lon Alt]
+    Args:
+        WGS-84 position, [x, y, z], [m, m, m], numpy array of size (3,)
+    return:
+        lla: [Lat, Lon, Alt], [rad, rad, meter], numpy array of size (3,)
+    '''
+    # longitude
+    lon = math.atan2(xyz[1], xyz[0])
+    # distance from the polar axis
+    rho = math.sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1])
+    # Spheroid properties
+    b = (1.0 - FLATTENING) * Re             # Semiminor axis
+    e2 = FLATTENING * (2.0 - FLATTENING)    # Square of (first) eccentricity
+    ep2 = e2 / (1.0 - e2)                   # Square of second eccentricity
+    # Bowring's formula for initial parametric (beta) and geodetic latitudes
+    beta = math.atan2(xyz[2], (1.0 - FLATTENING) * rho)
+    lat = math.atan2(xyz[2] + b*ep2*math.sin(beta)**3.0,\
+                     rho - Re*e2*math.cos(beta)**3.0)
+    # Fixed-point iteration with Bowring's formula
+    # (typically converges within two or three iterations)
+    beta_new = math.atan2((1.0 - FLATTENING)*math.sin(lat), math.cos(lat))
+    count = 0
+    while count < 5 and beta != beta_new:
+        beta = beta_new
+        lat = math.atan2(xyz[2] + b*ep2*math.sin(beta)**3.0,\
+                         rho - Re*e2*math.cos(beta)**3.0)
+        beta_new = math.atan2((1.0 - FLATTENING)*math.sin(lat), math.cos(lat))
+        count += 1
+    # Ellipsoidal height from final value for latitude
+    slat = math.sin(lat)
+    N = Re/math.sqrt(1.0-e2*slat*slat)
+    alt = rho*math.cos(lat) + (xyz[2] + e2*N*slat)*slat - N
+    return np.array([lat, lon, alt])

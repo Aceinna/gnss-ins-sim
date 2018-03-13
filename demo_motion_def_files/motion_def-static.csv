@@ -1,4 +1,4 @@
 ini lat (deg),ini lon (deg),ini alt (m),ini vx_body (m/s),ini vy_body (m/s),ini vz_body (m/s),ini yaw (deg),ini pitch (deg),ini roll (deg)
 32,120,0,0,0,0,0,0,0
-command type,yaw (rad),pitch (rad),roll (rad),vx_body (m/s),reserved,reserved,command duration (s),reserved
+command type,yaw (deg),pitch (deg),roll (deg),vx_body (m/s),reserved,reserved,command duration (s),reserved
 1,0,0,0,0,,,10,0

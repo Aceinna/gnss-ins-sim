@@ -58,7 +58,7 @@ def test_free_integration():
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, motion_def_path+"//motion_def-90deg_turn.csv",
+    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, motion_def_path+"//motion_def-0to100.csv",
                       ref_frame=1,
                       mode=None,
                       env=None,
@@ -67,7 +67,7 @@ def test_free_integration():
     sim.run(1)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results
-    sim.results(gen_kml=True)
+    sim.results('a', gen_kml=True)
 
 if __name__ == '__main__':
     test_free_integration()

@@ -31,12 +31,14 @@ class Sim(object):
             fs: [fs_imu, fs_gps, fs_mag], Hz
             imu: See IMU in imu_model.py
             motion_def: a .csv file to define the waypoints
-                row 1: initial states.
-                    3 initial position (LLA, deg, meter),
-                    3 initial velocity in body frame(m/s),
-                    3 initial attitude (Euler angles, deg)
-                row >=2: motion commands.
-                    col 1: motion type.
+                row 1: header line for initial states
+                row 2: initial states, which include:
+                    col 1-3: initial position (LLA, deg, meter),
+                    col 4-6: initial velocity in body frame(m/s),
+                    col 7-9: initial attitude (Euler angles, deg)
+                row 3: header line for motion command
+                row >=2: motion commands, which include
+                    col 1: motion type. The following types are supported:
                         1: Euler angles change rate and body frame velocity change rate.
                         2: absolute att and absolute vel to rech.
                         3: relative att and vel change.
@@ -44,6 +46,8 @@ class Sim(object):
                         5: relative att, absolute vel.
                     col 2-7: motion command (deg, m/s).
                         [yaw, pitch, roll, vx (velocity along body x axis), reserved, reserved].
+                        For motion type 1, the above Euler angles and velocity should be
+                        change rate, corresponding units are (deg/s, m/s/s).
                     col 8: maximum time for the given segment, sec.
                     col 9: reserved.
             ref_frame: reference frame used as the navigation frame,

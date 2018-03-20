@@ -1,0 +1,180 @@
+# -*- coding: utf-8 -*-
+# Fielname = dmu380_offline_sim.py
+
+"""
+IMU fusion.
+Created on 2018-03-15
+@author: dongxiaoguang
+"""
+
+# import
+import os
+import math
+import numpy as np
+from ctypes import *
+
+# globals
+VERSION = '1.0'
+
+R2D = 180.0 / math.pi
+
+class SIM_COMFIG(Structure):
+    '''
+    read config params from file, and put params in this structure
+    '''
+    _fields_ = [("_pktType", c_bool),
+                ("pktType", c_uint8),
+                ("_inputDataRate", c_bool),
+                ("inputDataRate", c_uint8),
+                ("_outputDataRate", c_bool),
+                ("outputDataRate", c_uint8),
+                ("_rsType", c_bool),
+                ("rsTypeStr", c_char * 64),
+                ("_dmuVersion", c_bool),
+                ("dmuVersionStr", c_char * 64),
+                ("_hasMags", c_bool),
+                ("hasMags", c_bool),
+                ("_useMags", c_bool),
+                ("useMags", c_bool),
+                ("_hasGps", c_bool),
+                ("hasGps", c_bool),
+                ("_useGps", c_bool),
+                ("useGps", c_bool),
+                ("_freeIntegrate", c_bool),
+                ("freeIntegrate", c_bool),
+                ("_dynamicMotion", c_bool),
+                ("dynamicMotion", c_bool),
+                ("_stationaryLockYaw", c_bool),
+                ("stationaryLockYaw", c_bool),
+                ("_turnSwitchThreshold", c_bool),
+                ("turnSwitchThreshold", c_ushort),
+                ("_hardIron_X", c_bool),
+                ("hardIron_X", c_float),
+                ("_hardIron_Y", c_bool),
+                ("hardIron_Y", c_float),
+                ("_softIronScaleRatio", c_bool),
+                ("softIronScaleRatio", c_float),
+                ("_softIronAngle", c_bool),
+                ("softIronAngle", c_float),
+                ("_headingTrackOffset", c_bool),
+                ("headingTrackOffset", c_ushort),
+                ("_accelLPFType", c_bool),
+                ("accelLPFTypeStr", c_char * 64),
+                ("_accelSwitch", c_bool),
+                ("accelSwitch", c_float),
+                ("_linAccelSwitchDelay", c_bool),
+                ("linAccelSwitchDelay", c_float),
+                ("_Free_Integration_Cntr", c_bool),
+                ("Free_Integration_Cntr", c_float),
+                ("_Stabilize_System", c_bool),
+                ("Stabilize_System", c_float),
+                ("_Initialize_Attitude", c_bool),
+                ("Initialize_Attitude", c_float),
+                ("_High_Gain_AHRS", c_bool),
+                ("High_Gain_AHRS", c_float),
+                ("_Low_Gain_AHRS", c_bool),
+                ("Low_Gain_AHRS", c_float),
+                ("_Max_GPS_Drop_Time", c_bool),
+                ("Max_GPS_Drop_Time", c_int32)]
+
+class EKF_STATE(Structure):
+    '''
+    Return EFK state in this structure
+    '''
+    _fields_ = [("timeStep", c_uint32),
+                ("kfPosN", c_float*3),
+                ("kfVelN", c_float*3),
+                ("kfQuat", c_float*4),
+                ("kfRateBias", c_float*3),
+                ("kfAccelBias", c_float*3),
+                ("kfCorrectedRateB", c_float*3),
+                ("kfCorrectedAccelB", c_float*3),
+                ("algoFilteredYawRate", c_float),
+                ("kfEulerAngles", c_float*3),
+                ("algoState", c_int),
+                ("algoTurnSwitch", c_ushort),
+                ("algoLinAccelSwitch", c_uint8),
+                ("algoAMag", c_float),
+                ("algoAFiltN", c_float * 3),]
+
+class DMU380Sim(object):
+    '''
+    A wrapper form DMU380 algorithm offline simulation.
+    '''
+    def __init__(self, config_file):
+        '''
+        vars
+        '''
+        # algorithm description
+        self.input = ['fs', 'gyro', 'accel', 'mag']
+        self.output = ['algo_time', 'att_euler']
+        self.batch = True
+        self.results = None
+        # algorithm vars
+        this_dir = os.path.dirname(__file__)
+        config_lib = os.path.join(this_dir, 'dmu380_sim_lib/sim_utilities.so')
+        sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/dmu380_algo_sim.so')
+        self.parse_config = cdll.LoadLibrary(config_lib)
+        self.sim_engine = cdll.LoadLibrary(sim_lib)
+        # initialize algorithm
+        self.sim_config = SIM_COMFIG()
+        self.parse_config.parseConfigFile(c_char_p(config_file.encode('utf-8')),\
+                                          pointer(self.sim_config))
+        self.sim_engine.SimInitialize(pointer(self.sim_config))
+
+    def run(self, set_of_input):
+        '''
+        main procedure of the algorithm
+        Args:
+            set_of_input is a tuple or list consistent with self.input
+        '''
+        # get input
+        fs = set_of_input[0]
+        gyro = set_of_input[1]
+        accel = set_of_input[2]
+        mag = set_of_input[3]
+        n = accel.shape[0]
+        # algo output
+        time_step = np.zeros((n,))
+        euler_angles = np.zeros((n, 3))
+        # run
+        ekf_state = EKF_STATE()
+        output_len = 0
+        for i in range(0, n):
+            sensor_data = np.zeros((15,))
+            sensor_data[0:3] = gyro[i, :]*R2D
+            sensor_data[3:6] = accel[i, :]/9.8
+            sensor_data[6:9] = mag[i, :]/100.0
+            sensorReadings = sensor_data.ctypes.data_as(POINTER(c_double))
+            new_results = self.sim_engine.SimRun(sensorReadings)
+            # get output
+            if new_results == 1:
+                self.sim_engine.GetEKF_STATES(pointer(ekf_state))
+                # time_step[output_len] = ekf_state.timeStep / fs
+                time_step[output_len] = i / fs
+                euler_angles[output_len, 0] = ekf_state.kfEulerAngles[0]
+                euler_angles[output_len, 1] = ekf_state.kfEulerAngles[1]
+                euler_angles[output_len, 2] = ekf_state.kfEulerAngles[2]
+                output_len += 1
+        # results
+        self.results = [time_step[0:output_len], euler_angles[0:output_len, :]]
+
+    def update(self, gyro, acc, mag=np.array([0.0, 0.0, 0.0])):
+        '''
+        Mahony filter for gyro, acc and mag.
+        Args:
+        Returns:
+        '''
+        pass
+
+    def get_results(self):
+        '''
+        return algorithm results as specified in self.output
+        '''
+        return self.results
+
+    def reset(self):
+        '''
+        Reset the fusion process to uninitialized state.
+        '''
+        self.sim_engine.SimInitialize(pointer(self.sim_config))

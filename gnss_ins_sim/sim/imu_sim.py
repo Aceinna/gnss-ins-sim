@@ -67,6 +67,7 @@ class Sim(object):
         ########## configure simulation ##########
         self.sim_count = 1          # simulation count
         self.sim_complete = False   # simulation complete successfully
+        self.sim_results = False    # simulation results is generated
         # sample rate
         self.fs = Sim_data(name='fs',\
                            description='Sample frequency of imu',\
@@ -143,6 +144,9 @@ class Sim(object):
                                 legend=['ref_mag_x', 'ref_mag_y', 'ref_mag_z'])
 
         # simulation results
+        self.algo_time = Sim_data(name='algo_time',\
+                             description='sample time from algo',\
+                             units=['sec'])
         self.pos = Sim_data(name='pos',\
                             description='simulation position from algo',\
                             units=self.ref_pos.units,\
@@ -236,6 +240,7 @@ class Sim(object):
         # algorithm output that can be handled by Sim class
         # algorithm outputs vary for different simulations
         self.supported_out = {
+            self.algo_time.name: self.algo_time,
             self.pos.name: self.pos,
             self.vel.name: self.vel,
             self.att_quat.name: self.att_quat,
@@ -414,7 +419,12 @@ class Sim(object):
                 self.__save_kml_files(data_dir)
             # simulation summary and save summary to file
             self.__summary(data_dir)  # generate summary
-        return self.res
+
+            self.sim_results = True
+            return self.res
+        else:
+            print("Call Sim.run() to run the simulaltion first.")
+            return None
 
     def __save_kml_files(self, data_dir):
         '''
@@ -473,8 +483,8 @@ class Sim(object):
                     i = self.data_map[i][0].name
                 ref_name = 'ref_' + i
                 if i in self.interested_error and ref_name in self.res:
-                    self.sum += '\n----------------statistics for ' +\
-                                self.res[i].description + '\n'
+                    self.sum += '\n-----------statistics for ' +\
+                                self.res[i].description + ' (end point error)\n'
                     err = np.zeros((self.sim_count, 3))
                     for j in range(self.sim_count):
                         err[j, :] = self.res[i].data[j][-1, :] - self.res[ref_name].data[-1, :]
@@ -521,6 +531,9 @@ class Sim(object):
                     'error': plot the error of the data specified by what_to_plot w.r.t ref
                     '3d': 3d plot
         '''
+        if self.sim_results is False:
+            print("Call Sim.run() and then Sim.results() to run the simulaltion first.")
+            return
         # check sim_idx
         if sim_idx is None:                 # no index specified, plot all data
             sim_idx = list(range(self.sim_count))
@@ -564,6 +577,9 @@ class Sim(object):
                         x_axis = self.gps_time
                     # self.supported_plot[i].plot(x_axis, ref=ref, plot3d=plot3d)
                 # plot data of all simulation counts
+                elif i in self.supported_out:   # algo output
+                    if self.algo_time.name in self.res:
+                        x_axis = self.algo_time
                 else:
                     if i == self.ad_gyro.name or i == self.ad_accel.name or\
                        i == self.allan_t.name:
@@ -861,8 +877,8 @@ class Sim_data(object):
                         idx = y_data > math.pi
                         y_data[idx] = y_data[idx] - attitude.TWO_PI
                 except:
-                    print(ref_data.shape)
-                    print(y_data.shape)
+                    print('ref data shape: ', ref_data.shape)
+                    print('simulation data shape: ', y_data.shape)
                     raise ValueError('Check input data ref and self.data dimension.')
             # unit conversion
             y_data = self.convert_unit(y_data)
@@ -1057,8 +1073,8 @@ def plot_in_one_figure(x, y, logx=False, logy=False,\
         else:
             raise ValueError
     except:
-        print(x.shape)
-        print(y.shape)
+        print('x-axis data len: ', x.shape)
+        print('y-axis data shape: ', y.shape)
         raise ValueError('Check input data y.')
     # label
     if xlabel is not None:

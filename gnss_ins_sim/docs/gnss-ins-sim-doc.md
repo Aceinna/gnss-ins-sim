@@ -34,7 +34,7 @@ This doc is for better understanding and usage of **gnss-ins_sim**.
 
 ### 2.1 Coordinate systems
 
-This section gives the definitions of the coordinate system used in **gnss-ins-sim**.
+This section gives the definitions of the coordinate systems used in **gnss-ins-sim**.
 
 #### 2.1.1 ECEF frame
 

@@ -10,12 +10,17 @@
 
 ## 20180123
 
-- split demos in demo.py into different files: demo_xxx.py
+- split demos in demo.py into different files: demo_xxx.py.
 
 ## 20180125
 
-- separate demos from gnss-ins-sim
+- separate demos from gnss-ins-sim.
 
 ## 20180313
 
-- add .kml file generation
+- add .kml file generation.
+
+## 20180321
+
+- Add the functinoality to handle the cases where output data rate of the algorithm is different from its input data rate.
+- integrate DMU380 algorithm into gnss-ins-sim.

@@ -17,6 +17,7 @@ We provide the following demos:
 | demo_allan.py | A demo of Allan analysis of gyroscope and accelerometer data. The generated Allan deviation is shown in figures.|
 | demo_free_integration.py | A demo of a simple strapdown system. The simulation runs for 1000 times. The statistics of the INS results of the 1000 simulations are generated.|
 | demo_inclinometer_mahony.py | A demo of an dynamic inclinometer algorithm based on Mahony's theory. This demos shows how to generate error plot of interested data.|
+| demo_dmu380_sim.py | A demo of DMU380 algorithm. The DMU380 algorithm is first compiled as a shared library. This demo shows how to call the shared library.|
 
 ## Step 1 Define the IMU model
 

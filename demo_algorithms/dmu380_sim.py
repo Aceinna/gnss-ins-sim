@@ -112,8 +112,11 @@ class DMU380Sim(object):
         self.results = None
         # algorithm vars
         this_dir = os.path.dirname(__file__)
-        config_lib = os.path.join(this_dir, 'dmu380_sim_lib/sim_utilities.so')
-        sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/dmu380_algo_sim.so')
+        config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities.so')
+        sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim.so')
+        if not (os.path.exists(config_lib) and os.path.exists(sim_lib)):
+            if not self.build_lib():
+                raise OSError('Shared libs not found.')
         self.parse_config = cdll.LoadLibrary(config_lib)
         self.sim_engine = cdll.LoadLibrary(sim_lib)
         # initialize algorithm
@@ -178,3 +181,47 @@ class DMU380Sim(object):
         Reset the fusion process to uninitialized state.
         '''
         self.sim_engine.SimInitialize(pointer(self.sim_config))
+
+    def build_lib(self, dst_dir=None, src_dir=None):
+        '''
+        Build shared lib
+        Args:
+            dst_dir: dir to put the built libs in.
+            src_dir: dir containing the source code.
+        Returns:
+            True if success, False if error.
+        '''
+        this_dir = os.path.dirname(__file__)
+        # get dir containing the source code
+        if src_dir is None:
+            src_dir = os.path.join(this_dir, './/dmu380_sim_src//')
+        if not os.path.exists(src_dir):
+            print('Source code directory ' + src_dir + ' does not exist.')
+            return False
+        # get dir to put the libs in
+        if dst_dir is None:
+            dst_dir = os.path.join(this_dir, './/dmu380_sim_lib//')
+        if not os.path.exists(dst_dir):
+            os.mkdir(dst_dir)
+
+        algo_lib = 'libdmu380_algo_sim.so'
+        sim_utilities_lib = 'libsim_utilities.so'
+        # get current workding dir
+        cwd = os.getcwd()
+        # create the cmake dir
+        cmake_dir = src_dir + '//cmake//'
+        if not os.path.exists(cmake_dir):
+            os.mkdir(cmake_dir)
+        # call cmake and make to build the libs
+        os.chdir(cmake_dir)
+        ret = os.system("cmake ..")
+        ret = os.system("make")
+        algo_lib = cmake_dir + 'algo//' + algo_lib
+        sim_utilities_lib = cmake_dir + 'SimUtilities//' + sim_utilities_lib
+        if os.path.exists(algo_lib) and os.path.exists(sim_utilities_lib):
+            os.system("mv " + algo_lib + " " + dst_dir)
+            os.system("mv " + sim_utilities_lib + " " + dst_dir)
+
+        # restore working dir
+        os.chdir(cwd)
+        return True

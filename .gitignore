@@ -1,4 +1,5 @@
 !.gitignore
+/.vscode/
 /demo_saved_data/
 __pycache__/
 *.cprofile

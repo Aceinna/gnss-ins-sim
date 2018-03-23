@@ -18,7 +18,7 @@ from ..kml_gen import kml_gen
 
 D2R = math.pi/180
 # built-in mobility
-high_mobility = np.array([1.0, 0.5, 2.0])
+high_mobility = np.array([1.0, 0.5, 2.0])   # m/s/s, rad/s/s, rad/s
 
 class Sim(object):
     '''
@@ -75,7 +75,7 @@ class Sim(object):
                 This is not implemented yet. A built-in 'high_mobility' mode is used.
                 or a numpy array of size (3,) to customize the sim mode.
                     [max_acceleration, max_angular_acceleration, max_angular_velocity],
-                    in units of [m/s/s, rad/s/s, rad/s]
+                    in units of [m/s/s, deg/s/s, deg/s]
 
             env: vibration model. There are three kinds of vibration models:
                 'ng-random': normal-distribution random vibration, rms is n*9.8 m/s^2
@@ -455,7 +455,7 @@ class Sim(object):
             for i in range(0, len(self.res['pos'].data)):
                 pos_name = 'pos_' + str(i)
                 kml_contents = kml_gen.kml_gen(self.res['pos'].data[i],\
-                                        name = pos_name,\
+                                        name=pos_name,\
                                         convert_to_lla=convert_xyz_to_lla)
                 kml_file = data_dir + '//' + pos_name + '.kml'
                 fp = open(kml_file, 'w')
@@ -645,7 +645,9 @@ class Sim(object):
                     self.mobility = high_mobility
             elif isinstance(mode, np.ndarray):      # customize the sim mode
                 if mode.shape == (3,):
-                    self.mobility = mode
+                    self.mobility[0] = mode[0]
+                    self.mobility[1] = mode[1] * D2R
+                    self.mobility[2] = mode[2] * D2R
                 else:
                     raise TypeError('mode should be of size (3,)')
             else:

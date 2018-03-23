@@ -15,13 +15,17 @@ from ..attitude import attitude
 
 R2D = 180.0/math.pi
 
-def kml_gen(pos, template_file='template.kml', convert_to_lla=False):
+def kml_gen(pos, template_file='template.kml', name='pathgen', convert_to_lla=False):
     '''
     Generate .kml file contents from position data.
     Args:
         pos: nx3 [lat, lon, alt in rad and m, or [x, y, z] in m
         template_file: template kml file. The line 'REPALCE THIS WITH COORDINATES'
                        will be replaced by coordinates defined in pos.
+        name: string name of this trajectory.
+        convert_to_lla: true if position data are generated in a virtual inertial frame.
+            xyz-form position data will be converted to [Lat Lon Alt] coordinates.
+            See imu_sim and pathgen for details about the virtual inertial frame.
     Returns:
         kml_contents: string contents of kml file.
     '''
@@ -64,6 +68,9 @@ def kml_gen(pos, template_file='template.kml', convert_to_lla=False):
                     lines = lines + '\t\t\t\t'
                 lines = lines + ('%f,%f,%f ' %(lla[i, 1], lla[i, 0], lla[i, 2]))
             lines = lines + '\n'
+        elif 'PATHGEN' in line:
+            line = line.replace('PATHGEN', name)
+            lines = lines + line
         else:
             lines = lines + line
     # close template file

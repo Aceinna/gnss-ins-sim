@@ -65,7 +65,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             'nav':      True position, velocity and attitude (Euler angles, ZYX).
                         ref_frame==0, [index, absolute_position_lla, velocity_in_body_frame, attitude],
                         ref_frame==1, [index, absolute_position_xyz, velocity_in_body_frame, attitude],
-                        Notice: For absolute_position_xyz, it is indeed position_ecef + relative_position_ref_frame.
+                        Notice: For absolute_position_xyz, it is indeed the sum of the initial
+                        position in ecef and the relative position in the virutal inertial frame.
                         Index is synced with index in mimu.csv.
             'mag':      True/ideal geomagneti field in the body frame.
                         [index, magx, magy, magz], uT, index synced with mimu.csv index.

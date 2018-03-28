@@ -155,9 +155,11 @@ class DMU380Sim(object):
                 self.sim_engine.GetEKF_STATES(pointer(ekf_state))
                 # time_step[output_len] = ekf_state.timeStep / fs
                 time_step[output_len] = i / fs
-                euler_angles[output_len, 0] = ekf_state.kfEulerAngles[0]
+                # Euler angles order is [roll pitch yaw] in the algo
+                # We use yaw [pitch roll yaw] order in the simulation
+                euler_angles[output_len, 0] = ekf_state.kfEulerAngles[2]
                 euler_angles[output_len, 1] = ekf_state.kfEulerAngles[1]
-                euler_angles[output_len, 2] = ekf_state.kfEulerAngles[2]
+                euler_angles[output_len, 2] = ekf_state.kfEulerAngles[0]
                 output_len += 1
         # results
         self.results = [time_step[0:output_len], euler_angles[0:output_len, :]]
@@ -212,6 +214,8 @@ class DMU380Sim(object):
         cmake_dir = src_dir + '//cmake//'
         if not os.path.exists(cmake_dir):
             os.mkdir(cmake_dir)
+        else:
+            os.system("rm -rf " + cmake_dir + "*")
         # call cmake and make to build the libs
         os.chdir(cmake_dir)
         ret = os.system("cmake ..")

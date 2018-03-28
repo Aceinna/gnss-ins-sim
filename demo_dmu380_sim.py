@@ -41,7 +41,7 @@ def test_dmu380_sim():
                       mode=None,
                       env=None,
                       algorithm=algo)
-    sim.run(5)
+    sim.run(10)
     # generate simulation results, summary, and save data to files
     sim.results()  # do not save data
     # plot data

@@ -64,10 +64,10 @@ def test_free_integration():
                       env=None,
                       algorithm=algo)
     # run the simulation for 1000 times
-    sim.run(1)
+    sim.run(1000)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results
-    sim.results('.//demo_saved_data//')
+    sim.results()
 
 if __name__ == '__main__':
     test_free_integration()

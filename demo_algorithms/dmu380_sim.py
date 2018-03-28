@@ -103,7 +103,8 @@ class DMU380Sim(object):
     '''
     def __init__(self, config_file):
         '''
-        vars
+        Args:
+            config_file: a configuration file
         '''
         # algorithm description
         self.input = ['fs', 'gyro', 'accel', 'mag']
@@ -130,6 +131,10 @@ class DMU380Sim(object):
         main procedure of the algorithm
         Args:
             set_of_input is a tuple or list consistent with self.input
+                fs: sample frequency, Hz
+                gyro: numpy array of size (n,3), rad/s
+                accel: numpy array of size (n,3), m/s/s
+                mag: numpy array of size (n,3), Gauss
         '''
         # get input
         fs = set_of_input[0]
@@ -174,7 +179,10 @@ class DMU380Sim(object):
 
     def get_results(self):
         '''
-        return algorithm results as specified in self.output
+        Returns:
+            algorithm results as specified in self.output
+                algorithm time step, sec
+                Euler angles [yaw pitch roll], rad
         '''
         return self.results
 

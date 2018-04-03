@@ -78,10 +78,10 @@ class Sim(object):
                     in units of [m/s/s, deg/s/s, deg/s]
 
             env: vibration model. There are three kinds of vibration models:
-                'ng-random': normal-distribution random vibration, rms is n*9.8 m/s^2
-                'n-random': normal-distribution random vibration, rms is n m/s^2
-                'ng-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2
-                'n-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
+                '[nx ny nz]g-random': normal-distribution random vibration, rms is n*9.8 m/s^2
+                '[nx ny nz]-random': normal-distribution random vibration, rms is n m/s^2
+                '[nx ny nz]g-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2
+                '[nx ny nz]-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
                 numpy array of (n,4): single-sided PSD. Each row is [freq, x, y, z], m^2/s^4/Hz
 
             algorithm: a user defined algorithm.

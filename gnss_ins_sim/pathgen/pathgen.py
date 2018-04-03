@@ -435,9 +435,11 @@ def acc_gen(fs, ref_a, acc_err, vib_def=None):
             specified by single-sided PSD.
             Generated vibrating acc is expressed in the body frame.
             'type' == 'random':
-                Normal distribution. 'amp' gives the 1sigma values, units: m/s2
+                Normal distribution. 'x', 'y' and 'z' give the 1sigma values along x, y and z axis.
+                units: m/s2
             'type' == 'sinunoidal'
-                Sinunoidal vibration. 'amp' gives the amplitude of the sine wave, units: m/s2.
+                Sinunoidal vibration. 'x', 'y' and 'z' give the amplitude of the sine wave along
+                x, y and z axis. units: m/s2.
             'type' == 'psd'. Single sided PSD.
                 'freq':  frequency, in unit of Hz
                 'x': x axis, in unit of m2/s4/Hz.
@@ -465,9 +467,13 @@ def acc_gen(fs, ref_a, acc_err, vib_def=None):
             acc_vib[:, 2] = time_series_from_psd.time_series_from_psd(vib_def['z'],
                                                                       vib_def['freq'], fs, n)[1]
         elif vib_def['type'] == 'random':
-            acc_vib[:, 2] = vib_def['amp'] * np.random.randn(n)
+            acc_vib[:, 0] = vib_def['x'] * np.random.randn(n)
+            acc_vib[:, 1] = vib_def['y'] * np.random.randn(n)
+            acc_vib[:, 2] = vib_def['z'] * np.random.randn(n)
         elif vib_def['type'] == 'sinusoidal':
-            acc_vib[:, 2] = vib_def['amp'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+            acc_vib[:, 0] = vib_def['x'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+            acc_vib[:, 1] = vib_def['y'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+            acc_vib[:, 2] = vib_def['z'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
     # accelerometer white noise
     acc_noise = np.random.randn(n, 3)
     acc_noise[:, 0] = acc_err['vrw'][0] / math.sqrt(dt) * acc_noise[:, 0]

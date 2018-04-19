@@ -78,10 +78,10 @@ class Sim(object):
                     in units of [m/s/s, deg/s/s, deg/s]
 
             env: vibration model. There are three kinds of vibration models:
-                'ng-random': normal-distribution random vibration, rms is n*9.8 m/s^2
-                'n-random': normal-distribution random vibration, rms is n m/s^2
-                'ng-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2
-                'n-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
+                '[nx ny nz]g-random': normal-distribution random vibration, rms is n*9.8 m/s^2
+                '[nx ny nz]-random': normal-distribution random vibration, rms is n m/s^2
+                '[nx ny nz]g-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2
+                '[nx ny nz]-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
                 numpy array of (n,4): single-sided PSD. Each row is [freq, x, y, z], m^2/s^4/Hz
 
             algorithm: a user defined algorithm.
@@ -662,49 +662,54 @@ class Sim(object):
         Args:
             env: vibration model
         '''
-        if env is not None:
-            self.vib_def = {}
-            if isinstance(env, str):        # specify simple vib model
-                env = env.lower()
-                if 'random' in env:         # normal distribution
-                    self.vib_def['type'] = 'random'
-                    env = env.replace('-random', '')
-                elif 'sinusoidal' in env:   # sinusoidal vibration
-                    self.vib_def['type'] = 'sinusoidal'
-                    env = env.replace('-sinusoidal', '')
-                    if env[-2:] == 'hz':
-                        try:
-                            idx_first_mark = env.find('-')
-                            self.vib_def['freq'] = math.fabs(float(env[idx_first_mark+1:-2]))
-                            env = env[:idx_first_mark]
-                        except:
-                            raise ValueError('env = \'%s\' is not valid (invalid vib freq).'% env)
-                    else:
-                        raise ValueError('env = \'%s\' is not valid (No vib freq).'% env)
+        if env is None:
+            self.vib_def = None
+        self.vib_def = {}
+        if isinstance(env, str):        # specify simple vib model
+            env = env.lower()
+            if 'random' in env:         # normal distribution
+                self.vib_def['type'] = 'random'
+                env = env.replace('-random', '')
+            elif 'sinusoidal' in env:   # sinusoidal vibration
+                self.vib_def['type'] = 'sinusoidal'
+                env = env.replace('-sinusoidal', '')
+                if env[-2:] == 'hz':
+                    try:
+                        idx_first_mark = env.find('-')
+                        self.vib_def['freq'] = math.fabs(float(env[idx_first_mark+1:-2]))
+                        env = env[:idx_first_mark]
+                    except:
+                        raise ValueError('env = \'%s\' is not valid (invalid vib freq).'% env)
                 else:
-                    raise ValueError('env = \'%s\' is not valid.'% env)
-                vib_amp = 1.0   # vibration amplitude, 1sigma for random, peak value for sinusoidal
-                if env[-1] == 'g' or env[-1] == 'G':
-                    vib_amp = 9.8
-                    env = env[:-1]  # remove 'g' or 'G'
-                try:
-                    vib_amp *= float(env)
-                    self.vib_def['amp'] = vib_amp
-                except:
-                    raise ValueError('Cannot convert \'%s\' to float'% env)
-            elif isinstance(env, np.ndarray):           # customize the vib model with PSD
-                if env.ndim == 2 and env.shape[1] == 4: # env is a np.array of size (n,4)
-                    self.vib_def['type'] = 'psd'
-                    n = env.shape[0]
-                    half_fs = 0.5*self.fs.data
-                    if env[-1, 0] > half_fs:
-                        n = np.where(env[:, 0] > half_fs)[0][0]
-                    self.vib_def['freq'] = env[:n, 0]
-                    self.vib_def['x'] = env[:n, 1]
-                    self.vib_def['y'] = env[:n, 2]
-                    self.vib_def['z'] = env[:n, 3]
+                    raise ValueError('env = \'%s\' is not valid (No vib freq).'% env)
             else:
-                raise TypeError('env should be a string or a numpy array of size (n,2)')
+                raise ValueError('env = \'%s\' is not valid.'% env)
+            vib_amp = 1.0   # vibration amplitude, 1sigma for random, peak value for sinusoidal
+            if env[-1] == 'g' or env[-1] == 'G':
+                vib_amp = 9.8
+                env = env[:-1]  # remove 'g' or 'G'
+            try:
+                env = env[1:-1] # remove '[]' or '()'
+                env = env.split(' ')
+                vib_amp *= np.array(env, dtype='float64')
+                self.vib_def['x'] = vib_amp[0]
+                self.vib_def['y'] = vib_amp[1]
+                self.vib_def['z'] = vib_amp[2]
+            except:
+                raise ValueError('Cannot convert \'%s\' to float'% env)
+        elif isinstance(env, np.ndarray):           # customize the vib model with PSD
+            if env.ndim == 2 and env.shape[1] == 4: # env is a np.array of size (n,4)
+                self.vib_def['type'] = 'psd'
+                n = env.shape[0]
+                half_fs = 0.5*self.fs.data
+                if env[-1, 0] > half_fs:
+                    n = np.where(env[:, 0] > half_fs)[0][0]
+                self.vib_def['freq'] = env[:n, 0]
+                self.vib_def['x'] = env[:n, 1]
+                self.vib_def['y'] = env[:n, 2]
+                self.vib_def['z'] = env[:n, 3]
+        else:
+            raise TypeError('env should be a string or a numpy array of size (n,2)')
 
     def check_algo(self):
         '''

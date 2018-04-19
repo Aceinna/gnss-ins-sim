@@ -580,6 +580,7 @@ class Sim(object):
             # x axis data
             x_axis = self.time
             if i in self.supported_plot:
+                ## choose proper x axis data for specific y axis data
                 # plot only once
                 if i in self.supported_in_constant:
                     if i == self.ref_gps.name or i == self.gps_time.name:
@@ -589,12 +590,12 @@ class Sim(object):
                 elif i in self.supported_out:   # algo output
                     if self.algo_time.name in self.res:
                         x_axis = self.algo_time
-                else:
-                    if i == self.ad_gyro.name or i == self.ad_accel.name or\
-                       i == self.allan_t.name:
-                        x_axis = self.allan_t
-                    elif i == self.gps.name:
-                        x_axis = self.gps_time
+                    else:
+                        if i == self.ad_gyro.name or i == self.ad_accel.name or\
+                           i == self.allan_t.name:
+                            x_axis = self.allan_t
+                        elif i == self.gps.name:
+                            x_axis = self.gps_time
                 self.supported_plot[i].plot(x_axis, key=sim_idx, ref=ref, plot3d=plot3d)
             else:
                 print('Unsupported plot: %s.'% i)

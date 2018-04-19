@@ -664,6 +664,7 @@ class Sim(object):
         '''
         if env is None:
             self.vib_def = None
+            return
         self.vib_def = {}
         if isinstance(env, str):        # specify simple vib model
             env = env.lower()

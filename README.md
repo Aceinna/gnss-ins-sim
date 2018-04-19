@@ -112,6 +112,7 @@ Supported output:
 
 | name | description |
 |-|-|
+| 'algo_time' | Time series corresponding to algorithm output, units: ['s'] |
 | 'allan_t' | Time series of Allan analysis, units: ['s'] |
 | 'allan_std_gyro' | Allan std of gyro, units: ['rad/s', 'rad/s', 'rad/s'] |
 | 'allan_std_accel' | Allan std of accel, units: ['m/s2', 'm/s2', 'm/s2'] |

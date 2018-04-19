@@ -36,7 +36,7 @@ def test_dmu380_sim():
 
     #### start simulation
     sim = imu_sim.Sim([fs, 0.0, fs], imu,
-                      motion_def_path+"//motion_def-Komatsu_loaded_-5_0.csv",
+                      motion_def_path+"//motion_def-Komatsu_level_50m_0_0.csv",
                       ref_frame=1,
                       mode=None,
                       env=None,

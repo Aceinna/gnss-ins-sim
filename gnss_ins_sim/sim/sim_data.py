@@ -72,10 +72,102 @@ class Sim_data(object):
         if grid.lower() == 'off':
             self.grid = grid
         self.legend = legend
-        # a dict to store data, each key corresponds to a set of data
-        # or a numpy array of size(m,n)
-        # or a scalar
+        '''
+        each item in the data should be either scalar or numpy.array of size(n, dim),
+        or a dict of the above two, dict keys are like 0, 1, 2, 3, ...
+        n is the sample number, dim is a set of data at time tn. For example, accel is nx3,
+        att_quat is nx4, allan_t is (n,)
+        '''
         self.data = {}
+
+    def add_data(self, data, key=None, units=None):
+        '''
+        Add data to Sim_data.
+        Args:
+            data: a scalar, a numpy array or a dict of the above two. If data is a dict, each
+                value in it should be of same type (scalr or numpy array), same size and same
+                units.
+            key: There are more than one set of data, key is an index of data added this time.
+                If key is None, data can be a scalr, a numpy array or a dict of the above two.
+                If key is a valid dict key, data can be a scalr or a numpy.
+            units: Units of the input data. If you know clearly no units convertion is needed, set
+                units to None. If you do not know what units are used in the class InsDataMgr,
+                you'd better provide the units of the data. Units convertion will be done
+                automatically here.
+                If data is a scalar, units should be a list of one string to define its unit.
+                If data is a numpy of size(m,n), units should be a list of n strings
+                to define the units.
+                If data is a dict, units should be the same as the above two depending on if
+                each value in the dict is a scalr or a numpy array.
+        '''
+        # units convertion should be done in sim_data.py
+        if units is not None:
+            units = list(units) # units of Sim_data is a list even if it contains scalars
+            if len(units) == len(self.units):
+                if units != self.units:
+                    # data units are different from units in the manager, need convertion
+                    data = self.__convert_unit(data, units, self.units)
+            else:
+                print(units)
+                print(self.units)
+                raise ValueError('Units are of different lengths.')
+        # add data into the manager
+        if key is None:
+            self.data = data
+        else:
+            if not isinstance(self.data, dict):
+                self.data = {}
+            self.data[key] = data
+
+    def save_to_file(self, data_dir):
+        '''
+        Save self.data to files.
+        Args:
+            data_dir: directory for the data files.
+        '''
+        #### generate header
+        # how many columns in each set of data? 0 if scalar
+        cols = 0
+        if isinstance(self.data, dict):
+            for i in self.data:
+                if self.data[i].ndim > 1:
+                    cols = self.data[i].shape[1]
+                break   # each set of data in data should have the same number of columns
+        elif isinstance(self.data, np.ndarray):
+            if self.data.ndim > 1:
+                cols = self.data.shape[1]
+        # add the name and unit of each column to header
+        header_line = ''
+        if cols > 0:    # more than one column
+            for i in range(cols):
+                # units
+                str_unit = ''
+                if i < len(self.output_units):
+                    str_unit = ' (' + self.output_units[i] + ')'
+                # add a column
+                if cols == len(self.legend):    # legend available
+                    header_line += self.legend[i] + str_unit + ','
+                else:                           # legend not available
+                    header_line += self.name + '_' + str(i) + str_unit + ','
+            # remove the trailing ','
+            header_line = header_line[0:-1]
+        else:           # only one column
+            str_unit = ''
+            if len(self.output_units) > 0:
+                str_unit = ' (' + self.output_units[0] + ')'
+            header_line = self.name + str_unit
+        #### save data and header to .csv files
+        if isinstance(self.data, dict):
+            for i in self.data:
+                file_name = data_dir + '//' + self.name + '_' + str(i) + '.csv'
+                np.savetxt(file_name,\
+                           self.__convert_unit(self.data[i], self.units, self.output_units),\
+                           header=header_line, delimiter=',', comments='')
+        else:
+            file_name = data_dir + '//' + self.name + '.csv'
+            np.savetxt(file_name,\
+                       self.__convert_unit(self.data, self.units, self.output_units),\
+                       header=header_line, delimiter=',', comments='')
 
     def plot(self, x, key=None, ref=None, plot3d=False):
         '''
@@ -86,11 +178,11 @@ class Sim_data(object):
         '''
         if self.plottable:
             if isinstance(self.data, dict):
-                self.plot_dict(x, key, ref, plot3d)
+                self.__plot_dict(x, key, ref, plot3d)
             else:
-                self.plot_array(x, ref, plot3d)
+                self.__plot_array(x, ref, plot3d)
 
-    def plot_dict(self, x, key, ref=None, plot3d=False):
+    def __plot_dict(self, x, key, ref=None, plot3d=False):
         '''
         self.data is a dict. plot self.data according to key
         '''
@@ -118,7 +210,7 @@ class Sim_data(object):
                     print('simulation data shape: ', y_data.shape)
                     raise ValueError('Check input data ref and self.data dimension.')
             # unit conversion
-            y_data = self.convert_unit(y_data)
+            y_data = self.__convert_unit(y_data, self.units, self.output_units)
             # plot
             if plot3d:
                 plot3d_in_one_figure(y_data,\
@@ -134,7 +226,7 @@ class Sim_data(object):
                                    grid=self.grid,\
                                    legend=self.legend)
 
-    def plot_array(self, x, ref=None, plot3d=False):
+    def __plot_array(self, x, ref=None, plot3d=False):
         '''
         self.data is a numpy.array
         '''
@@ -157,7 +249,7 @@ class Sim_data(object):
                 print(self.data.shape)
                 raise ValueError('Check input data ref and self.data dimension.')
         # unit conversion
-        y_data = self.convert_unit(y_data)
+        y_data = self.__convert_unit(y_data, self.units, self.output_units)
         # plot
         if plot3d:
             plot3d_in_one_figure(y_data,\
@@ -173,98 +265,73 @@ class Sim_data(object):
                                grid=self.grid,\
                                legend=self.legend)
 
-    def save_to_file(self, data_dir):
+    def __convert_unit(self, data, src_unit, dst_unit):
         '''
-        Save self.data to files.
+        Unit conversion. Notice not to change values in data
         Args:
-            data_dir: directory for the data files.
-        '''
-        #### generate header
-        # how many columns in each set of data? 0 if scalar
-        cols = 0
-        if isinstance(self.data, dict):
-            for i in self.data.keys():
-                if self.data[i].ndim > 1:
-                    cols = self.data[i].shape[1]
-                break   # each set of data in data should have the same number of columns
-        else:
-            if self.data.ndim > 1:
-                cols = self.data.shape[1]
-        # add the name and unit of each column to header
-        header_line = ''
-        if cols > 0:    # more than one column
-            for i in range(cols):
-                # units
-                str_unit = ''
-                if i < len(self.output_units):
-                    str_unit = ' (' + self.output_units[i] + ')'
-                # add a column
-                if cols == len(self.legend):    # legend available
-                    header_line += self.legend[i] + str_unit + ','
-                else:                           # legend not available
-                    header_line += self.name + '_' + str(i) + str_unit + ','
-            # remove the trailing ','
-            header_line = header_line[0:-1]
-        else:           # only one column
-            str_unit = ''
-            if len(self.output_units) > 0:
-                str_unit = ' (' + self.output_units[0] + ')'
-            header_line = self.name + str_unit
-        #### save data and header to .csv files
-        if isinstance(self.data, dict):
-            for i in self.data:
-                file_name = data_dir + '//' + self.name + '_' + str(i) + '.csv'
-                np.savetxt(file_name, self.convert_unit(self.data[i]),\
-                           header=header_line, delimiter=',', comments='')
-        else:
-            file_name = data_dir + '//' + self.name + '.csv'
-            np.savetxt(file_name, self.convert_unit(self.data),\
-                       header=header_line, delimiter=',', comments='')
-
-    def convert_unit(self, data):
-        '''
-        Unit conversion.
-        Args:
-            data: convert data units from units to output_units,\
-                data should be a numpy array of size(n,) or (n,m).
-                n is data length, m is data dimension.
+            data: convert data units from src_unit to dst_unit. Data should be a scalar,
+                a numpy array of size(n,) or (n,m). n is data length, m is data dimension.
+            src_unit: a list of unit of the data.
+            dst_unit: a list of unit we want to convert the data to.
         Returns:
-            data: data after unit conversion.
+            x: data after unit conversion.
         '''
-        # check if unit conversion is needed and calculate the scale
-        m = len(self.output_units)
-        scale = self.unit_conversion_scale()
+        scale = self.__unit_conversion_scale(src_unit, dst_unit)
         # unit conversion
-        x = data.copy()
-        if x.ndim == 2:
-            for i in range(min(m, x.shape[1])):
-                if scale[i] != 0.0:
-                    x[:, i] = x[:, i] * scale[i]
-        elif x.ndim == 1:
-            if scale[0] != 0.0:
-                x = x * scale[0]
+        x = data.copy() # avoid changing values in data
+        if isinstance(x, dict):
+            for i in x:
+                x = self.__convert_unit_ndarray_scalar(x[i], scale)
         else:
-            raise ValueError('data should a 1D or 2D array, ndim = %s'% data.ndim)
+            x = self.__convert_unit_ndarray_scalar(x, scale)
         return x
 
-    def unit_conversion_scale(self):
+    def __unit_conversion_scale(self, src_unit, dst_unit):
         '''
         Calculate unit conversion scale.
         '''
-        m = len(self.output_units)
+        m = len(dst_unit)
         scale = np.zeros((m,))
         for i in range(m):
             # deg to rad
-            if self.units[i] == 'deg' and self.output_units[i] == 'rad':
+            if src_unit[i] == 'deg' and dst_unit[i] == 'rad':
                 scale[i] = D2R
-            elif self.units[i] == 'deg/s' and self.output_units[i] == 'rad/s':
+            elif src_unit[i] == 'deg/s' and dst_unit[i] == 'rad/s':
                 scale[i] = D2R
             # rad to deg
-            elif self.units[i] == 'rad' and self.output_units[i] == 'deg':
+            elif src_unit[i] == 'rad' and dst_unit[i] == 'deg':
                 scale[i] = 1.0/D2R
-            elif self.units[i] == 'rad/s' and self.output_units[i] == 'deg/s':
+            elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/s':
                 scale[i] = 1.0/D2R
+            else:
+                pass
+                # print('No need or not know how to convert from %s to %s.'% (src_unit, dst_unit))
         return scale
+
+    def __convert_unit_ndarray_scalar(self, x, scale):
+        '''
+        Unit conversion of numpy array or a scalar.
+        Args:
+            x: convert x units from src_unit to dst_unit. x should be a scalar,
+                a numpy array of size(n,) or (n,m). n is x length, m is x dimension.
+            scale: 1D numpy array of unit convertion scale. x = x * scale
+        Returns:
+            x: x after unit conversion.
+        '''
+        m = scale.shape[0]
+        if isinstance(x, np.ndarray):
+            if x.ndim == 2:
+                for i in range(min(m, x.shape[1])):
+                    if scale[i] != 0.0:
+                        x[:, i] = x[:, i] * scale[i]
+            elif x.ndim == 1:
+                if scale[0] != 0.0:
+                    x = x * scale[0]
+        elif isinstance(x, (int, float)):
+            x = x * scale[0]
+        else:
+            raise ValueError('Input x should be a scalar, 1D or 2D array, ndim = %s'% data.ndim)
+        return x
 
 def plot_in_one_figure(x, y, logx=False, logy=False,\
                        title='Figure', xlabel=None, ylabel=None,\

@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-# Filename: demo_no_algo.py
+# Filename: test_ins_sim.py
 
 """
-The simplest demo of Sim.
-Only generate reference trajectory (pos, vel, sensor output). No algorithm.
-Created on 2018-01-23
+Test ins_sim.
+Created on 2018-04-23
 @author: dongxiaoguang
 """
 
 import os
 import math
 from gnss_ins_sim.sim import imu_model
-from gnss_ins_sim.sim import imu_sim
+from gnss_ins_sim.sim import ins_sim
 
 # globals
 D2R = math.pi/180
@@ -31,8 +30,11 @@ def test_path_gen():
     imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, fs_gps, fs_mag], imu, motion_def_path+"//motion_def.csv",
+    sim = ins_sim.Sim([fs, fs_gps, fs_mag],
+                    #   motion_def_path+"//motion_def.csv",
+                      'e://Projects//gnss-ins-sim//demo_saved_data//2018-04-24-14-55-53//',
                       ref_frame=1,
+                      imu=imu,
                       mode=None,
                       env=None,
                       algorithm=None)
@@ -40,7 +42,7 @@ def test_path_gen():
     # save simulation data to files
     sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
-    # sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
+    sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
 
 if __name__ == '__main__':
     test_path_gen()

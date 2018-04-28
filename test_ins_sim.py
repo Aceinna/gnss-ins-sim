@@ -29,6 +29,11 @@ def test_path_gen():
     # generate GPS and magnetometer data
     imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True)
 
+    #### Algorithm
+    # ECF based inclinometer
+    from demo_algorithms import inclinometer_mahony
+    algo = inclinometer_mahony.MahonyFilter()
+
     #### start simulation
     sim = ins_sim.Sim([fs, fs_gps, fs_mag],
                     #   motion_def_path+"//motion_def.csv",
@@ -37,12 +42,12 @@ def test_path_gen():
                       imu=imu,
                       mode=None,
                       env=None,
-                      algorithm=None)
+                      algorithm=algo)
     sim.run(1)
     # save simulation data to files
     sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
-    sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
+    sim.plot(['att_quat'])
 
 if __name__ == '__main__':
     test_path_gen()

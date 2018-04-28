@@ -145,7 +145,7 @@ class Sim_data(object):
                 if i < len(self.output_units):
                     str_unit = ' (' + self.output_units[i] + ')'
                 # add a column
-                if cols == len(self.legend):    # legend available
+                if (self.legend is not None) and (cols == len(self.legend)):    # legend available
                     header_line += self.legend[i] + str_unit + ','
                 else:                           # legend not available
                     header_line += self.name + '_' + str(i) + str_unit + ','

@@ -12,6 +12,7 @@ import time
 import math
 import numpy as np
 from .ins_data_manager import InsDataMgr
+from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
 
 D2R = math.pi/180
@@ -95,7 +96,6 @@ class Sim(object):
         self.imu = imu
         self.mode = mode
         self.env = env
-        self.algo = algorithm
         if ref_frame == 0 or ref_frame == 1:
             self.ref_frame = ref_frame
         else:
@@ -107,6 +107,8 @@ class Sim(object):
         # simulation data manager
         self.dmgr = InsDataMgr(fs, self.ref_frame)
         self.data_src = motion_def
+        # algorithm manager
+        self.amgr = InsAlgoMgr(algorithm)
 
         # error terms we are interested in
         self.interested_error = {self.dmgr.att_euler.name: 'angle',
@@ -125,11 +127,19 @@ class Sim(object):
         self.sim_count = int(num_times)
         if self.sim_count < 1:
             self.sim_count = 1
-        # generate sensor data from file or pathgen
+
+        #### generate sensor data from file or pathgen
         self.__gen_data()
-        # run simulation
-        for i in range(self.sim_count):
-            pass
+
+        #### run simulation
+        if self.amgr.algo is not None:
+            # get algo input data
+            algo_input = self.dmgr.get_data(self.amgr.algo.input)
+            # run the algo and get algo output
+            algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
+            # add algo output to ins_data_manager
+            for i in range(len(self.amgr.algo.output)):
+                self.dmgr.add_data(self.amgr.algo.output[i], algo_output[i])
         # simulation complete successfully
         self.sim_complete = True
 

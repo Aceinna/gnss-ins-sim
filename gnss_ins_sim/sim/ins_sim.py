@@ -14,6 +14,7 @@ import numpy as np
 from .ins_data_manager import InsDataMgr
 from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
+from .. attitude import attitude
 
 D2R = math.pi/180
 # built-in mobility
@@ -114,7 +115,12 @@ class Sim(object):
         self.interested_error = {self.dmgr.att_euler.name: 'angle',
                                  self.dmgr.pos.name: None,
                                  self.dmgr.vel.name: None}
-
+        # associated data mapping
+        self.data_map = {\
+            self.dmgr.ref_att_euler.name: [self.dmgr.ref_att_quat.name, self.__euler2quat_zyx],
+            self.dmgr.ref_att_quat.name: [self.dmgr.ref_att_euler.name, self.__quat2euler_zyx],
+            self.dmgr.att_euler.name: [self.dmgr.att_quat.name, self.__euler2quat_zyx],
+            self.dmgr.att_quat.name: [self.dmgr.att_euler.name, self.__quat2euler_zyx]}
         # summary
         self.sum = ''
 
@@ -163,6 +169,8 @@ class Sim(object):
             Simulation results include a summary file containing statistics of the simulation
             and .csv files containing all data generated.
             '''
+            # generate associated data
+            self.__add_associated_data_to_results()
             # check data dir
             if data_dir is not None:    # data_dir specified, meaning to save .csv files
                 data_dir = self.__check_data_dir(data_dir)
@@ -469,3 +477,66 @@ class Sim(object):
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
         return data_dir
+
+    def __add_associated_data_to_results(self):
+        '''
+        Check if some data in self.res have associated data. If so, calculate the associated data
+        and add the data in self.res.
+        For example, pathgen generates Euler angles, this procedure will calculate the
+        coresponding quaternions and add those in self.res.
+        '''
+        # search for data to add to results and generate associated data
+        for i in self.data_map:
+            if i in self.dmgr.available and \
+                self.data_map[i][0] not in self.dmgr.available and\
+                self.dmgr.is_supported(self.data_map[i][0]):
+                self.dmgr.add_data(self.data_map[i][0],\
+                                   self.data_map[i][1](self.dmgr.get_data([i])[0])
+                                  )
+
+    def __quat2euler_zyx(self, src):
+        '''
+        quaternion to Euler angles (zyx)
+        '''
+        if isinstance(src, np.ndarray):
+            n = src.shape[0]
+            dst = np.zeros((n, 3))
+            for j in range(n):
+                dst[j, :] = attitude.quat2euler(src[j, :])
+            return dst
+        elif isinstance(src, dict):
+            dst = {}
+            for i in src:
+                n = src[i].shape[0]
+                euler = np.zeros((n, 3))
+                for j in range(n):
+                    euler[j, :] = attitude.quat2euler(src[i][j, :])
+                dst[i] = euler
+            return dst
+        else:
+            raise ValueError('%s is not a dict or numpy array.'% src.name)
+
+    def __euler2quat_zyx(self, src):
+        '''
+        Euler angles (zyx) to quaternion
+        '''
+        # array
+        if isinstance(src, np.ndarray):
+            n = src.shape[0]
+            dst = np.zeros((n, 4))
+            for j in range(n):
+                dst[j, :] = attitude.euler2quat(src[j, :])
+            return dst
+        # dict
+        elif isinstance(src, dict):
+            dst = {}
+            for i in src:
+                n = src[i].shape[0]
+                quat = np.zeros((n, 4))
+                for j in range(n):
+                    quat[j, :] = attitude.euler2quat(src[i][j, :])
+                dst[i] = quat
+            return dict
+        else:
+            raise ValueError('%s is not a dict or numpy array.'% src.name)
+

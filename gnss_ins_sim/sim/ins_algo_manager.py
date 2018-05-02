@@ -82,7 +82,11 @@ class InsAlgoMgr(object):
                 # prepare the algorith input
                 for ele in input_data:
                     if isinstance(ele, dict):
-                        set_of_input.append(ele[i])
+                        if i in ele:
+                            set_of_input.append(ele[i])
+                        else:
+                            raise ValueError("set_of_input has keys %s, but you are requiring %s"\
+                                             % (ele.keys(), i))
                     else:
                         set_of_input.append(ele)
                 # run the algorithm once

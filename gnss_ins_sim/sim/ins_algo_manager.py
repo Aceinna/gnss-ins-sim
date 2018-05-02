@@ -80,6 +80,7 @@ class InsAlgoMgr(object):
                 results.append({})
             for i in keys:
                 # prepare the algorith input
+                set_of_input = []
                 for ele in input_data:
                     if isinstance(ele, dict):
                         if i in ele:
@@ -96,5 +97,6 @@ class InsAlgoMgr(object):
                 # add algorithm output of this run to results
                 for j in range(nout):
                     results[j][i] = this_results[j]
+                # reset the algorithm
                 self.algo.reset()
         return results

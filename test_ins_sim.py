@@ -47,7 +47,7 @@ def test_path_gen():
     # save simulation data to files
     sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
-    sim.plot(['att_quat'])
+    sim.plot(['att_euler'], opt={'att_euler': 'error'})
 
 if __name__ == '__main__':
     test_path_gen()

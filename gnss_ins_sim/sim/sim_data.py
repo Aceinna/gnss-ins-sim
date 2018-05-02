@@ -25,7 +25,8 @@ class Sim_data(object):
                  plottable=True, logx=False, logy=False,\
                  grid='on', legend=None):
         '''
-        Set up data properties and plot properties. All data are stored in a dict: self.data.
+        Set up data properties and plot properties. All data are stored in a dict (or a scalr or
+        a numpy array): self.data.
         Each key of this dict corresponds to a set of data. self.data[key] is of size mxn.
         m is the number of samples of this set of data. n is the dimension of this set of data.
         m may vary through different set of data. n must be same for all sets of data.

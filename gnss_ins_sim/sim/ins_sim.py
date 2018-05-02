@@ -536,7 +536,7 @@ class Sim(object):
                 for j in range(n):
                     quat[j, :] = attitude.euler2quat(src[i][j, :])
                 dst[i] = quat
-            return dict
+            return dst
         else:
             raise ValueError('%s is not a dict or numpy array.'% src.name)
 

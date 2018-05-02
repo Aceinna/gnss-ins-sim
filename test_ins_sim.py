@@ -36,14 +36,14 @@ def test_path_gen():
 
     #### start simulation
     sim = ins_sim.Sim([fs, fs_gps, fs_mag],
-                    #   motion_def_path+"//motion_def.csv",
-                      'e://Projects//gnss-ins-sim//demo_saved_data//2018-04-24-14-55-53//',
+                      motion_def_path+"//motion_def.csv",
+                    #   'e://Projects//gnss-ins-sim//demo_saved_data//2018-04-24-14-55-53//',
                       ref_frame=1,
                       imu=imu,
                       mode=None,
                       env=None,
                       algorithm=algo)
-    sim.run(1)
+    sim.run(3)
     # save simulation data to files
     sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel

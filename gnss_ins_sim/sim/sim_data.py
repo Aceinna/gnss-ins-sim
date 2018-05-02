@@ -282,7 +282,7 @@ class Sim_data(object):
         x = data.copy() # avoid changing values in data
         if isinstance(x, dict):
             for i in x:
-                x = self.__convert_unit_ndarray_scalar(x[i], scale)
+                x[i] = self.__convert_unit_ndarray_scalar(x[i], scale)
         else:
             x = self.__convert_unit_ndarray_scalar(x, scale)
         return x

@@ -446,37 +446,6 @@ class Sim(object):
         else:
             raise TypeError('env should be a string or a numpy array of size (n,2)')
 
-    def __check_algo(self):
-        '''
-        Generate expressions to handle algorithm input and output.
-        Args:
-            algorithm: user specified algorithm class
-        Returns:
-            Raise ValueError if algorithm has no input or output;
-            Raise ValueError if algorithm input and output have unsupported elements
-            Raise TypeError if algorithm input or output is not a list or tuple
-        '''
-        '''try:
-            n_in = len(self.algo.input)
-            n_out = len(self.algo.output)
-            # algorithm must have at least one input and one output
-            if n_in < 1 or n_out < 1:
-                raise ValueError
-            # prepare algorithm input and output
-            for i in self.algo.input:
-                if not i in self.supported_in_constant and not i in self.supported_in_varying:
-                    print('Unsupported algorithm input: %s'% i)
-                    raise ValueError
-            for i in self.algo.output:
-                if not i in self.supported_out:
-                    print('Unsupported algorithm output: %s'% i)
-                    raise ValueError
-        except ValueError:
-            raise ValueError('check input and output definitions of the algorithm.')
-        except:
-            raise TypeError('algorithm input or output is not a valid list or tuple.')'''
-        pass
-
     def __check_data_dir(self, data_dir):
         '''
         check if data_dir is a valid dir. If not, use the default dir.

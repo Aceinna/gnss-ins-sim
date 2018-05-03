@@ -111,16 +111,18 @@ class Sim(object):
         # algorithm manager
         self.amgr = InsAlgoMgr(algorithm)
 
-        # error terms we are interested in
-        self.interested_error = {self.dmgr.att_euler.name: 'angle',
-                                 self.dmgr.pos.name: None,
-                                 self.dmgr.vel.name: None}
         # associated data mapping
         self.data_map = {\
             self.dmgr.ref_att_euler.name: [self.dmgr.ref_att_quat.name, self.__euler2quat_zyx],
             self.dmgr.ref_att_quat.name: [self.dmgr.ref_att_euler.name, self.__quat2euler_zyx],
             self.dmgr.att_euler.name: [self.dmgr.att_quat.name, self.__euler2quat_zyx],
             self.dmgr.att_quat.name: [self.dmgr.att_euler.name, self.__quat2euler_zyx]}
+
+        # error terms we are interested in
+        self.interested_error = {self.dmgr.att_euler.name: 'angle',
+                                 self.dmgr.pos.name: None,
+                                 self.dmgr.vel.name: None}
+
         # summary
         self.sum = ''
 
@@ -176,10 +178,13 @@ class Sim(object):
                 data_dir = self.__check_data_dir(data_dir)
                 # save data files
                 self.dmgr.save_data(data_dir)
+            # generate .kml files
             if gen_kml is True:       # want to gen kml without specifying the data_dir
                 if data_dir is None:
                     data_dir = self.__check_data_dir(data_dir)
                 self.dmgr.save_kml_files(data_dir)
+            # simulation summary and save summary to file
+            self.__summary(data_dir)  # generate summary
             self.sim_results = True
         else:
             print("Call Sim.run() to run the simulaltion first.")
@@ -215,6 +220,61 @@ class Sim(object):
             sim_idx.remove(i)
         # plot data
         self.dmgr.plot(what_to_plot, sim_idx, opt)
+
+    def __summary(self, data_dir):
+        '''
+        Summary of sim results.
+        '''
+        #### simulation config
+        # sample frequency
+        self.sum += self.dmgr.fs.description + ': [' +\
+                    self.dmgr.fs.name + '] = ' +\
+                    str(self.dmgr.fs.data) + ' ' +\
+                    self.dmgr.fs.units[0] + '\n'
+        # simulation time duration
+        self.sum += 'Simulation time duration: ' + \
+                    str(len(self.dmgr.time.data)/self.dmgr.fs.data) + ' s' + '\n'
+        # simulation times
+        self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
+        if data_dir is not None:
+            self.sum += 'Simulation results are saved to ' + data_dir + '\n'
+        #### supported plot
+
+        #### error of algorithm output
+        for data_name in self.interested_error:
+            if data_name not in self.dmgr.available:
+                continue
+            is_angle = self.interested_error[data_name] == 'angle'
+            err_stat = self.dmgr.get_error_stat(data_name, end_point=False, angle=is_angle,
+                                                use_output_units=True)
+            if err_stat is not None:
+                self.sum += '\n-----------statistics for ' +\
+                            self.dmgr.get_data_all(data_name).description +\
+                            ' (in units of ' +\
+                            self.dmgr.get_data_all(data_name).output_units[0] +')\n'
+                if isinstance(err_stat['max'], dict):
+                    for sim_run in err_stat['max']:
+                        self.sum += '\tSimulation run ' + str(sim_run) + ':\n'
+                        self.sum += '\t\t--Max error: ' + str(err_stat['max'][sim_run]) + '\n'
+                        self.sum += '\t\t--Avg error: ' + str(err_stat['avg'][sim_run]) + '\n'
+                        self.sum += '\t\t--Std of error: ' + str(err_stat['std'][sim_run]) + '\n'
+                else:
+                    self.sum += '\t--Max error: ' + str(err_stat['max']) + '\n'
+                    self.sum += '\t--Avg error: ' + str(err_stat['avg']) + '\n'
+                    self.sum += '\t--Std of error: ' + str(err_stat['std']) + '\n'
+
+        print(self.sum)
+
+        #### Allan analysis results ####
+        # to be added
+
+        #### save summary to file
+        if data_dir is not None:
+            try:
+                with open(data_dir + '//summary.txt', 'w') as file_summary:
+                    file_summary.write(self.sum + '\n')
+            except:
+                raise IOError('Unable to save summary to %s.'% data_dir)
 
     def __gen_data(self):
         '''

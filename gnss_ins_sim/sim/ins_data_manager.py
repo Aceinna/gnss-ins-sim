@@ -9,6 +9,7 @@ Created on 2018-04-24
 
 import numpy as np
 import matplotlib.pyplot as plt
+from . import sim_data
 from .sim_data import Sim_data
 from ..attitude import attitude
 from ..kml_gen import kml_gen
@@ -280,6 +281,59 @@ class InsDataMgr(object):
                 return None
         return data
 
+    def get_data_all(self, data_name):
+        '''
+        get the description of a var accroding to data_name
+        '''
+        if data_name in self.__all:
+            return self.__all[data_name]
+        else:
+            return None
+
+    def get_error_stat(self, data_name, end_point=False, angle=False, use_output_units=False):
+        '''
+        Get error statistics of data_name.
+        Args:
+            data_name: name of data whose error will be calculated.
+            end_point: True if want to calculate only the end point error. In this case,
+                the result contains statistics of end-point errors of multiple runs.
+                False if want to calculate the process error. In this case, the result is
+                a dict of statistics of process error of each simulatoin run.
+                For example, if we want the end-point error of position from a free-integration
+                algorithm ran for n times, the result is {'max': numpy.array([rx, ry, rz]),
+                'avg': numpy.array([rx, ry, rz]), 'std': numpy.array([rx, ry, rz])}.
+                If we want the process error of an attitude determination algorithm ran for n
+                times, the result is {'max': a dict of numpy.array([yaw, pitch, roll]),
+                                      'avg': a dict of numpy.array([yaw, pitch, roll]),
+                                      'std': a dict of numpy.array([yaw, pitch, roll])}.
+            angle: True if this is angle error. Angle error will be converted to be within
+                [-pi, pi] before calculating statistics.
+            use_output_units: use output units instead of inner units in which the data are
+                stored. An automatic unit conversion is done.
+        Returns:
+            err_stat: error statistics.
+        '''
+        err_stat = None
+        if end_point is True:
+            # end-point error
+            err_stat = self.__end_point_error_stat(data_name, angle)
+        else:
+            # process error
+            err_stat = self.__process_error_stat(data_name, angle)
+        # unit conversion
+        if use_output_units:
+            for i in err_stat:
+                if isinstance(err_stat[i], dict):
+                    for j in err_stat[i]:
+                        err_stat[i][j] = sim_data.convert_unit(err_stat[i][j],\
+                                                               self.__all[data_name].units,\
+                                                               self.__all[data_name].output_units)
+                else:
+                    err_stat[i] = sim_data.convert_unit(err_stat[i],\
+                                                        self.__all[data_name].units,\
+                                                        self.__all[data_name].output_units)
+        return err_stat
+
     def save_data(self, data_dir):
         '''
         save data to files
@@ -377,6 +431,79 @@ class InsDataMgr(object):
         Tell if this set of data is supported or not
         '''
         return data_name in self.__all.keys()
+
+    def __end_point_error_stat(self, data_name, angle=False):
+        '''
+        end-point error statistics
+        '''
+        if data_name not in self.available:
+            print('__end_point_error_stat: %s is not available.'% data_name)
+            return None
+        ref_data_name = 'ref_' + data_name
+        if ref_data_name not in self.available:
+            print('%s has no reference.'% data_name)
+            return None
+        if isinstance(self.__all[data_name].data, dict):
+            # a dict contains data of multiple runs
+            err = []
+            for i in self.__all[data_name].data:
+                err.append(self.__all[data_name].data[i][-1, :] -\
+                           self.__all[ref_data_name].data[-1, :])
+            # convert list to np.array
+            err = np.array(err)
+            return self.__array_stat(err, angle)
+        elif isinstance(self.__all[data_name].data, np.ndarray):
+            err = self.__all[data_name].data[-1, :] - self.__all[ref_data_name].data[-1, :]
+            return self.__array_stat(err, angle)
+        else:
+            print('Unsupported data type to calculate error statitics for %s'% data_name)
+            return None
+
+    def __process_error_stat(self, data_name, angle=False):
+        '''
+        process error statistics
+        '''
+        if data_name not in self.available:
+            print('__process_error_stat: %s is not available.'% data_name)
+            return None
+        ref_data_name = 'ref_' + data_name
+        if ref_data_name not in self.available:
+            print('%s has no reference.'% data_name)
+            return None
+        if isinstance(self.__all[data_name].data, dict):
+            stat = {'max': {}, 'avg': {}, 'std': {}}
+            for i in self.__all[data_name].data:
+                err = self.__all[data_name].data[i] - self.__all[ref_data_name].data
+                tmp = self.__array_stat(err, angle)
+                stat['max'][i] = tmp['max']
+                stat['avg'][i] = tmp['avg']
+                stat['std'][i] = tmp['std']
+            return stat
+        elif isinstance(self.__all[data_name].data, np.ndarray):
+            err = self.__all[data_name].data - self.__all[ref_data_name].data
+            return self.__array_stat(err, angle)
+        else:
+            print('Unsupported data type to calculate error statitics for %s'% data_name)
+            return None
+
+    def __array_stat(self, x, angle=False):
+        '''
+        statistics of array x.
+        Args:
+            x is a numpy array of size (m,n) or (m,). m is number of sample. n is its dimension.
+            angle: True if this is angle error. Angle error will be converted to be within
+                [-pi, pi] before calculating statistics.
+        Returns:
+            {'max':, 'avg':, 'std': }
+        '''
+        # convert angle error to be within [-pi, pi] if necessary
+        if angle is True:
+            for i in range(len(x.flat)):
+                x.flat[i] = attitude.angle_range_pi(x.flat[i])
+        # statistics
+        return {'max': np.max(np.abs(x), 0),\
+                'avg': np.average(x, 0),\
+                'std': np.std(x, 0)}
 
     def __quat2euler_zyx(self, src, dst):
         '''

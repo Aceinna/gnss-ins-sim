@@ -107,7 +107,7 @@ class Sim_data(object):
             if len(units) == len(self.units):
                 if units != self.units:
                     # data units are different from units in the manager, need convertion
-                    data = self.__convert_unit(data, units, self.units)
+                    data = convert_unit(data, units, self.units)
             else:
                 print(units)
                 print(self.units)
@@ -162,12 +162,12 @@ class Sim_data(object):
             for i in self.data:
                 file_name = data_dir + '//' + self.name + '_' + str(i) + '.csv'
                 np.savetxt(file_name,\
-                           self.__convert_unit(self.data[i], self.units, self.output_units),\
+                           convert_unit(self.data[i], self.units, self.output_units),\
                            header=header_line, delimiter=',', comments='')
         else:
             file_name = data_dir + '//' + self.name + '.csv'
             np.savetxt(file_name,\
-                       self.__convert_unit(self.data, self.units, self.output_units),\
+                       convert_unit(self.data, self.units, self.output_units),\
                        header=header_line, delimiter=',', comments='')
 
     def plot(self, x, key=None, ref=None, plot3d=False):
@@ -211,7 +211,7 @@ class Sim_data(object):
                     print('simulation data shape: ', y_data.shape)
                     raise ValueError('Check input data ref and self.data dimension.')
             # unit conversion
-            y_data = self.__convert_unit(y_data, self.units, self.output_units)
+            y_data = convert_unit(y_data, self.units, self.output_units)
             # plot
             if plot3d:
                 plot3d_in_one_figure(y_data,\
@@ -250,7 +250,7 @@ class Sim_data(object):
                 print(self.data.shape)
                 raise ValueError('Check input data ref and self.data dimension.')
         # unit conversion
-        y_data = self.__convert_unit(y_data, self.units, self.output_units)
+        y_data = convert_unit(y_data, self.units, self.output_units)
         # plot
         if plot3d:
             plot3d_in_one_figure(y_data,\
@@ -266,73 +266,73 @@ class Sim_data(object):
                                grid=self.grid,\
                                legend=self.legend)
 
-    def __convert_unit(self, data, src_unit, dst_unit):
-        '''
-        Unit conversion. Notice not to change values in data
-        Args:
-            data: convert data units from src_unit to dst_unit. Data should be a scalar,
-                a numpy array of size(n,) or (n,m). n is data length, m is data dimension.
-            src_unit: a list of unit of the data.
-            dst_unit: a list of unit we want to convert the data to.
-        Returns:
-            x: data after unit conversion.
-        '''
-        scale = self.__unit_conversion_scale(src_unit, dst_unit)
-        # unit conversion
-        x = data.copy() # avoid changing values in data
-        if isinstance(x, dict):
-            for i in x:
-                x[i] = self.__convert_unit_ndarray_scalar(x[i], scale)
-        else:
-            x = self.__convert_unit_ndarray_scalar(x, scale)
-        return x
+def convert_unit(data, src_unit, dst_unit):
+    '''
+    Unit conversion. Notice not to change values in data
+    Args:
+        data: convert data units from src_unit to dst_unit. Data should be a scalar,
+            a numpy array of size(n,) or (n,m). n is data length, m is data dimension.
+        src_unit: a list of unit of the data.
+        dst_unit: a list of unit we want to convert the data to.
+    Returns:
+        x: data after unit conversion.
+    '''
+    scale = unit_conversion_scale(src_unit, dst_unit)
+    # unit conversion
+    x = data.copy() # avoid changing values in data
+    if isinstance(x, dict):
+        for i in x:
+            x[i] = convert_unit_ndarray_scalar(x[i], scale)
+    else:
+        x = convert_unit_ndarray_scalar(x, scale)
+    return x
 
-    def __unit_conversion_scale(self, src_unit, dst_unit):
-        '''
-        Calculate unit conversion scale.
-        '''
-        m = len(dst_unit)
-        scale = np.zeros((m,))
-        for i in range(m):
-            # deg to rad
-            if src_unit[i] == 'deg' and dst_unit[i] == 'rad':
-                scale[i] = D2R
-            elif src_unit[i] == 'deg/s' and dst_unit[i] == 'rad/s':
-                scale[i] = D2R
-            # rad to deg
-            elif src_unit[i] == 'rad' and dst_unit[i] == 'deg':
-                scale[i] = 1.0/D2R
-            elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/s':
-                scale[i] = 1.0/D2R
-            else:
-                pass
-                # print('No need or not know how to convert from %s to %s.'% (src_unit, dst_unit))
-        return scale
-
-    def __convert_unit_ndarray_scalar(self, x, scale):
-        '''
-        Unit conversion of numpy array or a scalar.
-        Args:
-            x: convert x units from src_unit to dst_unit. x should be a scalar,
-                a numpy array of size(n,) or (n,m). n is x length, m is x dimension.
-            scale: 1D numpy array of unit convertion scale. x = x * scale
-        Returns:
-            x: x after unit conversion.
-        '''
-        m = scale.shape[0]
-        if isinstance(x, np.ndarray):
-            if x.ndim == 2:
-                for i in range(min(m, x.shape[1])):
-                    if scale[i] != 0.0:
-                        x[:, i] = x[:, i] * scale[i]
-            elif x.ndim == 1:
-                if scale[0] != 0.0:
-                    x = x * scale[0]
-        elif isinstance(x, (int, float)):
-            x = x * scale[0]
+def unit_conversion_scale(src_unit, dst_unit):
+    '''
+    Calculate unit conversion scale.
+    '''
+    m = len(dst_unit)
+    scale = np.zeros((m,))
+    for i in range(m):
+        # deg to rad
+        if src_unit[i] == 'deg' and dst_unit[i] == 'rad':
+            scale[i] = D2R
+        elif src_unit[i] == 'deg/s' and dst_unit[i] == 'rad/s':
+            scale[i] = D2R
+        # rad to deg
+        elif src_unit[i] == 'rad' and dst_unit[i] == 'deg':
+            scale[i] = 1.0/D2R
+        elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/s':
+            scale[i] = 1.0/D2R
         else:
-            raise ValueError('Input x should be a scalar, 1D or 2D array, ndim = %s'% data.ndim)
-        return x
+            pass
+            # print('No need or not know how to convert from %s to %s.'% (src_unit, dst_unit))
+    return scale
+
+def convert_unit_ndarray_scalar(x, scale):
+    '''
+    Unit conversion of numpy array or a scalar.
+    Args:
+        x: convert x units from src_unit to dst_unit. x should be a scalar,
+            a numpy array of size(n,) or (n,m). n is x length, m is x dimension.
+        scale: 1D numpy array of unit convertion scale. x = x * scale
+    Returns:
+        x: x after unit conversion.
+    '''
+    m = scale.shape[0]
+    if isinstance(x, np.ndarray):
+        if x.ndim == 2:
+            for i in range(min(m, x.shape[1])):
+                if scale[i] != 0.0:
+                    x[:, i] = x[:, i] * scale[i]
+        elif x.ndim == 1:
+            if scale[0] != 0.0:
+                x = x * scale[0]
+    elif isinstance(x, (int, float)):
+        x = x * scale[0]
+    else:
+        raise ValueError('Input x should be a scalar, 1D or 2D array, ndim = %s'% x.ndim)
+    return x
 
 def plot_in_one_figure(x, y, logx=False, logy=False,\
                        title='Figure', xlabel=None, ylabel=None,\

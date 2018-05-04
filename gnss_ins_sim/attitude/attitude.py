@@ -21,8 +21,8 @@ def get_cn2b_acc_mag_ned(acc, mag):
     '''
     Calculate NED to body transformation matrix from acc and mag.
     Args:
-        acc: 3x1 acc measurement.
-        mag: 3x1 mag measurement.
+        acc: acc measurement, numpy array of 3x1.
+        mag: mag measurement, numpy array of 3x1.
     Returns:
         cn2b: transformation matrix from NED to body
     '''

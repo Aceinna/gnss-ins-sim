@@ -142,12 +142,12 @@ class Sim(object):
         #### run simulation
         if self.amgr.algo is not None:
             # get algo input data
-            algo_input = self.dmgr.get_data(self.amgr.algo.input)
+            algo_input = self.dmgr.get_data(self.amgr.input)
             # run the algo and get algo output
             algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
             # add algo output to ins_data_manager
-            for i in range(len(self.amgr.algo.output)):
-                self.dmgr.add_data(self.amgr.algo.output[i], algo_output[i])
+            for i in range(len(self.amgr.output)):
+                self.dmgr.add_data(self.amgr.output[i], algo_output[i])
         # simulation complete successfully
         self.sim_complete = True
 
@@ -218,8 +218,13 @@ class Sim(object):
                       (i, sim_idx[i], self.sim_count))
         for i in invalid_idx:
             sim_idx.remove(i)
+        keys = []
+        for i in range(self.amgr.nalgo):
+            algo_name = self.amgr.get_algo_name(i)
+            for j in range(len(sim_idx)):
+                keys.append(algo_name+'_'+str(j))
         # plot data
-        self.dmgr.plot(what_to_plot, sim_idx, opt)
+        self.dmgr.plot(what_to_plot, keys, opt)
 
     def __summary(self, data_dir):
         '''
@@ -253,7 +258,7 @@ class Sim(object):
                             ' (in units of ' +\
                             self.dmgr.get_data_all(data_name).output_units[0] +')\n'
                 if isinstance(err_stat['max'], dict):
-                    for sim_run in err_stat['max']:
+                    for sim_run in sorted(err_stat['max'].keys()):
                         self.sum += '\tSimulation run ' + str(sim_run) + ':\n'
                         self.sum += '\t\t--Max error: ' + str(err_stat['max'][sim_run]) + '\n'
                         self.sum += '\t\t--Avg error: ' + str(err_stat['avg'][sim_run]) + '\n'

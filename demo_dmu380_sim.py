@@ -10,7 +10,7 @@ Created on 2018-03-16
 import os
 import math
 from gnss_ins_sim.sim import imu_model
-from gnss_ins_sim.sim import imu_sim
+from gnss_ins_sim.sim import ins_sim
 
 # globals
 D2R = math.pi/180.0
@@ -35,9 +35,10 @@ def test_dmu380_sim():
     algo = dmu380_sim.DMU380Sim(cfg_file)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, 0.0, fs], imu,
+    sim = ins_sim.Sim([fs, 0.0, fs],
                       motion_def_path+"//motion_def-Komatsu_level_50m_0_0.csv",
                       ref_frame=1,
+                      imu=imu,
                       mode=None,
                       env=None,
                       algorithm=algo)

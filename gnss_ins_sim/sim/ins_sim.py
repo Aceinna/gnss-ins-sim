@@ -151,13 +151,15 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
-    def results(self, data_dir=None, gen_kml=False):
+    def results(self, data_dir=None, end_point=False, gen_kml=False):
         '''
         simulation results.
         Args:
             data_dir: if not None, save simulation data to files.
                 if data_dir is a valid directory, data files will be saved in data_idr,
                 else, data files will be saved in the default directory './data/'
+            end_point: True if want end-point error statistics.
+                    False if want process error statistics
             gen_kml: generate .kml files using the reference position and simulation position
         Returns: a dict contains all simulation results.
         '''
@@ -184,7 +186,7 @@ class Sim(object):
                     data_dir = self.__check_data_dir(data_dir)
                 self.dmgr.save_kml_files(data_dir)
             # simulation summary and save summary to file
-            self.__summary(data_dir)  # generate summary
+            self.__summary(data_dir, end_point=end_point)  # generate summary
             self.sim_results = True
         else:
             print("Call Sim.run() to run the simulaltion first.")
@@ -226,7 +228,7 @@ class Sim(object):
         # plot data
         self.dmgr.plot(what_to_plot, keys, opt)
 
-    def __summary(self, data_dir):
+    def __summary(self, data_dir, end_point=False):
         '''
         Summary of sim results.
         '''
@@ -250,8 +252,8 @@ class Sim(object):
             if data_name not in self.dmgr.available:
                 continue
             is_angle = self.interested_error[data_name] == 'angle'
-            err_stat = self.dmgr.get_error_stat(data_name, end_point=False, angle=is_angle,
-                                                use_output_units=True)
+            err_stat = self.dmgr.get_error_stat(data_name, end_point=end_point,\
+                                                angle=is_angle, use_output_units=True)
             if err_stat is not None:
                 self.sum += '\n-----------statistics for ' +\
                             self.dmgr.get_data_all(data_name).description +\

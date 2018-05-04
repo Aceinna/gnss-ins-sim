@@ -11,7 +11,7 @@ import os
 import math
 import numpy as np
 from gnss_ins_sim.sim import imu_model
-from gnss_ins_sim.sim import imu_sim
+from gnss_ins_sim.sim import ins_sim
 
 # globals
 D2R = math.pi/180
@@ -42,8 +42,10 @@ def test_allan():
     algo = allan_analysis.Allan()
 
     #### start simulation
-    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, motion_def_path+"//motion_def-Allan.csv",
+    sim = ins_sim.Sim([fs, 0.0, 0.0],
+                      motion_def_path+"//motion_def-Allan.csv",
                       ref_frame=1,
+                      imu=imu,
                       mode=None,
                       env=None,
                       algorithm=algo)

@@ -11,7 +11,7 @@ import os
 import math
 import numpy as np
 from gnss_ins_sim.sim import imu_model
-from gnss_ins_sim.sim import imu_sim
+from gnss_ins_sim.sim import ins_sim
 
 # globals
 D2R = math.pi/180
@@ -58,8 +58,10 @@ def test_free_integration():
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
 
     #### start simulation
-    sim = imu_sim.Sim([fs, 0.0, 0.0], imu, motion_def_path+"//motion_def-90deg_turn.csv",
+    sim = ins_sim.Sim([fs, 0.0, 0.0],
+                      motion_def_path+"//motion_def-90deg_turn.csv",
                       ref_frame=1,
+                      imu=imu,
                       mode=None,
                       env=None,
                       algorithm=algo)
@@ -67,7 +69,7 @@ def test_free_integration():
     sim.run(1000)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results
-    sim.results()
+    sim.results(end_point=True)
 
 if __name__ == '__main__':
     test_free_integration()

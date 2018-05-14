@@ -141,6 +141,8 @@ class Sim(object):
 
         #### run simulation
         if self.amgr.algo is not None:
+            # tell data manager the output of the algorithm
+            self.dmgr.set_algo_output(self.amgr.output)
             # get algo input data
             algo_input = self.dmgr.get_data(self.amgr.input)
             # run the algo and get algo output
@@ -220,8 +222,10 @@ class Sim(object):
                       (i, sim_idx[i], self.sim_count))
         for i in invalid_idx:
             sim_idx.remove(i)
+        # generate keys to index simulation data
         keys = []
         for i in range(self.amgr.nalgo):
+            # results from different algorithms are indexed by algo_name and simulation runs
             algo_name = self.amgr.get_algo_name(i)
             for j in range(len(sim_idx)):
                 keys.append(algo_name+'_'+str(j))

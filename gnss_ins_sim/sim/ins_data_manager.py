@@ -225,15 +225,17 @@ class InsDataMgr(object):
             self.fs_mag.data = fs[2]
             self.available.append(self.fs_mag.name)
         # the following will not be saved
-        self.do_not_save = [self.fs.name, self.fs_gps.name,\
+        self.__do_not_save = [self.fs.name, self.fs_gps.name,\
                             self.fs_mag.name, self.ref_frame.name]
+        # algorithm output
+        self.__algo_output = []
         # associated data mapping. If the user want Euler angles, but only quaternions are
         # available, Euler angles will be automatically calculated, added to self.available and
         # returned.
-        self.data_map = {self.ref_att_euler.name: [self.ref_att_quat, self.__euler2quat_zyx],
-                         self.ref_att_quat.name: [self.ref_att_euler, self.__quat2euler_zyx],
-                         self.att_euler.name: [self.att_quat, self.__euler2quat_zyx],
-                         self.att_quat.name: [self.att_euler, self.__quat2euler_zyx]}
+        self.__data_map = {self.ref_att_euler.name: [self.ref_att_quat, self.__euler2quat_zyx],
+                           self.ref_att_quat.name: [self.ref_att_euler, self.__quat2euler_zyx],
+                           self.att_euler.name: [self.att_quat, self.__euler2quat_zyx],
+                           self.att_quat.name: [self.att_euler, self.__quat2euler_zyx]}
 
     def add_data(self, data_name, data, key=None, units=None):
         '''
@@ -263,9 +265,22 @@ class InsDataMgr(object):
         else:
             raise ValueError("Unsupported data: %s."%data_name)
 
+    def set_algo_output(self, algo_output):
+        '''
+        Tell data manager what output an algorithm provide
+        Args:
+            algo_output: a list of data names.
+        '''
+        for i in algo_output:
+            if self.is_supported(i):
+                self.__algo_output.append(i)
+            else:
+                raise ValueError("Unsupported algorithm output: %s."% i)
+
+
     def get_data(self, data_names):
         '''
-        Get data.
+        Get data section of data_names.
         Args:
             data_names: a list of data names
         Returns:
@@ -283,7 +298,7 @@ class InsDataMgr(object):
 
     def get_data_all(self, data_name):
         '''
-        get the description of a var accroding to data_name
+        get the Sim_data object accroding to data_name
         '''
         if data_name in self.__all:
             return self.__all[data_name]
@@ -341,7 +356,7 @@ class InsDataMgr(object):
             data_dir: Data files will be saved in data_idr,
         '''
         for data in self.available:
-            if data not in self.do_not_save:
+            if data not in self.__do_not_save:
                 # print('saving %s'% data)
                 self.__all[data].save_to_file(data_dir)
 
@@ -381,7 +396,7 @@ class InsDataMgr(object):
                 ## choose proper x axis data for specific y axis data
                 if i == self.ref_gps.name or i == self.gps.name or i == self.gps_time.name:
                     x_axis = self.gps_time
-                elif self.algo_time.name in self.available:#*****
+                elif i in self.__algo_output and self.algo_time.name in self.available:
                     x_axis = self.algo_time
                 elif i == self.ad_gyro.name or i == self.ad_accel.name or\
                     i == self.allan_t.name:
@@ -463,24 +478,54 @@ class InsDataMgr(object):
         '''
         process error statistics
         '''
+        # data_name is available
         if data_name not in self.available:
             print('__process_error_stat: %s is not available.'% data_name)
             return None
+        # reference of data_name is available
         ref_data_name = 'ref_' + data_name
         if ref_data_name not in self.available:
             print('%s has no reference.'% data_name)
             return None
+        # begin to calculate error stat
         if isinstance(self.__all[data_name].data, dict):
             stat = {'max': {}, 'avg': {}, 'std': {}}
+            ref_data = None
             for i in self.__all[data_name].data:
-                err = self.__all[data_name].data[i] - self.__all[ref_data_name].data
+                # get raw reference data for first key in the dict, use reference from last
+                # step for other keys to avoid multiple interps.
+                if ref_data is None:
+                    # use copy to avoid changing data if interp
+                    ref_data = self.__all[ref_data_name].data.copy()
+                # Interpolation
+                if ref_data.shape[0] != self.__all[data_name].data[i].shape[0]:
+                    print("%s has different number of samples from its reference."% data_name)
+                    print('Interpolation needed.')
+                    if self.algo_time.name in self.available and self.time.name in self.available:
+                        ref_data = self.__interp(self.algo_time.data[i], self.time.data, ref_data)
+                    else:
+                        print("%s or %s is not available."% (self.algo_time.name, self.time.name))
+                        return None
+                # error stat
+                err = self.__all[data_name].data[i] - ref_data
                 tmp = self.__array_stat(err, angle)
                 stat['max'][i] = tmp['max']
                 stat['avg'][i] = tmp['avg']
                 stat['std'][i] = tmp['std']
             return stat
         elif isinstance(self.__all[data_name].data, np.ndarray):
-            err = self.__all[data_name].data - self.__all[ref_data_name].data
+            ref_data = self.__all[ref_data_name].data.copy()
+            # Interpolation
+            if ref_data.shape[0] != self.__all[data_name].data.shape[0]:
+                print("%s has different number of samples from its reference."% data_name)
+                print('Interpolation needed.')
+                if self.algo_time.name in self.available and self.time.name in self.available:
+                    ref_data = self.__interp(self.algo_time.data, self.time.data, ref_data)
+                else:
+                    print("%s or %s is not available."% (self.algo_time.name, self.time.name))
+                    return None
+            # error stat
+            err = self.__all[data_name].data - ref_data
             return self.__array_stat(err, angle)
         else:
             print('Unsupported data type to calculate error statitics for %s'% data_name)
@@ -504,6 +549,22 @@ class InsDataMgr(object):
         return {'max': np.max(np.abs(x), 0),\
                 'avg': np.average(x, 0),\
                 'std': np.std(x, 0)}
+
+    def __interp(self, x, xp, fp):
+        '''
+        data interpolation
+        '''
+        m = x.shape[0]
+        ndim = fp.ndim
+        if ndim == 1:
+            return np.interp(x, xp, fp)
+        elif ndim == 2:
+            y = np.zeros((m, fp.shape[1]))
+            for i in range(fp.shape[1]):
+                y[:, i] = np.interp(x, xp, fp[:, i])
+            return y
+        else:
+            raise ValueError('only 1-D or 2-D fp is supported.')
 
     def __quat2euler_zyx(self, src, dst):
         '''

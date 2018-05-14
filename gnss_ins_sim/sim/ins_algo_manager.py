@@ -29,8 +29,8 @@ class InsAlgoMgr(object):
         self.nin = 0
         self.nout = 0
         self.nalgo = 0
+        # check algorithm
         if self.algo is not None:
-            # check algorithm
             self.__check_algo()
 
     def run_algo(self, input_data, keys=None):
@@ -149,6 +149,7 @@ class InsAlgoMgr(object):
             ## check if the other algorithms have the same input and output as the first algorithm
             for i in range(1, self.nalgo):
                 if self.algo[i].input != self.input or self.algo[i].output != self.output:
-                    pass
+                    self.algo = None
+                    raise ValueError("Algorithm #%s has different intput or output."% i)
         except:
             raise ValueError('algorithm input or output is not a valid list or tuple.')

@@ -499,9 +499,12 @@ class InsDataMgr(object):
                     ref_data = self.__all[ref_data_name].data.copy()
                 # Interpolation
                 if ref_data.shape[0] != self.__all[data_name].data[i].shape[0]:
-                    print("%s has different number of samples from its reference."% data_name)
-                    print('Interpolation needed.')
+                    # print("%s has different number of samples from its reference."% data_name)
+                    # print('Interpolation needed.')
                     if self.algo_time.name in self.available and self.time.name in self.available:
+                        # This is needed when algo output different samples for multiple runs
+                        if ref_data.shape[0] != self.time.data[0]:
+                            ref_data = self.__all[ref_data_name].data.copy()
                         ref_data = self.__interp(self.algo_time.data[i], self.time.data, ref_data)
                     else:
                         print("%s or %s is not available."% (self.algo_time.name, self.time.name))

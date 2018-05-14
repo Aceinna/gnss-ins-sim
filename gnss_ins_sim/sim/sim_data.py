@@ -233,7 +233,10 @@ class Sim_data(object):
         '''
         # x axis
         if isinstance(x.data, dict):
-            x_data = x.data[0]
+            # randomly choose data of any key
+            for i in x.data:
+                x_data = x.data[i]
+                break
         else:
             x_data = x.data
         # error
@@ -242,9 +245,9 @@ class Sim_data(object):
             try:
                 y_data = self.data - ref
                 if self.units == ['rad', 'rad', 'rad']:
-                        y_data = y_data % attitude.TWO_PI
-                        idx = y_data > math.pi
-                        y_data[idx] = y_data[idx] - attitude.TWO_PI
+                    y_data = y_data % attitude.TWO_PI
+                    idx = y_data > math.pi
+                    y_data[idx] = y_data[idx] - attitude.TWO_PI
             except:
                 print(ref.shape)
                 print(self.data.shape)

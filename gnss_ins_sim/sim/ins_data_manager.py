@@ -353,12 +353,17 @@ class InsDataMgr(object):
         '''
         save data to files
         Args:
-            data_dir: Data files will be saved in data_idr,
+            data_dir: Data files will be saved in data_idr
+        Returns:
+            data_saved: a list of data that are saved.
         '''
+        data_saved = []
         for data in self.available:
             if data not in self.__do_not_save:
                 # print('saving %s'% data)
                 self.__all[data].save_to_file(data_dir)
+                data_saved.append(data)
+        return data_saved
 
     def plot(self, what_to_plot, sim_idx, opt=None):
         '''

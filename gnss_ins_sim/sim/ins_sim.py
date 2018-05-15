@@ -178,17 +178,18 @@ class Sim(object):
             # generate associated data
             self.__add_associated_data_to_results()
             # check data dir
+            data_saved = []
             if data_dir is not None:    # data_dir specified, meaning to save .csv files
                 data_dir = self.__check_data_dir(data_dir)
                 # save data files
-                self.dmgr.save_data(data_dir)
+                data_saved = self.dmgr.save_data(data_dir)
             # generate .kml files
             if gen_kml is True:       # want to gen kml without specifying the data_dir
                 if data_dir is None:
                     data_dir = self.__check_data_dir(data_dir)
                 self.dmgr.save_kml_files(data_dir)
             # simulation summary and save summary to file
-            self.__summary(data_dir, end_point=end_point)  # generate summary
+            self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
             self.sim_results = True
         else:
             print("Call Sim.run() to run the simulaltion first.")
@@ -232,11 +233,12 @@ class Sim(object):
         # plot data
         self.dmgr.plot(what_to_plot, keys, opt)
 
-    def __summary(self, data_dir, end_point=False):
+    def __summary(self, data_dir, data_saved, end_point=False):
         '''
         Summary of sim results.
         '''
         #### simulation config
+        self.sum += '\n------------------------------------------------------------\n'
         # sample frequency
         self.sum += self.dmgr.fs.description + ': [' +\
                     self.dmgr.fs.name + '] = ' +\
@@ -247,11 +249,16 @@ class Sim(object):
                     str(len(self.dmgr.time.data)/self.dmgr.fs.data) + ' s' + '\n'
         # simulation times
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
+        #### available data
+        self.sum += '\n------------------------------------------------------------\n'
         if data_dir is not None:
             self.sum += 'Simulation results are saved to ' + data_dir + '\n'
-        #### supported plot
-
+            self.sum += 'The following results are saved:\n'
+            for i in data_saved:
+                self.sum += '\t' + i  + ': ' + self.dmgr.get_data_all(i).description + '\n'
         #### error of algorithm output
+        self.sum += '\n------------------------------------------------------------\n'
+        self.sum += 'The following are error statistics.'
         for data_name in self.interested_error:
             if data_name not in self.dmgr.available:
                 continue

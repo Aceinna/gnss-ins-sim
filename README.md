@@ -19,6 +19,7 @@ We provide the following demos:
 | demo_inclinometer_mahony.py | A demo of an dynamic inclinometer algorithm based on Mahony's theory. This demos shows how to generate error plot of interested data.|
 | demo_dmu380_sim.py | A demo of DMU380 algorithm. The DMU380 algorithm is first compiled as a shared library. This demo shows how to call the shared library.|
 | demo_multiple_algorithms.py | A demo of multiple algorithms in a simulation. This demo shows how to compare resutls of multiple algorithm.|
+| demo_gen_data_from_files.py | This demo shows how to generate data from logged data files.|
 
 ## Step 1 Define the IMU model
 

@@ -18,6 +18,7 @@ We provide the following demos:
 | demo_free_integration.py | A demo of a simple strapdown system. The simulation runs for 1000 times. The statistics of the INS results of the 1000 simulations are generated.|
 | demo_inclinometer_mahony.py | A demo of an dynamic inclinometer algorithm based on Mahony's theory. This demos shows how to generate error plot of interested data.|
 | demo_dmu380_sim.py | A demo of DMU380 algorithm. The DMU380 algorithm is first compiled as a shared library. This demo shows how to call the shared library.|
+| demo_multiple_algorithms.py | A demo of multiple algorithms in a simulation. This demo shows how to compare resutls of multiple algorithm.|
 
 ## Step 1 Define the IMU model
 
@@ -166,16 +167,16 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 ### step 3.1 Create the simulation object:
 
 ```python
-  sim = imu_sim.Sim(
+  sim = ins_sim.Sim(
         # sample rate of imu (gyro and accel), GPS and magnetometer
         [fs, fs_gps, fs_mag],
-        # the imu object created at step 1
-        imu,
         # initial conditions and motion definition,
         # see IMU in imu_sim.py for details
         data_path+"//motion_def-90deg_turn.csv",
         # reference frame
         ref_frame=1,
+        # the imu object created at step 1
+        imu,
         # vehicle maneuver capability
         # [max accel, max angular accel, max angular rate]
         mode=np.array([1.0, 0.5, 2.0]),
@@ -185,6 +186,8 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
         # the algorithm object created at step 2
         algorithm=algo)
 ```
+
+ins_sim.Sim supports running multiple algorithms in one simulation. All the algorithms should have the same input and same output. In this case, the parameter algorithm should be a list of user defined algorithms.
 
 There are three kinds of vibration models:
 
@@ -196,7 +199,7 @@ There are three kinds of vibration models:
 | 'n-mHz-sinusoidal' | sinusoidal vibration of m Hz, amplitude is n m/s^2 |
 | numpy array of size (n,4) | single-sided PSD. [freqency, x, y, z], m^2/s^4/Hz |
 
-### Step 3.2 Run the simulation:
+### Step 3.2 Run the simulation
 
 ```python
 sim.run()     # run for 1 time

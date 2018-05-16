@@ -74,9 +74,10 @@ class Sim(object):
                            not be added. I did in this way here just to preserve all usefull
                            information. Keep this in mind if you use this result.
 
-            imu: If you want to do simulation with logged data files, set imu=None.
+            imu: Define the IMU error model. See IMU in imu_model.py.
+                If you want to do simulation with logged data files, set imu=None.
                 If you do not have logged data files and want to generate sensor data from a motion
-                definition file, you should define the IMU error model. See IMU in imu_model.py.
+                definition file, you should specify the IMU model.
 
             mode: simu mode could be a string to specify a built-in mode:
                 'flight':
@@ -93,7 +94,8 @@ class Sim(object):
                 '[nx ny nz]-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
                 numpy array of (n,4): single-sided PSD. Each row is [freq, x, y, z], m^2/s^4/Hz
 
-            algorithm: a user defined algorithm.
+            algorithm: a user defined algorithm or list of algorithms. If there are multiple
+                algorithms, all algorithms should have the same input and output.
         '''
         self.fs = fs
         self.imu = imu

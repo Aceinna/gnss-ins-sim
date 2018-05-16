@@ -160,7 +160,7 @@ class Sim_data(object):
         #### save data and header to .csv files
         if isinstance(self.data, dict):
             for i in self.data:
-                file_name = data_dir + '//' + self.name + '_' + str(i) + '.csv'
+                file_name = data_dir + '//' + self.name + '-' + str(i) + '.csv'
                 np.savetxt(file_name,\
                            convert_unit(self.data[i], self.units, self.output_units),\
                            header=header_line, delimiter=',', comments='')
@@ -176,6 +176,7 @@ class Sim_data(object):
         Args:
             key is a tuple or list of keys
             x: x axis data
+            ref: reference data for error plot
         '''
         if self.plottable:
             if isinstance(self.data, dict):
@@ -186,7 +187,13 @@ class Sim_data(object):
     def __plot_dict(self, x, key, ref=None, plot3d=False):
         '''
         self.data is a dict. plot self.data according to key
+        Args:
+            x: x axis data Sim_data object.
+            key: a list of keys to specify what data in self.data is plotted.
+                If key is an empty list, plot all keys in self.data
         '''
+        if key == []:
+            key = self.data.keys()
         for i in key:
             y_data = self.data[i]
             # x axis

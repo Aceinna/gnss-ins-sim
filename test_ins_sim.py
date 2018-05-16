@@ -38,18 +38,18 @@ def test_path_gen():
 
     #### start simulation
     sim = ins_sim.Sim([fs, fs_gps, fs_mag],
-                      motion_def_path+"//motion_def-static.csv",
-                    #   'e://Projects//gnss-ins-sim//demo_saved_data//2018-04-24-14-55-53//',
+                    #   motion_def_path+"//motion_def-static.csv",
+                      'e://Projects//gnss-ins-sim//demo_saved_data//2018-05-16-14-23-34//',
                       ref_frame=1,
                       imu=imu,
                       mode=None,
                       env=None,
-                      algorithm=[algo1, algo2])
-    sim.run(3)
+                      algorithm=None)
+    sim.run()
     # save simulation data to files
     sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
-    sim.plot(['att_euler'], opt={'att_euler': 'error'})
+    sim.plot(['ref_att_euler', 'att_euler'], opt={'att_euler': 'error'})
 
 if __name__ == '__main__':
     test_path_gen()

@@ -164,7 +164,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 
 ## Step 3 Run the simulation
 
-### step 3.1 Create the simulation object:
+### step 3.1 Create the simulation object
 
 ```python
   sim = ins_sim.Sim(

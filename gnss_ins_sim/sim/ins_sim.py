@@ -16,7 +16,7 @@ from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
 from .. attitude import attitude
 
-D2R = math.pi/180
+D2R = math.pi/180.0
 # built-in mobility
 high_mobility = np.array([1.0, 0.5, 2.0])   # m/s/s, rad/s/s, rad/s
 
@@ -29,14 +29,14 @@ class Sim(object):
         '''
         Args:
             fs: [fs_imu, fs_gps, fs_mag], Hz.
-                fs_imu: The sample rate of IMU.
+                fs_imu: The sample rate of IMU. This is also the sampel rate of the simulatino.
                 fs_gps: The sample rate of GPS.
                 fs_mag: not used now. The sample rate of the magnetometer is
                     the same as that of the imu.
 
             motion_def: If you want to do simulation with logged data files, motion_def should be
-                a directory contains the data files. Data files should be named as follows:
-                ......
+                a directory contains the data files. Data files should be named as data_name.csv.
+                Supported data names are algorithm input. (Refer to readme.md)
                 If you do not have logged data files and want to generate sensor data from a motion
                 definition file,  motion_def should be a .csv file to define the waypoints.
                 The .csv file should be organized as follows:
@@ -65,12 +65,14 @@ class Sim(object):
                            y axis pointing eastward,
                            z axis pointing downward.
                         1: a virtual inertial frame with constant g,
-                           x axis pointing along magnetic north,
+                           x axis pointing along geographic/magnetic north,
                            z axis pointing along g,
                            y axis completing a right-handed coordinate system.
-                           Notice: For this virtual inertial frame, position is indeed the sum of
+                           **Notice: For this virtual inertial frame, position is indeed the sum of
                            the initial position in ecef and the relative position in the virutal
-                           inertial frame.
+                           inertial frame. Indeed, two vectors expressed in different frames should
+                           not be added. I did in this way here just to preserve all usefull
+                           information. Keep this in mind if you use this result.
 
             imu: If you want to do simulation with logged data files, set imu=None.
                 If you do not have logged data files and want to generate sensor data from a motion
@@ -108,6 +110,7 @@ class Sim(object):
         # simulation data manager
         self.dmgr = InsDataMgr(fs, self.ref_frame)
         self.data_src = motion_def
+        self.data_from_files = False
         # algorithm manager
         self.amgr = InsAlgoMgr(algorithm)
 
@@ -159,9 +162,18 @@ class Sim(object):
         Args:
             data_dir: if not None, save simulation data to files.
                 if data_dir is a valid directory, data files will be saved in data_idr,
-                else, data files will be saved in the default directory './data/'
+                else, data files will be saved in the default directory './data/'. The file name
+                is in the form of data_name-key.csv. data_name is the name of the data as defined
+                in ins_data_manager. key is determined by the algorithm name and simulation run.
+                E.g., if have two algorithms in one simulation [algo_with_name, algo_no_name]
+                and the simulation is ran for 10 times. algo_with_name has a name field 'tilt'
+                and algo_no_name does not. Both algorithms output Euler angles. Then the results
+                of the 0-th simulation run are saved to files named att_euler-tilt_0.csv and
+                att_euler-algo1.csv. That is, if the algorithm has name, the name is used in the
+                key. If the algorithm has no name, a name "algo"+order of the algorithm in the
+                algorithm list is used as the algorithm name in the key.
             end_point: True if want end-point error statistics.
-                    False if want process error statistics
+                    False if want process error statistics.
             gen_kml: generate .kml files using the reference position and simulation position
         Returns: a dict contains all simulation results.
         '''
@@ -301,6 +313,7 @@ class Sim(object):
         if os.path.isdir(self.data_src):    # gen data from files in a directory
             self.data_src = os.path.abspath(self.data_src)
             self.__gen_data_from_files()
+            self.data_from_files = True
         elif os.path.isfile(self.data_src): # gen data from motion definitions in a .csv file
             self.__gen_data_from_pathgen()
         else:
@@ -373,10 +386,10 @@ class Sim(object):
         '''
         Get data name and data key from the file_name.
         Args:
-            file_name: a string formatted as name_key. For example, accel_0.csv means the file
-                contains #0 set of accelerometer measurements. The data_name is accel, and the
+            file_name: a string formatted as name_key. For example, accel-0.csv means the file
+                contains 0-th set of accelerometer measurements. The data_name is accel, and the
                 data key is 0. ref_accel.csv means teh file contains reference acceleratons (no
-                error). The data_name is ref_accel, and data_key is None
+                error). The data_name is ref_accel, and data_key is None.
         Returns:
             data_name: name of data in this file. If the file is not a .csv file, data_name is
                 None.
@@ -388,12 +401,11 @@ class Sim(object):
         file_name = file_name.lower()
         if file_name[-4::] == '.csv':
             data_name = file_name[0:-4]
-            if data_name[-1].isdigit():
-                # file name contains a key
-                i = data_name.rfind('_')
-                if i != -1:
-                    data_key = int(data_name[i+1::])
-                    data_name = data_name[0:i]
+            # file name contains a key
+            i = data_name.rfind('-')
+            if i != -1:
+                data_key = data_name[i+1::]
+                data_name = data_name[0:i]
         return data_name, data_key
 
     def __get_data_units(self, file_name):

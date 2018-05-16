@@ -20,25 +20,15 @@ fs = 100.0          # IMU sample frequency
 fs_gps = 10.0       # GPS sample frequency
 fs_mag = fs         # magnetometer sample frequency, not used for now
 
-def test_path_gen():
+def test_gen_data_from_files():
     '''
     test only path generation in Sim.
     '''
     #### choose a built-in IMU model, typical for IMU381
-    imu_err = 'mid-accuracy'
-    # generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True)
-
-    #### Algorithm
-    # ECF based inclinometer
-    from demo_algorithms import inclinometer_mahony
-    algo1 = inclinometer_mahony.MahonyFilter()
-    from demo_algorithms import inclinometer_acc
-    algo2 = inclinometer_acc.TiltAcc()
+    imu = None
 
     #### start simulation
     sim = ins_sim.Sim([fs, fs_gps, fs_mag],
-                    #   motion_def_path+"//motion_def-static.csv",
                       'e://Projects//gnss-ins-sim//demo_saved_data//2018-05-16-14-23-34//',
                       ref_frame=1,
                       imu=imu,
@@ -47,9 +37,9 @@ def test_path_gen():
                       algorithm=None)
     sim.run()
     # save simulation data to files
-    sim.results('.//demo_saved_data//')
+    sim.results()
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
     sim.plot(['ref_att_euler', 'att_euler'], opt={'att_euler': 'error'})
 
 if __name__ == '__main__':
-    test_path_gen()
+    test_gen_data_from_files()

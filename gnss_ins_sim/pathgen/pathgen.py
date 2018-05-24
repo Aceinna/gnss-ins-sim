@@ -44,8 +44,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 3: relative att and vel change.
                 4: absolute att, relative vel.
                 5: relative att, absolute vel.
-            motion_def[:,1:5]: motion params = [Att command, vel along body x axis command].
-            motion_def[:,5] = maximum time for the given segment, sec.
+            motion_def[:,1:6]: motion params = [Att command, vel along body axis command].
+            motion_def[:,7] = maximum time for the given segment, sec.
         output_def: [[simulation_over_sample_rate imu_freq];[1 gps_freq] or [2 odo_freq]], Hz.
         mobility: [max_acceleration, max_angular_acceleration, max_angular_velocity]
         ref_frame: reference frame used as the navigation frame,
@@ -109,9 +109,9 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     ### convert time duration to simulation cycles
     sim_count_max = 0
     for i in range(0, motion_def.shape[0]):
-        seg_count = motion_def[i, 5] * out_freq         # max count for this segment
+        seg_count = motion_def[i, 7] * out_freq         # max count for this segment
         sim_count_max += seg_count                      # data count of all segments
-        motion_def[i, 5] = round(seg_count * sim_osr)   # simulation count
+        motion_def[i, 7] = round(seg_count * sim_osr)   # simulation count
 
     ### create output arrays
     sim_count_max = int(sim_count_max)
@@ -175,7 +175,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
         att_com_filt = att
         vel_com_b_filt = vel_b
         # generate trajectory according to the command of this segment
-        sim_count_max = sim_count + motion_def[i, 5]    # max cycles to execute command of this seg
+        sim_count_max = sim_count + motion_def[i, 7]    # max cycles to execute command of this seg
         com_complete = 0                                # complete command of this seg, go to next
         while (sim_count < sim_count_max) and (com_complete == 0):
             # handle the input motion commands
@@ -406,19 +406,19 @@ def parse_motion_def(motion_def_seg, att, vel):
     """
     if motion_def_seg[0] == 1:
         att_com = [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
-        vel_com = [motion_def_seg[4], 0, 0]
+        vel_com = [motion_def_seg[4], motion_def_seg[5], motion_def_seg[6]]
     elif motion_def_seg[0] == 2:   # abs att and abs vel
         att_com = [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
-        vel_com = [motion_def_seg[4], 0, 0]
+        vel_com = [motion_def_seg[4], motion_def_seg[5], motion_def_seg[6]]
     elif motion_def_seg[0] == 3:   # rel att and rel vel
         att_com = att + [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
-        vel_com = vel + [motion_def_seg[4], 0, 0]
+        vel_com = vel + [motion_def_seg[4], motion_def_seg[5], motion_def_seg[6]]
     elif motion_def_seg[0] == 4:   # abs att and rel vel
         att_com = [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
-        vel_com = vel + [motion_def_seg[4], 0, 0]
+        vel_com = vel + [motion_def_seg[4], motion_def_seg[5], motion_def_seg[6]]
     elif motion_def_seg[0] == 5:   # rel att and abs vel
         att_com = att + [motion_def_seg[1], motion_def_seg[2], motion_def_seg[3]]
-        vel_com = [motion_def_seg[4], 0, 0]
+        vel_com = [motion_def_seg[4], motion_def_seg[5], motion_def_seg[6]]
     return att_com, vel_com
 
 def acc_gen(fs, ref_a, acc_err, vib_def=None):

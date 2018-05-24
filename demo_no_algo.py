@@ -32,7 +32,7 @@ def test_path_gen():
 
     #### start simulation
     sim = ins_sim.Sim([fs, fs_gps, fs_mag],
-                      motion_def_path+"//motion_def.csv",
+                      motion_def_path+"//motion_def-3d.csv",
                       ref_frame=1,
                       imu=imu,
                       mode=None,
@@ -42,7 +42,7 @@ def test_path_gen():
     # save simulation data to files
     sim.results('.//demo_saved_data//')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
-    # sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
+    sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
 
 if __name__ == '__main__':
     test_path_gen()

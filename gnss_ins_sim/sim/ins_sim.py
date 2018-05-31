@@ -11,6 +11,7 @@ import os
 import time
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 from .ins_data_manager import InsDataMgr
 from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
@@ -238,14 +239,21 @@ class Sim(object):
         for i in invalid_idx:
             sim_idx.remove(i)
         # generate keys to index simulation data
-        keys = []
-        for i in range(self.amgr.nalgo):
-            # results from different algorithms are indexed by algo_name and simulation runs
-            algo_name = self.amgr.get_algo_name(i)
-            for j in range(len(sim_idx)):
-                keys.append(algo_name+'_'+str(j))
-        # plot data
-        self.dmgr.plot(what_to_plot, keys, opt)
+        for data in what_to_plot:
+            # generate keys for this var, only algo output has algo name in keys
+            if data in self.amgr.output:
+                keys = []
+                for i in range(self.amgr.nalgo):
+                    # results from different algorithms are indexed by algo_name and simulation runs
+                    algo_name = self.amgr.get_algo_name(i)
+                    for j in range(len(sim_idx)):
+                        keys.append(algo_name+'_'+str(j))
+            else:
+                keys = sim_idx
+            # plot data
+            self.dmgr.plot([data], keys, opt)
+        # show figures
+        plt.show()
 
     def __summary(self, data_dir, data_saved, end_point=False):
         '''

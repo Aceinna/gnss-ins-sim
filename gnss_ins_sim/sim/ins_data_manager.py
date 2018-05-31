@@ -365,14 +365,14 @@ class InsDataMgr(object):
                 data_saved.append(data)
         return data_saved
 
-    def plot(self, what_to_plot, sim_idx, opt=None):
+    def plot(self, what_to_plot, keys, opt=None):
         '''
         Plot specified results.
         Args:
             what_to_plot: a string list to specify what to plot. See manual for details.
-            sim_idx: specify the simulation index. This can be an integer, or a list or tuple.
-                Each element should be within [0, num_times-1]. Default is None, and plot data
-                of all simulations.
+            keys: specify the simulation data of multiple run. This can be an integer, or a list
+                or tuple. Each element should be within [0, num_times-1]. Default is None, and
+                plot data of all simulations.
             opt: a dict to specify plot options. its keys are composed of elements in what_to_plot.
                 values can be:
                     'error': plot the error of the data specified by what_to_plot w.r.t ref
@@ -407,14 +407,12 @@ class InsDataMgr(object):
                     i == self.allan_t.name:
                     x_axis = self.allan_t
                 # print('plot: %s, %s.'% (x_axis.name, i))
-                self.__all[i].plot(x_axis, key=sim_idx, ref=ref, plot3d=plot3d)
+                self.__all[i].plot(x_axis, key=keys, ref=ref, plot3d=plot3d)
             else:
                 print('Unsupported plot: %s.'% i)
                 # print("Only the following data are available for plot:")
                 # print(list(self.supported_plot.keys()))
                 # raise ValueError("Unsupported data to plot: %s."%data)
-        # show figures
-        plt.show()
 
     def save_kml_files(self, data_dir):
         '''

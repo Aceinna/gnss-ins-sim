@@ -15,7 +15,8 @@ import numpy as np
 # global
 VERSION = '1.0'
 TWO_PI = 2.0*math.pi
-
+D2R = math.pi/180.0
+R2D = 180.0/math.pi
 
 def get_cn2b_acc_mag_ned(acc, mag):
     '''

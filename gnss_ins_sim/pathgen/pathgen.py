@@ -74,6 +74,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                         ref_frame==0, [index, absolute_position_lla, velocity_in_navigation_frame],
                         ref_frame==1, [index, absolute_position_xyz, velocity_in_navigation_frame],
                         GPS data are down sampled to gps_freq, index synced with mimu.csv index.
+                        Note that the navigation frame is not the ECEF frame. That is, if ref_frame
+                        is 0, velocity_in_navigation_frame is NED velocity.
             'odo':      True odometer measurements.
                         [index, travel_distance, velocity_in_body_frame].
                         Odometry are down sampled to odd_freq, index synced with mimu.csv index.

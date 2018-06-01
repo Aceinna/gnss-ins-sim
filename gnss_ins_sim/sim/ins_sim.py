@@ -240,8 +240,9 @@ class Sim(object):
             sim_idx.remove(i)
         # generate keys to index simulation data
         for data in what_to_plot:
+            print(data)
             # generate keys for this var, only algo output has algo name in keys
-            if data in self.amgr.output:
+            if data in self.amgr.output or self.data_map[data][0] in self.amgr.output:
                 keys = []
                 for i in range(self.amgr.nalgo):
                     # results from different algorithms are indexed by algo_name and simulation runs

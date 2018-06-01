@@ -554,8 +554,11 @@ class Sim(object):
                 vib_def['x'] = env[:n, 1]
                 vib_def['y'] = env[:n, 2]
                 vib_def['z'] = env[:n, 3]
+            else:
+                raise TypeError('env should be of size (n,2)')
         else:
             raise TypeError('env should be a string or a numpy array of size (n,2)')
+        return vib_def
 
     def __check_data_dir(self, data_dir):
         '''
@@ -630,7 +633,7 @@ class Sim(object):
             for j in range(n):
                 dst[j, :] = attitude.euler2quat(src[j, :])
             return dst
-        # dict
+        # dict557
         elif isinstance(src, dict):
             dst = {}
             for i in src:

@@ -113,13 +113,13 @@ class DMU380Sim(object):
         self.results = None
         # algorithm vars
         this_dir = os.path.dirname(__file__)
-        config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities.so')
-        sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim.so')
-        if not (os.path.exists(config_lib) and os.path.exists(sim_lib)):
+        self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities.so')
+        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim.so')
+        if not (os.path.exists(self.config_lib) and os.path.exists(self.sim_lib)):
             if not self.build_lib():
                 raise OSError('Shared libs not found.')
-        self.parse_config = cdll.LoadLibrary(config_lib)
-        self.sim_engine = cdll.LoadLibrary(sim_lib)
+        self.parse_config = cdll.LoadLibrary(self.config_lib)
+        self.sim_engine = cdll.LoadLibrary(self.sim_lib)
         # initialize algorithm
         self.sim_config = SIM_COMFIG()
         self.parse_config.parseConfigFile(c_char_p(config_file.encode('utf-8')),\
@@ -190,6 +190,7 @@ class DMU380Sim(object):
         '''
         Reset the fusion process to uninitialized state.
         '''
+        self.sim_engine = cdll.LoadLibrary(self.sim_lib)
         self.sim_engine.SimInitialize(pointer(self.sim_config))
 
     def build_lib(self, dst_dir=None, src_dir=None):

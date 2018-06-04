@@ -151,7 +151,7 @@ class DMU380Sim(object):
         for i in range(0, n):
             sensor_data = np.zeros((15,))
             sensor_data[0:3] = gyro[i, :]*R2D
-            sensor_data[3:6] = accel[i, :]/9.8
+            sensor_data[3:6] = accel[i, :]/9.80665
             sensor_data[6:9] = mag[i, :]/100.0
             sensorReadings = sensor_data.ctypes.data_as(POINTER(c_double))
             new_results = self.sim_engine.SimRun(sensorReadings)

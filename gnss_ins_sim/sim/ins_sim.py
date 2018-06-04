@@ -417,6 +417,8 @@ class Sim(object):
             if i != -1:
                 data_key = data_name[i+1::]
                 data_name = data_name[0:i]
+                if data_key.isdigit():
+                    data_key = int(data_key)
         return data_name, data_key
 
     def __get_data_units(self, file_name):

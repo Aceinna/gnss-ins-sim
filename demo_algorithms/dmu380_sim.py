@@ -40,6 +40,8 @@ class SIM_COMFIG(Structure):
                 ("hasGps", c_bool),
                 ("_useGps", c_bool),
                 ("useGps", c_bool),
+                ("_algorithm", c_bool),
+                ("algorithm", c_bool),
                 ("_freeIntegrate", c_bool),
                 ("freeIntegrate", c_bool),
                 ("_dynamicMotion", c_bool),
@@ -62,6 +64,8 @@ class SIM_COMFIG(Structure):
                 ("accelLPFTypeStr", c_char * 64),
                 ("_accelSwitch", c_bool),
                 ("accelSwitch", c_float),
+                ("_origLlinAcelSwitch", c_bool),
+                ("origLlinAcelSwitch", c_bool),
                 ("_linAccelSwitchDelay", c_bool),
                 ("linAccelSwitchDelay", c_float),
                 ("_Free_Integration_Cntr", c_bool),
@@ -75,7 +79,17 @@ class SIM_COMFIG(Structure):
                 ("_Low_Gain_AHRS", c_bool),
                 ("Low_Gain_AHRS", c_float),
                 ("_Max_GPS_Drop_Time", c_bool),
-                ("Max_GPS_Drop_Time", c_int32)]
+                ("Max_GPS_Drop_Time", c_int32),
+                ("_suppressDisgnosticMsgs", c_bool),
+                ("suppressDisgnosticMsgs", c_bool),
+                ("_procCovarMult_rateBias", c_bool),
+                ("procCovarMult_rateBias", c_float),
+                ("_procCovarMult_attitude", c_bool),
+                ("procCovarMult_attitude", c_float),
+                ("_measCovarMult_roll", c_bool),
+                ("measCovarMult_roll", c_float),
+                ("_measCovarMult_pitch", c_bool),
+                ("measCovarMult_pitch", c_float)]
 
 class EKF_STATE(Structure):
     '''

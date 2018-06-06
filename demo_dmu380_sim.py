@@ -36,13 +36,14 @@ def test_dmu380_sim():
 
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, fs],
-                      motion_def_path+"//motion_def-Komatsu_level_50m_0_0.csv",
+                    #   motion_def_path+"//motion_def-Komatsu_level_50m_0_0.csv",
+                    "/home/dong/py_projects/gnss-ins-sim/demo_saved_data/2018-06-04-11-02-31",
                       ref_frame=1,
                       imu=imu,
                       mode=None,
                       env=None,
                       algorithm=algo)
-    sim.run(10)
+    sim.run(1)
     # generate simulation results, summary, and save data to files
     sim.results()  # do not save data
     # plot data

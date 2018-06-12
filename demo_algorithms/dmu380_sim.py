@@ -219,7 +219,7 @@ class DMU380Sim(object):
         this_dir = os.path.dirname(__file__)
         # get dir containing the source code
         if src_dir is None:
-            src_dir = os.path.join(this_dir, './/dmu380_sim_src//')
+            src_dir = os.path.join(this_dir, '//home//dong//c_projects//dmu380_sim_src//')
         if not os.path.exists(src_dir):
             print('Source code directory ' + src_dir + ' does not exist.')
             return False

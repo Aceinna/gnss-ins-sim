@@ -122,7 +122,7 @@ class DMU380Sim(object):
         '''
         # algorithm description
         self.input = ['fs', 'gyro', 'accel', 'mag']
-        self.output = ['algo_time', 'att_euler']
+        self.output = ['algo_time', 'att_euler', 'wb']
         self.batch = True
         self.results = None
         # algorithm vars
@@ -159,6 +159,7 @@ class DMU380Sim(object):
         # algo output
         time_step = np.zeros((n,))
         euler_angles = np.zeros((n, 3))
+        rate_bias = np.zeros((n, 3))
         # run
         ekf_state = EKF_STATE()
         output_len = 0
@@ -179,9 +180,14 @@ class DMU380Sim(object):
                 euler_angles[output_len, 0] = ekf_state.kfEulerAngles[2]
                 euler_angles[output_len, 1] = ekf_state.kfEulerAngles[1]
                 euler_angles[output_len, 2] = ekf_state.kfEulerAngles[0]
+                rate_bias[output_len, 0] = ekf_state.kfRateBias[0]
+                rate_bias[output_len, 1] = ekf_state.kfRateBias[1]
+                rate_bias[output_len, 2] = ekf_state.kfRateBias[2]
                 output_len += 1
         # results
-        self.results = [time_step[0:output_len], euler_angles[0:output_len, :]]
+        self.results = [time_step[0:output_len],\
+                        euler_angles[0:output_len, :],\
+                        rate_bias[0:output_len, :]]
 
     def update(self, gyro, acc, mag=np.array([0.0, 0.0, 0.0])):
         '''

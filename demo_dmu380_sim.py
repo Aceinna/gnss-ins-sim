@@ -26,7 +26,7 @@ def test_dmu380_sim():
     print("This demo only runs on Ubuntu x64.")
     #### choose a built-in IMU model, typical for IMU380
     imu_err = {'gyro_b': np.array([1.0, -1.0, 0.5]) * 1.0,
-               'gyro_arw': np.array([0.25, 0.25, 0.25]) * 3.0,
+               'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
                'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
                'gyro_b_corr': np.array([100.0, 100.0, 100.0]),
                'accel_b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
@@ -46,18 +46,18 @@ def test_dmu380_sim():
 
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, fs],
-                    #   motion_def_path+"//motion_def-static.csv",
-                    '/home/dong/py_projects/gnss-ins-sim/demo_saved_data/2018-06-06-16-57-01',
+                      motion_def_path+"//motion_def-static.csv",
+                    # '/home/dong/py_projects/gnss-ins-sim/demo_saved_data/2018-06-14-13-40-07',
                       ref_frame=1,
                       imu=imu,
                       mode=None,
-                      env='[0.11 0.01 0.01]g-random',
+                      env='[0.11 0.01 0.11]g-random',
                       algorithm=algo)
     sim.run(1)
     # generate simulation results, summary, and save data to files
     sim.results()  # do not save data
     # plot data
-    sim.plot(['att_euler'])
+    sim.plot(['att_euler', 'wb'])
 
 if __name__ == '__main__':
     test_dmu380_sim()

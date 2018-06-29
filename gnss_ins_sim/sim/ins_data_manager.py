@@ -369,7 +369,7 @@ class InsDataMgr(object):
         '''
         Plot specified results.
         Args:
-            what_to_plot: a string list to specify what to plot. See manual for details.
+            what_to_plot: a string to specify what to plot. See manual for details.
             keys: specify the simulation data of multiple run. This can be an integer, or a list
                 or tuple. Each element should be within [0, num_times-1]. Default is None, and
                 plot data of all simulations.
@@ -378,41 +378,91 @@ class InsDataMgr(object):
                     'error': plot the error of the data specified by what_to_plot w.r.t ref
                     '3d': 3d plot
         '''
-        # data to plot
-        for i in what_to_plot:
-            # print("data to plot: %s"% i)
+        if what_to_plot in self.available:
             # get plot options
             ref = None
             plot3d = None
             # this data has plot options?
             if isinstance(opt, dict):
-                if i in opt:
-                    if opt[i].lower() == '3d':
+                if what_to_plot in opt:
+                    if opt[what_to_plot].lower() == '3d':
                         plot3d = True
-                    elif opt[i].lower() == 'error':
-                        ref_name = 'ref_' + i   # this data have reference, error can be calculated
+                    elif opt[what_to_plot].lower() == 'error':
+                        # this data have reference, error can be calculated
+                        ref_name = 'ref_' + what_to_plot
                         if ref_name in self.available:
                             ref = self.__all[ref_name]
                         else:
-                            print(i + ' has no reference.')
-            if i in self.available:
-                # default x axis data
-                x_axis = self.time
-                ## choose proper x axis data for specific y axis data
-                if i == self.ref_gps.name or i == self.gps.name or i == self.gps_time.name:
-                    x_axis = self.gps_time
-                elif i in self.__algo_output and self.algo_time.name in self.available:
-                    x_axis = self.algo_time
-                elif i == self.ad_gyro.name or i == self.ad_accel.name or\
-                    i == self.allan_t.name:
-                    x_axis = self.allan_t
-                # print('plot: %s, %s.'% (x_axis.name, i))
-                self.__all[i].plot(x_axis, key=keys, ref=ref, plot3d=plot3d)
+                            print(what_to_plot + ' has no reference.')
+            # default x axis data
+            x_axis = self.time
+            # choose proper x axis data for specific y axis data
+            if what_to_plot == self.ref_gps.name or what_to_plot == self.gps.name or\
+                what_to_plot == self.gps_time.name:
+                x_axis = self.gps_time
+            elif what_to_plot in self.__algo_output and self.algo_time.name in self.available:
+                x_axis = self.algo_time
+            elif what_to_plot == self.ad_gyro.name or what_to_plot == self.ad_accel.name or\
+                what_to_plot == self.allan_t.name:
+                x_axis = self.allan_t
+            # plot
+            # if data in what_to_plot and data in ref have different dimension, interp is needed.
+            if ref is not None:
+                # create tmp_ref in order not to change ref
+                tmp_ref = Sim_data(name=ref.name,\
+                                   description=ref.description,\
+                                   units=ref.units,\
+                                   output_units=ref.output_units,\
+                                   plottable=ref.plottable,\
+                                   logx=ref.logx, logy=ref.logy,\
+                                   grid=ref.grid,\
+                                   legend=ref.legend)
+                # interp data in ref to tmp_ref if needed
+                if isinstance(self.__all[what_to_plot].data, dict):
+                    last_key = None     # key of last interp data
+                    for i in self.__all[what_to_plot].data:
+                        # ref.data cannot be a dict, only one ref for each data is allowed
+                        if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
+                            # if last interp dimension is the same, do not need same interp
+                            if last_key is not None:
+                                if tmp_ref.data[last_key].shape[0] ==\
+                                    self.__all[what_to_plot].data[i].shape[0]:
+                                    # print('using results from last interp')
+                                    tmp_ref.data[i] = tmp_ref.data[last_key]
+                                    continue
+                            # interp
+                            if self.algo_time.name in self.available and\
+                                self.time.name in self.available:
+                                tmp_ref.data[i] = self.__interp(self.algo_time.data[i],\
+                                                                self.time.data, ref.data)
+                                last_key = i
+                            # no algo_time or time vars for interp, no error plot is available
+                            else:
+                                print('need interp for %s, but cannot do that.'% what_to_plot)
+                                tmp_ref = None
+                                break
+                        else:
+                            tmp_ref.data[i] = self.__all[what_to_plot].data[i]
+                elif isinstance(self.__all[what_to_plot].data, np.ndarray):
+                    if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
+                        if self.algo_time.name in self.available and\
+                            self.time.name in self.available:
+                            tmp_ref.data[i] = self.__interp(self.algo_time.data[i],\
+                                                            self.time.data, ref.data)
+                        else:
+                            tmp_ref = None
+                    else:
+                        tmp_ref.data[i] = self.__all[what_to_plot].data[i]
+                else:# this is impossible
+                    tmp_ref.data = ref.data
+                self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref, plot3d=plot3d)
             else:
-                print('Unsupported plot: %s.'% i)
-                # print("Only the following data are available for plot:")
-                # print(list(self.supported_plot.keys()))
-                # raise ValueError("Unsupported data to plot: %s."%data)
+                self.__all[what_to_plot].plot(x_axis, key=keys, ref=None, plot3d=plot3d)
+        else:
+            print('Unsupported plot: %s.'% what_to_plot)
+            # print("Only the following data are available for plot:")
+            # print(list(self.supported_plot.keys()))
+            # raise ValueError("Unsupported data to plot: %s."%data)
 
     def save_kml_files(self, data_dir):
         '''
@@ -500,15 +550,13 @@ class InsDataMgr(object):
                 if ref_data is None:
                     # use copy to avoid changing data if interp
                     ref_data = self.__all[ref_data_name].data.copy()
-                # Interpolation
+                # Interpolation. using ref_data to avoid multiple interps
                 if ref_data.shape[0] != self.__all[data_name].data[i].shape[0]:
                     # print("%s has different number of samples from its reference."% data_name)
                     # print('Interpolation needed.')
                     if self.algo_time.name in self.available and self.time.name in self.available:
-                        # This is needed when algo output different samples for multiple runs
-                        if ref_data.shape[0] != self.time.data[0]:
-                            ref_data = self.__all[ref_data_name].data.copy()
-                        ref_data = self.__interp(self.algo_time.data[i], self.time.data, ref_data)
+                        ref_data = self.__interp(self.algo_time.data[i],\
+                                                 self.time.data, self.__all[ref_data_name].data)
                     else:
                         print("%s or %s is not available."% (self.algo_time.name, self.time.name))
                         return None

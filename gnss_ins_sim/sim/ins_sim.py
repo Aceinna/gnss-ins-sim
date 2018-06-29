@@ -252,7 +252,7 @@ class Sim(object):
             else:
                 keys = sim_idx
             # plot data
-            self.dmgr.plot([data], keys, opt)
+            self.dmgr.plot(data, keys, opt)
         # show figures
         plt.show()
 

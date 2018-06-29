@@ -176,7 +176,7 @@ class Sim_data(object):
         Args:
             key is a tuple or list of keys
             x: x axis data
-            ref: reference data for error plot
+            ref: reference data for error plot is in ref.data
         '''
         if self.plottable:
             if isinstance(self.data, dict):
@@ -250,7 +250,7 @@ class Sim_data(object):
         y_data = self.data
         if ref is not None:
             try:
-                y_data = self.data - ref
+                y_data = self.data - ref.data
                 if self.units == ['rad', 'rad', 'rad']:
                     y_data = y_data % attitude.TWO_PI
                     idx = y_data > math.pi

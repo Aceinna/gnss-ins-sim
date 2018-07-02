@@ -457,7 +457,6 @@ class InsDataMgr(object):
                         tmp_ref.data[i] = ref.data
                 else:# this is impossible
                     tmp_ref.data = ref.data
-                print("error")
                 self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref, plot3d=plot3d)
             else:
                 self.__all[what_to_plot].plot(x_axis, key=keys, ref=None, plot3d=plot3d)

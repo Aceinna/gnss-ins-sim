@@ -422,6 +422,8 @@ class InsDataMgr(object):
                     last_key = None     # key of last interp data
                     for i in self.__all[what_to_plot].data:
                         # ref.data cannot be a dict, only one ref for each data is allowed
+                        # data in what_to_plot can have different samples for different keys
+                        # so each key should have its own reference data
                         if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
                             # if last interp dimension is the same, do not need same interp
                             if last_key is not None:
@@ -442,7 +444,7 @@ class InsDataMgr(object):
                                 tmp_ref = None
                                 break
                         else:
-                            tmp_ref.data[i] = self.__all[what_to_plot].data[i]
+                            tmp_ref.data[i] = ref.data
                 elif isinstance(self.__all[what_to_plot].data, np.ndarray):
                     if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
                         if self.algo_time.name in self.available and\
@@ -452,9 +454,10 @@ class InsDataMgr(object):
                         else:
                             tmp_ref = None
                     else:
-                        tmp_ref.data[i] = self.__all[what_to_plot].data[i]
+                        tmp_ref.data[i] = ref.data
                 else:# this is impossible
                     tmp_ref.data = ref.data
+                print("error")
                 self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref, plot3d=plot3d)
             else:
                 self.__all[what_to_plot].plot(x_axis, key=keys, ref=None, plot3d=plot3d)

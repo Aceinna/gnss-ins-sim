@@ -145,7 +145,7 @@ class Sim(object):
         #### generate sensor data from file or pathgen
         self.__gen_data()
 
-        #### run simulation
+        #### run algorithms
         if self.amgr.algo is not None:
             # tell data manager the output of the algorithm
             self.dmgr.set_algo_output(self.amgr.output)
@@ -161,13 +161,16 @@ class Sim(object):
 
     def results(self, data_dir=None, end_point=False, gen_kml=False):
         '''
-        simulation results.
+        Simulation results.
+        Save results to .csv files containing all data generated.
+        Simulation results also include a summary file containing statistics of the simulation.
         Args:
             data_dir: if not None, save simulation data to files.
-                if data_dir is a valid directory, data files will be saved in data_idr,
-                else, data files will be saved in the default directory './data/'. The file name
-                is in the form of data_name-key.csv. data_name is the name of the data as defined
-                in ins_data_manager. key is determined by the algorithm name and simulation run.
+                If data_dir is a valid directory, data files will be saved in data_idr.
+                Otherwise, data files will be saved in the default directory './demo_saved_data/'.
+                The file name is in the form of data_name-key.csv. data_name is the name of the
+                data as defined in ins_data_manager. key is determined by the algorithm name and
+                simulation run.
                 E.g., if have two algorithms in one simulation [algo_with_name, algo_no_name]
                 and the simulation is ran for 10 times. algo_with_name has a name field 'tilt'
                 and algo_no_name does not. Both algorithms output Euler angles. Then the results
@@ -175,39 +178,39 @@ class Sim(object):
                 att_euler-algo1.csv. That is, if the algorithm has name, the name is used in the
                 key. If the algorithm has no name, a name "algo"+order of the algorithm in the
                 algorithm list is used as the algorithm name in the key.
-            end_point: True if want end-point error statistics.
-                    False if want process error statistics.
-            gen_kml: generate .kml files using the reference position and simulation position
+            end_point: True for end-point error statistics, False for process error statistics.
+            gen_kml: True to generate two .kml files containing the reference position and the
+                    simulation position, respectively.
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:
-            '''
-            generate a dict to tell what simulation results can be acquired, and what results
-            can be plotted.
-            '''
-            '''
-            Save results to file.
-            Simulation results include a summary file containing statistics of the simulation
-            and .csv files containing all data generated.
-            '''
-            # generate associated data
+            #### generate associated data
             self.__add_associated_data_to_results()
-            # check data dir
+
+            #### check data dir
             data_saved = []
             if data_dir is not None:    # data_dir specified, meaning to save .csv files
                 data_dir = self.__check_data_dir(data_dir)
                 # save data files
                 data_saved = self.dmgr.save_data(data_dir)
-            # generate .kml files
+
+            #### generate .kml files
             if gen_kml is True:       # want to gen kml without specifying the data_dir
                 if data_dir is None:
                     data_dir = self.__check_data_dir(data_dir)
                 self.dmgr.save_kml_files(data_dir)
-            # simulation summary and save summary to file
+
+            #### simulation summary and save summary to file
             self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
+
+            #### simulation results are generated
             self.sim_results = True
+
+            #### available data
+            return self.dmgr.available
         else:
             print("Call Sim.run() to run the simulaltion first.")
+            return None
 
     def plot(self, what_to_plot, sim_idx=None, opt=None):
         '''
@@ -272,6 +275,7 @@ class Sim(object):
                     str(len(self.dmgr.time.data)/self.dmgr.fs.data) + ' s' + '\n'
         # simulation times
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
+
         #### available data
         self.sum += '\n------------------------------------------------------------\n'
         if data_dir is not None:
@@ -279,6 +283,7 @@ class Sim(object):
             self.sum += 'The following results are saved:\n'
             for i in data_saved:
                 self.sum += '\t' + i  + ': ' + self.dmgr.get_data_all(i).description + '\n'
+
         #### error of algorithm output
         self.sum += '\n------------------------------------------------------------\n'
         self.sum += 'The following are error statistics.'

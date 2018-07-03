@@ -40,14 +40,14 @@ class InsAlgoMgr(object):
             input_data: algorithm input. It is a list of data defined in self.input. Each element
                 in the list can be a scalar, a numpy array or a dict of the above two.
                 Scalars and numpy arrays stays the same for each run of the algorithm.
-                Data in dcits are chosen according to keys for each run of the algorithm.
+                Data in dict are chosen according to keys for each run of the algorithm.
             keys: a list of keys to index data in dicts in input. For example, we have multiple
                 sets of gyro data: w={key0: set_of_data_#0, key1: set_of_data#1}.
                 w is a element of input. keys should be [key0, key1]. For each run of the algo,
                 gyro data is chosen accroding to the keys.
         Returns:
             results: a list containing data defined in self.output.  Each output in results is
-                a dcit with keys 'algorithm_name' + '_' + 'simulation run'. For example:
+                a dict with keys 'algorithm_name' + '_' + 'simulation run'. For example:
                 algo0_0, algo0_1, algo1_0, algo1_1, ......
         '''
         if len(input_data) != self.nin:

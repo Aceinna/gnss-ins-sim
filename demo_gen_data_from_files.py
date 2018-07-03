@@ -38,7 +38,7 @@ def test_gen_data_from_files():
     sim.run()
     # save simulation data to files
     sim.results()
-    # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
+    # plot data
     sim.plot(['ref_att_euler', 'att_euler'], opt={'att_euler': 'error'})
 
 if __name__ == '__main__':

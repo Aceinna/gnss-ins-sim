@@ -180,7 +180,7 @@ class Sim(object):
                 algorithm list is used as the algorithm name in the key.
             end_point: True for end-point error statistics, False for process error statistics.
             gen_kml: True to generate two .kml files containing the reference position and the
-                    simulation position, respectively.
+                    simulation position (output by algorithms), respectively.
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:

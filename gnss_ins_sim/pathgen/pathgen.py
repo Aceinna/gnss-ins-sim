@@ -552,7 +552,7 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
                  If gps_type is 1, [x, y, z, vx, vy, vz], [m, m, m].
                  ref_gps data are expressed in the navigation frame.
         gps_err: GPS reeceiver parameters.
-            'stdm': RMS position error, [m, m, m].
+            'stdp': RMS position error, [m, m, m].
             'stdv': RMS velocity error, [m/s, m/s, m/s].
         gps_type: GPS data type.
             0: default, position is in the form of [Lat, Lon, Alt], rad, m
@@ -562,13 +562,13 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
     '''
     # total data count
     n = ref_gps.shape[0]
-    # If position is in the form of LLA, convert gps_err['stdm'] to LLA error
-    if gps_type == 0:   # GPS is in the form of LLA, stdm meter to rad
+    # If position is in the form of LLA, convert gps_err['stdp'] to LLA error
+    if gps_type == 0:   # GPS is in the form of LLA, stdp meter to rad
         earth_param = geoparams.geo_param(ref_gps[0, 1:4])
-        gps_err['stdm'][0] = gps_err['stdm'][0] / earth_param[0]
-        gps_err['stdm'][1] = gps_err['stdm'][1] / earth_param[1] / earth_param[4]
+        gps_err['stdp'][0] = gps_err['stdp'][0] / earth_param[0]
+        gps_err['stdp'][1] = gps_err['stdp'][1] / earth_param[1] / earth_param[4]
     ## simulate GPS error
-    pos_noise = gps_err['stdm'] * np.random.randn(n, 3)
+    pos_noise = gps_err['stdp'] * np.random.randn(n, 3)
     vel_noise = gps_err['stdv'] * np.random.randn(n, 3)
     gps_mea = np.hstack([ref_gps[:, 0:3] + pos_noise,
                          ref_gps[:, 3:6] + vel_noise])

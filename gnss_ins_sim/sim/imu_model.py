@@ -53,7 +53,7 @@ mag_high_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
                      'std': np.array([0.001, 0.001, 0.001])}
 
 ## built-in GPS error profiles
-gps_low_accuracy = {'stdm': np.array([5.0, 5.0, 7.0]),
+gps_low_accuracy = {'stdp': np.array([5.0, 5.0, 7.0]),
                     'stdv': np.array([0.05, 0.05, 0.05]),
                     'avail': 0.95}
 class IMU(object):
@@ -70,20 +70,20 @@ class IMU(object):
                     'mid-accuracy':
                     'high-accuracy':
                 or a dictionary to custom the IMU model:
-                    'gyro_b': deg/hr
-                    'gyro_arw': deg/rt-hr
-                    'gyro_b_stability': deg/hr
-                    'gyro_b_corr': sec
-                    'accel_b': m/s2
-                    'accel_vrw' : m/s/rt-hr
-                    'accel_b_stability': m/s2
-                    'accel_b_corr': sec
+                    'gyro_b': gyro bias, deg/hr
+                    'gyro_arw': gyro angle random walk, deg/rt-hr
+                    'gyro_b_stability': gyro bias instability, deg/hr
+                    'gyro_b_corr': gyro bias isntability correlation time, sec
+                    'accel_b': accel bias, m/s2
+                    'accel_vrw' : accel velocity random walk, m/s/rt-hr
+                    'accel_b_stability': accel bias instability, m/s2
+                    'accel_b_corr': accel bias isntability correlation time, sec
             axis: 6 for IMU, 9 for IMU+magnetometer
             gps: True if GPS exists, False if not.
             gps_op: a dictionary to specify the GPS error model.
-                'h_accuracy': horizontal accuracy, meters
-                'v_accuracy': vertical accuracy, meters
-                'avail': availability percentage, [0.0, 1.0]
+                'stdp': position RMS error, meters
+                'stdv': vertical RMS error, meters
+                'avail': availability percentage, (0.0, 1.0]
         '''
         # check axis
         self.magnetometer = False
@@ -164,12 +164,12 @@ class IMU(object):
             if gps_opt is None:
                 self.gps_err = gps_low_accuracy
             elif isinstance(gps_opt, dict):
-                if 'h_accuracy' in gps_opt and\
-                   'v_accuracy' in gps_opt and\
+                if 'stdp' in gps_opt and\
+                   'stdv' in gps_opt and\
                    'avail' in gps_opt:
                     self.gps_err = gps_opt
                 else:
-                    raise ValueError('gps_opt should have key: h_accuracy, v_accuracy and avail')
+                    raise ValueError('gps_opt should have key: stdp, stdv and avail')
             else:
                 raise TypeError('gps_opt should be None or a dict')
         else:

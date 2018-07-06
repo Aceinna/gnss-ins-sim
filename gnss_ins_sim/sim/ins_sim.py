@@ -276,17 +276,16 @@ class Sim(object):
         # simulation times
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
 
-        #### available data
-        self.sum += '\n------------------------------------------------------------\n'
+        #### save data
         if data_dir is not None:
+            self.sum += '\n------------------------------------------------------------\n'
             self.sum += 'Simulation results are saved to ' + data_dir + '\n'
             self.sum += 'The following results are saved:\n'
             for i in data_saved:
                 self.sum += '\t' + i  + ': ' + self.dmgr.get_data_all(i).description + '\n'
 
-        #### error of algorithm output
-        self.sum += '\n------------------------------------------------------------\n'
-        self.sum += 'The following are error statistics.'
+        #### error statistics of algorithm output
+        err_stat_header_line = False
         for data_name in self.interested_error:
             if data_name not in self.dmgr.available:
                 continue
@@ -294,6 +293,10 @@ class Sim(object):
             err_stat = self.dmgr.get_error_stat(data_name, end_point=end_point,\
                                                 angle=is_angle, use_output_units=True)
             if err_stat is not None:
+                if err_stat_header_line is False:
+                    err_stat_header_line = True
+                    self.sum += '\n------------------------------------------------------------\n'
+                    self.sum += 'The following are error statistics.'
                 self.sum += '\n-----------statistics for ' +\
                             self.dmgr.get_data_all(data_name).description +\
                             ' (in units of ' +\
@@ -312,7 +315,11 @@ class Sim(object):
         print(self.sum)
 
         #### Allan analysis results ####
-        # to be added
+        '''
+        to be added
+        This is not added because the Allan dev curve may not be normal sometimes.
+        Fitting this curve will result in wrong parameters.
+        '''
 
         #### save summary to file
         if data_dir is not None:

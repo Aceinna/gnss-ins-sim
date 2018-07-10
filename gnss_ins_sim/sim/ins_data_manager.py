@@ -132,7 +132,29 @@ class InsDataMgr(object):
                             description='magnetometer measurements',\
                             units=['uT', 'uT', 'uT'],\
                             legend=['mag_x', 'mag_y', 'mag_z'])
-        # algorithm output
+        # calibration algorithm output
+        self.gyro_cal = Sim_data(name='gyro_cal',\
+                                 description='gyro measurements after factory calibration',\
+                                 units=['rad/s', 'rad/s', 'rad/s'],\
+                                 output_units=['deg/s', 'deg/s', 'deg/s'],\
+                                 legend=['gyro_x', 'gyro_y', 'gyro_z'])
+        self.accel_cal = Sim_data(name='accel_cal',\
+                                  description='accel measurements after factory calibration',\
+                                  units=['m/s^2', 'm/s^2', 'm/s^2'],\
+                                  legend=['accel_x', 'accel_y', 'accel_z'])
+        self.mag_cal = Sim_data(name='mag_cal',\
+                                description='magnetometer measurements after SI&HI calibration',\
+                                units=['uT', 'uT', 'uT'],\
+                                legend=['mag_x', 'mag_y', 'mag_z'])
+        self.soft_iron = Sim_data(name='soft_iron',\
+                                description='soft iron calibration matrix',\
+                                plottable=False)
+        self.hard_iron = Sim_data(name='hard_iron',\
+                                description='hard iron',\
+                                units=['uT', 'uT', 'uT', 'uT'],\
+                                legend=['offset_x', 'offset_y', 'offset_z', 'radius'],\
+                                plottable=False)
+        # fusion algorithm output
         self.algo_time = Sim_data(name='algo_time',\
                                   description='sample time from algo',\
                                   units=['sec'])
@@ -153,14 +175,14 @@ class InsDataMgr(object):
                                   output_units=['deg', 'deg', 'deg'],\
                                   legend=['Yaw', 'Pitch', 'Roll'])
         self.wb = Sim_data(name='wb',\
-                            description='gyro bias estimation',\
-                            units=['rad/s', 'rad/s', 'rad/s'],\
-                            output_units=['deg/s', 'deg/s', 'deg/s'],\
-                            legend=['gyro_bias_x', 'gyro_bias_y', 'gyro_bias_z'])
+                           description='gyro bias estimation',\
+                           units=['rad/s', 'rad/s', 'rad/s'],\
+                           output_units=['deg/s', 'deg/s', 'deg/s'],\
+                           legend=['gyro_bias_x', 'gyro_bias_y', 'gyro_bias_z'])
         self.ab = Sim_data(name='ab',\
-                            description='accel bias estimation',\
-                            units=['m/s^2', 'm/s^2', 'm/s^2'],\
-                            legend=['accel_bias_x', 'accel_bias_y', 'accel_bias_z'])
+                           description='accel bias estimation',\
+                           units=['m/s^2', 'm/s^2', 'm/s^2'],\
+                           legend=['accel_bias_x', 'accel_bias_y', 'accel_bias_z'])
         self.allan_t = Sim_data(name='allan_t',\
                                 description='Allan var time',\
                                 units=['s'])
@@ -170,10 +192,10 @@ class InsDataMgr(object):
                                 logx=True, logy=True,\
                                 legend=['AD_wx', 'AD_wy', 'AD_wz'])
         self.ad_accel = Sim_data(name='ad_accel',\
-                                    description='Allan deviation of accel',\
-                                    units=['m/s^2', 'm/s^2', 'm/s^2'],\
-                                    logx=True, logy=True,\
-                                    legend=['AD_ax', 'AD_ay', 'AD_az'])
+                                 description='Allan deviation of accel',\
+                                 units=['m/s^2', 'm/s^2', 'm/s^2'],\
+                                 logx=True, logy=True,\
+                                 legend=['AD_ax', 'AD_ay', 'AD_az'])
 
         ########## all data ##########
         # __all include all data that may occur in an INS solution.
@@ -198,7 +220,13 @@ class InsDataMgr(object):
             self.accel.name: self.accel,
             self.gps.name: self.gps,
             self.mag.name: self.mag,
-            # algorithm output
+            # calibration algorithm output
+            self.gyro_cal.name: self.gyro_cal,
+            self.accel_cal.name: self.accel_cal,
+            self.mag_cal.name: self.mag_cal,
+            self.soft_iron.name: self.soft_iron,
+            self.hard_iron.name: self.hard_iron,
+            # fusion algorithm output
             self.algo_time.name: self.algo_time,
             self.pos.name: self.pos,
             self.vel.name: self.vel,

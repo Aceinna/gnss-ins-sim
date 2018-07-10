@@ -198,7 +198,10 @@ class Sim_data(object):
             y_data = self.data[i]
             # x axis
             if isinstance(x.data, dict):
-                x_data = x.data[i]
+                if not x.data:  # x.data could be an empty dict
+                    x_data = None
+                else:
+                    x_data = x.data[i]
             else:
                 x_data = x.data
             # error
@@ -240,10 +243,13 @@ class Sim_data(object):
         '''
         # x axis
         if isinstance(x.data, dict):
-            # randomly choose data of any key
-            for i in x.data:
-                x_data = x.data[i]
-                break
+            if not x.data:  # x.data could be an empty dict
+                x_data = None
+            else:
+                # randomly choose data of any key
+                for i in x.data:
+                    x_data = x.data[i]
+                    break
         else:
             x_data = x.data
         # error
@@ -362,6 +368,9 @@ def plot_in_one_figure(x, y, logx=False, logy=False,\
     fig = plt.figure(title)
     axis = fig.add_subplot(111)
     lines = []
+    # if not x data, generate default x data
+    if x is None:
+        x = np.array(range(y.shape[0]))
     try:
         dim = y.ndim
         if dim == 1:

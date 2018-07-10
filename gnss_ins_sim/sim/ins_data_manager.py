@@ -393,7 +393,7 @@ class InsDataMgr(object):
                 data_saved.append(data)
         return data_saved
 
-    def plot(self, what_to_plot, keys, opt=None):
+    def plot(self, what_to_plot, keys, opt=None, extra_opt=''):
         '''
         Plot specified results.
         Args:
@@ -405,16 +405,19 @@ class InsDataMgr(object):
                 values can be:
                     'error': plot the error of the data specified by what_to_plot w.r.t ref
                     '3d': 3d plot
+            extra_opt: strings to specify matplotlib properties.
         '''
         if what_to_plot in self.available:
             # get plot options
             ref = None
-            plot3d = None
+            plot3d = 0
             # this data has plot options?
             if isinstance(opt, dict):
                 if what_to_plot in opt:
                     if opt[what_to_plot].lower() == '3d':
-                        plot3d = True
+                        plot3d = 1
+                    elif opt[what_to_plot].lower() == 'projection':
+                        plot3d = 2
                     elif opt[what_to_plot].lower() == 'error':
                         # this data have reference, error can be calculated
                         ref_name = 'ref_' + what_to_plot
@@ -485,9 +488,11 @@ class InsDataMgr(object):
                         tmp_ref.data[i] = ref.data
                 else:# this is impossible
                     tmp_ref.data = ref.data
-                self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref, plot3d=plot3d)
+                self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref,\
+                                              plot3d=plot3d, extra_opt=extra_opt)
             else:
-                self.__all[what_to_plot].plot(x_axis, key=keys, ref=None, plot3d=plot3d)
+                self.__all[what_to_plot].plot(x_axis, key=keys, ref=None,\
+                                              plot3d=plot3d, extra_opt=extra_opt)
         else:
             print('Unsupported plot: %s.'% what_to_plot)
             # print("Only the following data are available for plot:")

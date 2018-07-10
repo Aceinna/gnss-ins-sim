@@ -212,7 +212,7 @@ class Sim(object):
             print("Call Sim.run() to run the simulaltion first.")
             return None
 
-    def plot(self, what_to_plot, sim_idx=None, opt=None):
+    def plot(self, what_to_plot, sim_idx=None, opt=None, extra_opt=''):
         '''
         Plot specified results.
         Args:
@@ -224,6 +224,8 @@ class Sim(object):
                 values can be:
                     'error': plot the error of the data specified by what_to_plot w.r.t ref
                     '3d': 3d plot
+                    'projection': project the 3D plot on xy, xz and yz plane, respectively.
+            extra_opt: only strings to specify matplotlib properties is supported.
         '''
         # check sim_idx
         if sim_idx is None:                 # no index specified, plot all data
@@ -255,7 +257,7 @@ class Sim(object):
             else:
                 keys = sim_idx
             # plot data
-            self.dmgr.plot(data, keys, opt)
+            self.dmgr.plot(data, keys, opt, extra_opt)
         # show figures
         plt.show()
 

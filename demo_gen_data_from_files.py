@@ -9,7 +9,6 @@ Created on 2018-04-23
 
 import os
 import math
-from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 
 # globals
@@ -22,16 +21,13 @@ fs_mag = fs         # magnetometer sample frequency, not used for now
 
 def test_gen_data_from_files():
     '''
-    test only path generation in Sim.
+    test data generation from files.
     '''
-    #### choose a built-in IMU model, typical for IMU381
-    imu = None
-
     #### start simulation
     sim = ins_sim.Sim([fs, fs_gps, fs_mag],
                       'e://Projects//gnss-ins-sim//demo_saved_data//2018-05-16-14-23-34//',
                       ref_frame=1,
-                      imu=imu,
+                      imu=None,
                       mode=None,
                       env=None,
                       algorithm=None)

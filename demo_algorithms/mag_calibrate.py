@@ -55,19 +55,37 @@ class MagCal(object):
         '''
         # get input
         mag = set_of_input[0].copy()    # mag will changed, "copy" to avoid changing input data
+        # plot mag data and get x/y/z rotating start/end index
+        plt.plot(mag)
+        plt.grid(True)
+
+        plt.show(block=False)
+        x0 = input('Please input start index of rotation about x axis:')
+        xf = input('Please input end index of rotation about x axis:')
+        y0 = input('Please input start index of rotation about y axis:')
+        yf = input('Please input end index of rotation about y axis:')
+        z0 = input('Please input start index of rotation about z axis:')
+        zf = input('Please input end index of rotation about z axis:')
+        x0 = int(x0)
+        xf = int(xf)
+        y0 = int(y0)
+        yf = int(yf)
+        z0 = int(z0)
+        zf = int(zf)
         # run
         # calculate soft iron and hard iron
         si = np.zeros((3, 3))
         si_ptr = si.ctypes.data_as(POINTER(c_double))
         hi = np.zeros((1, 4))
         hi_ptr = hi.ctypes.data_as(POINTER(c_double))
-        mx = mag[0:1000, :].ctypes.data_as(POINTER(c_double))
-        my = mag[1000:2000, :].ctypes.data_as(POINTER(c_double))
-        mz = mag[2000:3000, :].ctypes.data_as(POINTER(c_double))
-        iRowNum = np.array((1000, 1000, 1000), dtype='int32')
+        mx = mag[x0:xf, :].ctypes.data_as(POINTER(c_double))
+        my = mag[y0:yf, :].ctypes.data_as(POINTER(c_double))
+        mz = mag[z0:zf, :].ctypes.data_as(POINTER(c_double))
+        iRowNum = np.array((xf-x0, yf-y0, zf-z0), dtype='int32')
         iRowNum_ptr = iRowNum.ctypes.data_as(POINTER(c_double))
         self.sim_engine.MagCalibrate(si_ptr, hi_ptr, mx, my, mz, iRowNum_ptr)
         # results
+        mag = np.vstack([mag[x0:xf], mag[y0:yf], mag[z0:zf]])
         self.results = [si, hi, mag]
 
     def update(self, gyro, acc, mag=np.array([0.0, 0.0, 0.0])):

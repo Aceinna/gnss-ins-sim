@@ -1,0 +1,16 @@
+ini lat (deg),ini lon (deg),ini alt (m),ini vx_body (m/s),ini vy_body (m/s),ini vz_body (m/s),ini yaw (deg),ini pitch (deg),ini roll (deg)
+32,120,0,0,0,0,0,0,0
+command type,yaw (deg),pitch (deg),roll (deg),vx_body (m/s),vy_body (m/s),vz_body (m/s),command duration (s),reserved
+1,0,0,0,0,0,0,10,0
+2,0,0,0,0,0,0,10,0
+1,0,0,0,0,0,0,10,0
+1,0,0,60,0,0,0,10,0
+1,0,0,0,0,0,0,10,0
+2,0,0,0,0,0,0,20,0
+1,0,0,0,0,0,0,10,0
+1,0,60,0,0,0,0,10,0
+1,0,0,0,0,0,0,10,0
+2,0,0,0,0,0,0,20,0
+1,0,0,0,0,0,0,10,0
+1,60,0,0,0,0,0,10,0
+1,0,0,0,0,0,0,10,0

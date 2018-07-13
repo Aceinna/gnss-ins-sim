@@ -78,6 +78,12 @@ class IMU(object):
                     'accel_vrw' : accel velocity random walk, m/s/rt-hr
                     'accel_b_stability': accel bias instability, m/s2
                     'accel_b_corr': accel bias isntability correlation time, sec
+                    'mag_si': soft iron, default is a 3x3 identity matrix.
+                    'mag_hi': hard iron, default is 3x1 zero vector.
+                    'mag_std': mag noise std.
+                If magnetometer is enabled and you want to specify the magnetic params,
+                soft iron and hard iron are optional and noise std is needed. If soft
+                iron or hard iron is not provided, defautls will be used.
             axis: 6 for IMU, 9 for IMU+magnetometer
             gps: True if GPS exists, False if not.
             gps_op: a dictionary to specify the GPS error model.
@@ -92,7 +98,7 @@ class IMU(object):
         elif axis != 6:
             raise ValueError('axis should be either 6 or 9.')
 
-        # build imu error model
+        # built-in imu error model
         self.gyro_err = gyro_low_accuracy                   #   default is low accuracy
         self.accel_err = accel_low_accuracy
         self.mag_err = mag_low_accuracy
@@ -180,20 +186,107 @@ class IMU(object):
         '''
         set gyro error model
         Args:
-            gyro_error
+            gyro_error: gyro error model.
+                This can be a string to use the built-in gyro models:
+                    'low-accuracy':
+                    'mid-accuracy':
+                    'high-accuracy':
+                or a dictionary to custom the IMU model:
+                    'b': gyro bias, deg/hr
+                    'arw': gyro angle random walk, deg/rt-hr
+                    'b_drift': gyro bias instability, deg/hr
+                    'b_corr': gyro bias isntability correlation time, sec
         '''
-        pass
+        if isinstance(gyro_error, str):
+            if gyro_error == 'low-accuracy':                  # 'low-accuracy'
+                self.gyro_err = gyro_low_accuracy
+            elif gyro_error == 'mid-accuracy':                # 'mid-accuracy'
+                self.gyro_err = gyro_mid_accuracy
+            elif gyro_error == 'high-accuracy':               # 'high-accuracy'
+                self.gyro_err = gyro_high_accuracy
+            else:                                           # not a valid string
+                raise ValueError('gyro_error is not a valid string.')
+        # accuracy is a dict, user defined models
+        elif isinstance(gyro_error, dict):
+            for i in gyro_error:
+                if i in self.gyro_err:
+                    self.gyro_err[i] = gyro_error[i]
+                else:
+                    raise ValueError('unsupported key: %s in gyro_error'% i)
+        else:
+            raise TypeError('gyro_error is not valid.')
 
     def set_accel_error(self, accel_error='low-accuracy'):
         '''
         set accel error model
         Args:
-            accel_error
+            accel_error: accel error model.
+                This can be a string to use the built-in accel models:
+                    'low-accuracy':
+                    'mid-accuracy':
+                    'high-accuracy':
+                or a dictionary to custom the IMU model:
+                    'b': accel bias, m/s2
+                    'vrw' : accel velocity random walk, m/s/rt-hr
+                    'b_drift': accel bias instability, m/s2
+                    'b_corr': accel bias isntability correlation time, sec
         '''
-        pass
+        if isinstance(accel_error, str):
+            if accel_error == 'low-accuracy':                  # 'low-accuracy'
+                self.accel_err = accel_low_accuracy
+            elif accel_error == 'mid-accuracy':                # 'mid-accuracy'
+                self.accel_err = accel_mid_accuracy
+            elif accel_error == 'high-accuracy':               # 'high-accuracy'
+                self.accel_err = accel_high_accuracy
+            else:                                           # not a valid string
+                raise ValueError('accel_error is not a valid string.')
+        # accuracy is a dict, user defined models
+        elif isinstance(accel_error, dict):
+            for i in accel_error:
+                if i in self.accel_err:
+                    self.accel_err[i] = accel_error[i]
+                else:
+                    raise ValueError('unsupported key: %s in accel_error'% i)
+        else:
+            raise TypeError('accel_error is not valid.')
 
     def set_gps(self, gps=True, gps_opt=None):
         '''
         set GPS options
         '''
         pass
+
+    def set_mag_error(self, mag_error='low-accuracy'):
+        '''
+        set accel error model
+        Args:
+            mag_error: magnetometer error model.
+                This can be a string to use the built-in mag models:
+                    'low-accuracy':
+                    'mid-accuracy':
+                    'high-accuracy':
+                or a dictionary to custom the IMU model:
+                    'si': soft iron, default is a 3x3 identity matrix.
+                    'hi': hard iron, default is 3x1 zero vector.
+                    'std': mag noise std.
+        '''
+        if not  self.magnetometer:
+            return
+        if isinstance(mag_error, str):
+            if mag_error == 'low-accuracy':                  # 'low-accuracy'
+                self.mag_err = mag_low_accuracy
+            elif mag_error == 'mid-accuracy':                # 'mid-accuracy'
+                self.mag_err = mag_mid_accuracy
+            elif mag_error == 'high-accuracy':               # 'high-accuracy'
+                self.mag_err = mag_high_accuracy
+            else:                                           # not a valid string
+                raise ValueError('mag_error is not a valid string.')
+        # accuracy is a dict, user defined models
+        elif isinstance(mag_error, dict):
+            for i in mag_error:
+                if i in self.mag_err:
+                    self.mag_err[i] = mag_error[i]
+                else:
+                    raise ValueError('unsupported key: %s in mag_error'% i)
+        else:
+            raise TypeError('mag_error is not valid.')

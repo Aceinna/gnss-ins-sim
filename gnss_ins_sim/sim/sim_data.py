@@ -285,7 +285,7 @@ class Sim_data(object):
         # unit conversion
         y_data = convert_unit(y_data, self.units, self.output_units)
         # plot
-        if plot3d:
+        if plot3d == 1:
             plot3d_in_one_figure(y_data,\
                                  title=self.name,\
                                  grid=self.grid,\
@@ -293,7 +293,7 @@ class Sim_data(object):
                                  extra_opt=extra_opt)
         elif plot3d == 2:
             plot3d_proj_in_one_figure(y_data,\
-                                      title=self.name + '_' + str(i),\
+                                      title=self.name,\
                                       grid=self.grid,\
                                       legend=self.legend,\
                                       extra_opt=extra_opt)

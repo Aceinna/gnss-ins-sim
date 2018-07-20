@@ -1,6 +1,15 @@
 !.gitignore
+
+# visual studio files
 /.vscode/
-/demo_saved_data/
+
+# python
 __pycache__/
 *.cprofile
 *.pyc
+
+# saved data files
+/demo_saved_data/
+
+# mag calibration algorithm camke dir
+/demo_algorithms/mag_calibrate_src/cmake/

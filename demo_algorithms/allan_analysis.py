@@ -44,7 +44,7 @@ class Allan(object):
         algorithm description
         '''
         self.input = ['fs', 'accel', 'gyro']
-        self.output = ['allan_t', 'ad_accel', 'ad_gyro']
+        self.output = ['algo_time', 'ad_accel', 'ad_gyro']
         self.batch = True   # Put all data from t0 to tf if True (default)
                             # Sequentially put data from t0 to tf if False
         self.results = None # results must be a list or tuple of data as explained in self.out

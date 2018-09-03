@@ -183,9 +183,6 @@ class InsDataMgr(object):
                            description='accel bias estimation',\
                            units=['m/s^2', 'm/s^2', 'm/s^2'],\
                            legend=['accel_bias_x', 'accel_bias_y', 'accel_bias_z'])
-        self.allan_t = Sim_data(name='allan_t',\
-                                description='Allan var time',\
-                                units=['s'])
         self.ad_gyro = Sim_data(name='ad_gyro',\
                                 description='Allan deviation of gyro',\
                                 units=['rad/s', 'rad/s', 'rad/s'],\
@@ -234,7 +231,6 @@ class InsDataMgr(object):
             self.att_euler.name: self.att_euler,
             self.wb.name: self.wb,
             self.ab.name: self.ab,
-            self.allan_t.name: self.allan_t,
             self.ad_gyro.name: self.ad_gyro,
             self.ad_accel.name: self.ad_accel
             }
@@ -433,9 +429,6 @@ class InsDataMgr(object):
                 x_axis = self.gps_time
             elif what_to_plot in self.__algo_output and self.algo_time.name in self.available:
                 x_axis = self.algo_time
-            elif what_to_plot == self.ad_gyro.name or what_to_plot == self.ad_accel.name or\
-                what_to_plot == self.allan_t.name:
-                x_axis = self.allan_t
             # plot
             # if data in what_to_plot and data in ref have different dimension, interp is needed.
             if ref is not None:

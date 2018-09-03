@@ -340,11 +340,15 @@ def unit_conversion_scale(src_unit, dst_unit):
             scale[i] = D2R
         elif src_unit[i] == 'deg/s' and dst_unit[i] == 'rad/s':
             scale[i] = D2R
+        elif src_unit[i] == 'deg/hr' and dst_unit[i] == 'rad/s':
+            scale[i] = D2R / 3600.0
         # rad to deg
         elif src_unit[i] == 'rad' and dst_unit[i] == 'deg':
             scale[i] = 1.0/D2R
         elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/s':
             scale[i] = 1.0/D2R
+        elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/hr':
+            scale[i] = 3600.0/D2R
         else:
             pass
             # print('No need or not know how to convert from %s to %s.'% (src_unit, dst_unit))

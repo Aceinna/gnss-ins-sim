@@ -25,16 +25,28 @@ class MahonyFilter(object):
         '''
         # algorithm description
         self.input = ['fs', 'gyro', 'accel']#, 'mag']
-        self.output = ['att_quat']
+        self.output = ['att_quat', 'wb', 'ab']
         self.batch = True
         self.results = None
+        self.quat = None
+        self.wb = None
+        self.ab = None
         # algorithm vars
+        # config
+        self.innovationLimit = 0.1
+        self.kp_acc_high = 1
+        self.kp_acc_low = 0.01
+        self.ki_acc_high = 0.5
+        self.ki_acc_low = 0.001
+        # state
         self.ini = 0                                # indicate if attitude is initialized
         self.dt = 1.0                               # sample period, sec
         self.q = np.array([1.0, 0.0, 0.0, 0.0])     # quaternion
         self.err_int = np.array([0.0, 0.0, 0.0])    # integral of error
-        self.kp_acc = 0.1
+        self.kp_acc = 1
         self.ki_acc = 0.001
+        self.gyro_bias = np.array([0.0, 0.0, 0.0])
+        self.tmp = np.array([0.0, 0.0, 0.0])
 
     def run(self, set_of_input):
         '''
@@ -49,11 +61,15 @@ class MahonyFilter(object):
         # mag = set_of_input[3]
         n = accel.shape[0]
         # calculate
-        self.results = np.zeros((n, 4))
+        self.quat = np.zeros((n, 4))
+        self.wb = np.zeros((n, 3))
+        self.ab = np.zeros((n, 3))
         for i in range(n):
             self.update(gyro[i, :], accel[i, :])
-            # generate results, must be a tuple or list consistent with self.output
-            self.results[i, :] = self.q
+            # generate qaternion, must be a tuple or list consistent with self.output
+            self.quat[i, :] = self.q
+            self.wb[i, :] = self.gyro_bias
+            self.ab[i, :] = self.tmp
 
     def update(self, gyro, acc, mag=np.array([0.0, 0.0, 0.0])):
         '''
@@ -64,13 +80,15 @@ class MahonyFilter(object):
         mag_valid = (mag[0] != 0.0) or (mag[1] != 0.0) or (mag[2] != 0.0)
         acc_valid = (acc[0] != 0.0) or (acc[1] != 0.0) or (acc[2] != 0.0)
         # dynamic mode to be added here
-        if math.fabs(math.sqrt(np.dot(acc, acc)) - 9.8) > 0.5 or\
-           math.sqrt(np.dot(gyro, gyro)) > 0.5:
-            self.kp_acc = 0.001
-            self.ki_acc = 0.0
+        if math.fabs(math.sqrt(np.dot(acc, acc)) - 9.8) > 0.2 or\
+           math.sqrt(np.dot(gyro, gyro)) > 0.2:
+            self.kp_acc = self.kp_acc_low
+            self.ki_acc = self.ki_acc_low
+            # print("low")
         else:
-            self.kp_acc = 0.1
-            self.ki_acc = 0.0
+            self.kp_acc = self.kp_acc_high
+            self.ki_acc = self.ki_acc_high
+            # print("high")
         # normalize acc
         if acc_valid:
             acc = acc / math.sqrt(np.dot(acc, acc))
@@ -114,15 +132,21 @@ class MahonyFilter(object):
         v[1] = -2.0 * (q1[0]*q1[1] + q1[2]*q1[3])
         v[2] = -q1[0]*q1[0] + q1[1]*q1[1] + q1[2]*q1[2] - q1[3]*q1[3]
         acc_err = np.cross(acc, v)
-        for i in range(0, 3):                   # limite error
-            if math.fabs(acc_err[i]) > 0.01:
-                acc_err[i] = np.sign(acc_err[i]) * 0.01
+        acc_err_norm = math.sqrt(np.dot(acc_err, acc_err))
+        if acc_err_norm > self.innovationLimit:
+            acc_err = acc_err / acc_err_norm * self.innovationLimit
+        # for i in range(0, 3):                   # limite error
+        #     if math.fabs(acc_err[i]) > self.innovationLimit:
+        #         acc_err[i] = np.sign(acc_err[i]) * self.innovationLimit
         #print(acc_err)
         # integral of the error
         self.err_int = self.err_int + self.ki_acc * acc_err * self.dt
         # gyro correction
-        gyro_cor = self.kp_acc * acc_err + self.err_int
-        gyro = gyro + gyro_cor
+        k = 0.9
+        this_gyro_bias = self.kp_acc * acc_err + self.err_int
+        self.gyro_bias = k*self.gyro_bias + (1-k)*this_gyro_bias
+        self.tmp = acc_err
+        gyro = gyro + self.gyro_bias
         # quaternion update
         self.q = attitude.quat_update(self.q, gyro, self.dt)
 
@@ -130,7 +154,7 @@ class MahonyFilter(object):
         '''
         return algorithm results as specified in self.output
         '''
-        return [self.results]
+        return [self.quat, self.wb, self.ab]
 
     def reset(self):
         '''

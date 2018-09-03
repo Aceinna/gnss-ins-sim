@@ -127,8 +127,8 @@ class DMU380Sim(object):
         self.results = None
         # algorithm vars
         this_dir = os.path.dirname(__file__)
-        self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities.so')
-        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim.so')
+        self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities.dll')
+        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim.dll')
         if not (os.path.exists(self.config_lib) and os.path.exists(self.sim_lib)):
             if not self.build_lib():
                 raise OSError('Shared libs not found.')

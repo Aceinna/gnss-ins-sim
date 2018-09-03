@@ -46,8 +46,8 @@ def test_dmu380_sim():
 
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, fs],
-                    #   motion_def_path+"//motion_def-static.csv",
-                      "//mnt//share//jd_figure8.csv",
+                      motion_def_path+"//motion_def.csv",
+                    #   "//mnt//share//jd_figure8.csv",
                       ref_frame=1,
                       imu=imu,
                       mode=None,

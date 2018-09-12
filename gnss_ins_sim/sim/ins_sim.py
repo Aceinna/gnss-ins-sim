@@ -50,7 +50,7 @@ class Sim(object):
                 row >=2: motion commands, which include
                     col 1: motion type. The following types are supported:
                         1: Euler angles change rate and body frame velocity change rate.
-                        2: absolute att and absolute vel to rech.
+                        2: absolute att and absolute vel to reach.
                         3: relative att and vel change.
                         4: absolute att, relative vel.
                         5: relative att, absolute vel.
@@ -58,29 +58,39 @@ class Sim(object):
                         [yaw, pitch, roll, vx (velocity along body x axis), reserved, reserved].
                         For motion type 1, the above Euler angles and velocity should be
                         change rate, corresponding units are (deg/s, m/s/s).
-                    col 8: maximum time for the given segment, sec.
+                    col 8: maximum time for the given segment, sec. Max time together with the
+                        param "mode" determines if this command can be executed successfully.
+                        If actual excuting time is less than max time, the remaining time will
+                        not be used and the next command will be executed immediately. If the
+                        command cannot be finished within max time, the next command will be
+                        excuted after max time. If you want to fully control execution time by
+                        your own, you should always choose motion type to be 1.
                     col 9: reserved.
 
-            ref_frame: reference frame used as the navigation frame,
+            ref_frame: reference frame used as the navigation frame and the attitude reference.
                         0: NED (default), with x axis pointing along geographic north,
                            y axis pointing eastward,
                            z axis pointing downward.
+                           Position will be expressed in LLA form, and the velocity of the vehicle
+                           relative to the ECEF frame will be expressed in local NED frame.
                         1: a virtual inertial frame with constant g,
                            x axis pointing along geographic/magnetic north,
                            z axis pointing along g,
                            y axis completing a right-handed coordinate system.
+                           Positive and velocity will both be in the [x y z] form in this frame.
                            **Notice: For this virtual inertial frame, position is indeed the sum of
                            the initial position in ecef and the relative position in the virutal
                            inertial frame. Indeed, two vectors expressed in different frames should
-                           not be added. I did in this way here just to preserve all usefull
-                           information. Keep this in mind if you use this result.
+                           not be added. This is done in this way here just to preserve all usefull
+                           information to generate .kml files. 
+                           Keep this in mind if you use this result.
 
             imu: Define the IMU error model. See IMU in imu_model.py.
                 If you want to do simulation with logged data files, set imu=None.
                 If you do not have logged data files and want to generate sensor data from a motion
                 definition file, you should specify the IMU model.
 
-            mode: simu mode could be a string to specify a built-in mode:
+            mode: simulation mode could be a string to specify a built-in mode:
                 'flight':
                 ...
                 This is not implemented yet. A built-in 'high_mobility' mode is used.

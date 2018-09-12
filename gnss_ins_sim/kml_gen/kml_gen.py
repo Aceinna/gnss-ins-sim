@@ -15,10 +15,11 @@ from ..attitude import attitude
 
 R2D = 180.0/math.pi
 
-def kml_gen(pos, template_file='template.kml', name='pathgen', convert_to_lla=False):
+def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert_to_lla=False):
     '''
     Generate .kml file contents from position data.
     Args:
+        data_dir: directory to save the .kml files.
         pos: nx3 [lat, lon, alt in rad and m, or [x, y, z] in m
         template_file: template kml file. The line 'REPALCE THIS WITH COORDINATES'
                        will be replaced by coordinates defined in pos.
@@ -36,14 +37,9 @@ def kml_gen(pos, template_file='template.kml', name='pathgen', convert_to_lla=Fa
         lla[:, 0] = lla[:, 0] * R2D
         lla[:, 1] = lla[:, 1] * R2D
     else:
-        lla = np.zeros(pos.shape)
-        # # xyz to lla
-        # for i in range(0, n):
-        #     lla[i, :] = geoparams.xyz2lla(pos[i, :])
-        # # rad to deg
-        # lla[:, 0] = lla[:, 0] * R2D
-        # lla[:, 1] = lla[:, 1] * R2D
         # ned to lla
+        lla = np.zeros(pos.shape)
+        # virtual inertial frame is defined by initial position
         lla[0, :] = geoparams.xyz2lla(pos[0, :])
         ecef_to_ned = attitude.rot_y(-math.pi/2.0-lla[0, 0]).dot(attitude.rot_z(lla[0, 1]))
         for i in range(1, n):
@@ -53,6 +49,10 @@ def kml_gen(pos, template_file='template.kml', name='pathgen', convert_to_lla=Fa
         # rad to deg
         lla[:, 0] = lla[:, 0] * R2D
         lla[:, 1] = lla[:, 1] * R2D
+        # save lla to .csv file. ** This is needed by the web version.
+        header_line = 'Latitude (deg), Longitude (deg), Altitude (deg)'
+        file_name = data_dir + '//' + name + '_LLA.csv'
+        np.savetxt(file_name, lla, header=header_line, delimiter=',', comments='')
     # gen kml according to data and template
     if template_file is None:
         template_file = os.path.join(os.path.dirname(__file__), 'template.kml')
@@ -75,5 +75,9 @@ def kml_gen(pos, template_file='template.kml', name='pathgen', convert_to_lla=Fa
             lines = lines + line
     # close template file
     fp.close()
-    return lines
+    # write contents into .kml file
+    kml_file = data_dir + '//' + name + '.kml'
+    fp = open(kml_file, 'w')
+    fp.write(lines)
+    fp.close()
     

@@ -520,24 +520,18 @@ class InsDataMgr(object):
             convert_xyz_to_lla = True
         # ref position
         if 'ref_pos' in self.available:
-            kml_contents = kml_gen.kml_gen(self.__all['ref_pos'].data,\
-                                    name='ref_pos',\
-                                    convert_to_lla=convert_xyz_to_lla)
-            kml_file = data_dir + '//ref_pos.kml'
-            fp = open(kml_file, 'w')
-            fp.write(kml_contents)
-            fp.close()
+            kml_gen.kml_gen(data_dir,\
+                            self.__all['ref_pos'].data,\
+                            name='ref_pos',\
+                            convert_to_lla=convert_xyz_to_lla)
         # simulation position
         if 'pos' in self.available:
             for i in self.__all['pos'].data.keys():
                 pos_name = 'pos_' + str(i)
-                kml_contents = kml_gen.kml_gen(self.__all['pos'].data[i],\
-                                        name=pos_name,\
-                                        convert_to_lla=convert_xyz_to_lla)
-                kml_file = data_dir + '//' + pos_name + '.kml'
-                fp = open(kml_file, 'w')
-                fp.write(kml_contents)
-                fp.close()
+                kml_gen.kml_gen(data_dir,\
+                                self.__all['pos'].data[i],\
+                                name=pos_name,\
+                                convert_to_lla=convert_xyz_to_lla)
 
     def is_supported(self, data_name):
         '''

@@ -513,7 +513,7 @@ class InsDataMgr(object):
             fp.close()
         # simulation position
         if 'pos' in self.available:
-            for i in range(0, len(self.__all['pos'].data)):
+            for i in self.__all['pos'].data.keys():
                 pos_name = 'pos_' + str(i)
                 kml_contents = kml_gen.kml_gen(self.__all['pos'].data[i],\
                                         name=pos_name,\

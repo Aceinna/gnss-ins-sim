@@ -23,7 +23,6 @@ def test_dmu380_sim():
     '''
     test Sim with DMU380 algorithm.
     '''
-    print("This demo only runs on Ubuntu x64.")
     #### choose a built-in IMU model, typical for IMU380
     imu_err = {'gyro_b': np.array([1.0, -1.0, 0.5]) * 1.0,
                'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
@@ -36,7 +35,7 @@ def test_dmu380_sim():
                'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0
               }
     # do not generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=False)
+    imu = imu_model.IMU(accuracy=imu_err, axis=6, gps=False)
 
     #### Algorithm
     # DMU380 algorithm
@@ -55,9 +54,9 @@ def test_dmu380_sim():
                       algorithm=algo)
     sim.run(1)
     # generate simulation results, summary, and save data to files
-    sim.results('aa')  # do not save data
+    sim.results()  # do not save data
     # plot data
-    sim.plot(['att_euler', 'ref_pos'], opt={'ref_pos':'projection'})
+    sim.plot(['att_euler', 'ref_pos'], opt={'att_euler':'error'})
 
 if __name__ == '__main__':
     test_dmu380_sim()

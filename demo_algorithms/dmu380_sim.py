@@ -9,6 +9,7 @@ Created on 2018-03-15
 
 # import
 import os
+import platform
 import math
 import numpy as np
 from ctypes import *
@@ -120,15 +121,19 @@ class DMU380Sim(object):
         Args:
             config_file: a configuration file
         '''
+        self.ext = '.so'
+        # platform
+        if platform.system() == 'Windows':
+            self.ext = '.dll'
         # algorithm description
-        self.input = ['fs', 'gyro', 'accel', 'mag']
+        self.input = ['fs', 'gyro', 'accel']
         self.output = ['algo_time', 'att_euler', 'wb']
         self.batch = True
         self.results = None
         # algorithm vars
         this_dir = os.path.dirname(__file__)
-        self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities.dll')
-        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim.dll')
+        self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities' + self.ext)
+        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim' + self.ext)
         if not (os.path.exists(self.config_lib) and os.path.exists(self.sim_lib)):
             if not self.build_lib():
                 raise OSError('Shared libs not found.')
@@ -139,6 +144,9 @@ class DMU380Sim(object):
         self.parse_config.parseConfigFile(c_char_p(config_file.encode('utf-8')),\
                                           pointer(self.sim_config))
         self.sim_engine.SimInitialize(pointer(self.sim_config))
+        # if mag required?
+        if self.sim_config.hasMags and self.sim_config.useMags:
+            self.input.append('mag')
 
     def run(self, set_of_input):
         '''
@@ -154,7 +162,8 @@ class DMU380Sim(object):
         fs = set_of_input[0]
         gyro = set_of_input[1]
         accel = set_of_input[2]
-        mag = set_of_input[3]
+        if 'mag' in self.input:
+            mag = set_of_input[3]
         n = accel.shape[0]
         # algo output
         time_step = np.zeros((n,))
@@ -167,7 +176,8 @@ class DMU380Sim(object):
             sensor_data = np.zeros((15,))
             sensor_data[0:3] = gyro[i, :]*R2D
             sensor_data[3:6] = accel[i, :]/9.80665
-            sensor_data[6:9] = mag[i, :]/100.0
+            if 'mag' in self.input:
+                sensor_data[6:9] = mag[i, :]/100.0
             sensorReadings = sensor_data.ctypes.data_as(POINTER(c_double))
             new_results = self.sim_engine.SimRun(sensorReadings)
             # get output
@@ -222,6 +232,9 @@ class DMU380Sim(object):
         Returns:
             True if success, False if error.
         '''
+        if self.ext == '.dll':
+            print("Automatic generation of .dll is not supported.")
+            return False
         this_dir = os.path.dirname(__file__)
         # get dir containing the source code
         if src_dir is None:

@@ -74,14 +74,11 @@ class InsDataMgr(object):
                                 description='true pos in the navigation frame',\
                                 units=['rad', 'rad', 'm'],\
                                 output_units=['deg', 'deg', 'm'],\
-                                legend=['ref_pos_x', 'ref_pos_y', 'ref_pos_z'])
-        if self.ref_frame.data == 1:
-            self.ref_pos.units = ['m', 'm', 'm']
-            self.ref_pos.output_units = ['m', 'm', 'm']
+                                legend=['ref_pos_lat', 'ref_pos_lon', 'ref_pos_alt'])
         self.ref_vel = Sim_data(name='ref_vel',\
                                 description='true vel in the body frame',\
                                 units=['m/s', 'm/s', 'm/s'],\
-                                legend=['ref_vel_x', 'ref_vel_y', 'ref_vel_z'])
+                                legend=['ref_vel_N', 'ref_vel_E', 'ref_vel_D'])
         self.ref_att_euler = Sim_data(name='ref_att_euler',\
                                 description='true attitude (Euler angles, ZYX)',\
                                 units=['rad', 'rad', 'rad'],\
@@ -103,12 +100,9 @@ class InsDataMgr(object):
                                 description='true GPS pos/vel',\
                                 units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
                                 output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
-                                legend=['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
-                                        'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz'])
+                                legend=['ref_gps_lat', 'ref_gps_lon', 'ref_gps_alt',\
+                                        'ref_gps_vN', 'ref_gps_vE', 'ref_gps_vD'])
                                 # downsampled true pos/vel
-        if self.ref_frame.data == 1:
-            self.ref_gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
-            self.ref_gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
         self.ref_mag = Sim_data(name='ref_mag',\
                                 description='true magnetic field',\
                                 units=['uT', 'uT', 'uT'],\
@@ -125,9 +119,10 @@ class InsDataMgr(object):
                               legend=['accel_x', 'accel_y', 'accel_z'])
         self.gps = Sim_data(name='gps',\
                             description='GPS measurements',\
-                            units=self.ref_gps.units,\
-                            output_units=self.ref_gps.output_units,\
-                            legend=['gps_x', 'gps_y', 'gps_z', 'gps_vx', 'gps_vy', 'gps_vz'])
+                            units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
+                            output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
+                            legend=['gps_lat', 'gps_lon', 'gps_alt',\
+                                    'gps_vN', 'gps_vE', 'gps_vD'])
         self.mag = Sim_data(name='mag',\
                             description='magnetometer measurements',\
                             units=['uT', 'uT', 'uT'],\
@@ -160,12 +155,13 @@ class InsDataMgr(object):
                                   units=['sec'])
         self.pos = Sim_data(name='pos',\
                             description='simulation position from algo',\
-                            units=self.ref_pos.units,\
-                            legend=['pos_x', 'pos_y', 'pos_z'])
+                            units=['rad', 'rad', 'm'],\
+                            output_units=['deg', 'deg', 'm'],\
+                            legend=['pos_lat', 'pos_lon', 'pos_alt'])
         self.vel = Sim_data(name='vel',\
                             description='simulation velocity from algo',\
                             units=['m/s', 'm/s', 'm/s'],\
-                            legend=['vel_x', 'vel_y', 'vel_z'])
+                            legend=['vel_N', 'vel_E', 'vel_D'])
         self.att_quat = Sim_data(name='att_quat',\
                                  description='simulation attitude (quaternion)  from algo',\
                                  legend=['q0', 'q1', 'q2', 'q3'])
@@ -194,7 +190,27 @@ class InsDataMgr(object):
                                  units=['m/s^2', 'm/s^2', 'm/s^2'],\
                                  logx=True, logy=True,\
                                  legend=['AD_ax', 'AD_ay', 'AD_az'])
-
+        # if using virtual inertial frame
+        if self.ref_frame.data == 1:
+            # position units and legned
+            self.ref_pos.units = ['m', 'm', 'm']
+            self.ref_pos.output_units = ['m', 'm', 'm']
+            self.ref_pos.legend = ['ref_pos_x', 'ref_pos_y', 'ref_pos_z']
+            self.pos.units = ['m', 'm', 'm']
+            self.pos.output_units = ['m', 'm', 'm']
+            self.pos.legend = ['pos_x', 'pos_y', 'pos_z']
+            # velocity units and legend
+            self.ref_vel.legend = ['ref_vel_x', 'ref_vel_y', 'ref_vel_z']
+            self.vel.legend = ['vel_x', 'vel_y', 'vel_z']
+            # GPS units and legend
+            self.ref_gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
+            self.ref_gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
+            self.ref_gps.legend = ['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
+                                   'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz']
+            self.gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
+            self.gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
+            self.gps.legend = ['gps_x', 'gps_y', 'gps_z',\
+                               'gps_vx', 'gps_vy', 'gps_vz']
         ########## all data ##########
         # __all include all data that may occur in an INS solution.
         self.__all = {

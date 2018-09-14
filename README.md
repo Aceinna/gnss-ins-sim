@@ -1,6 +1,6 @@
 # GNSS-IMU-SIM
 
-**GNSS-IMU-SIM** is an IMU simulation project, which generates reference trajectories, IMU sensor output, GPS output, odometer output and magnetometer output. Users choose/set up the sensor model, define the waypoints and provide algorithms, and **gnss-imu-sim** can generated required data for the algorithms, run the algorithms, plot simulation results, save simulations results, and generate a brief summary.
+**GNSS-IMU-SIM** is an IMU simulation project, which generates reference trajectories, IMU sensor output, GPS output, odometer output and magnetometer output. Users choose/set up the sensor model, define the waypoints and provide algorithms, and **gnss-imu-sim** can generate required data for the algorithms, run the algorithms, plot simulation results, save simulations results, and generate a brief summary.
 
 ## Requirements
 

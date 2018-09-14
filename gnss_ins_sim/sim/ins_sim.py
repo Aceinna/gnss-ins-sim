@@ -60,10 +60,10 @@ class Sim(object):
                         change rate, corresponding units are (deg/s, m/s/s).
                     col 8: maximum time for the given segment, sec. Max time together with the
                         param "mode" determines if this command can be executed successfully.
-                        If actual excuting time is less than max time, the remaining time will
+                        If actual executing time is less than max time, the remaining time will
                         not be used and the next command will be executed immediately. If the
                         command cannot be finished within max time, the next command will be
-                        excuted after max time. If you want to fully control execution time by
+                        executed after max time. If you want to fully control execution time by
                         your own, you should always choose motion type to be 1.
                     col 9: reserved.
 
@@ -81,7 +81,7 @@ class Sim(object):
                            **Notice: For this virtual inertial frame, position is indeed the sum of
                            the initial position in ecef and the relative position in the virutal
                            inertial frame. Indeed, two vectors expressed in different frames should
-                           not be added. This is done in this way here just to preserve all usefull
+                           not be added. This is done in this way here just to preserve all useful
                            information to generate .kml files. 
                            Keep this in mind if you use this result.
 

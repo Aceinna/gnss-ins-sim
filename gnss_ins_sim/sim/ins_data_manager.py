@@ -377,7 +377,7 @@ class InsDataMgr(object):
             # process error
             err_stat = self.__process_error_stat(data_name, angle)
         # unit conversion
-        if use_output_units:
+        if use_output_units and (err_stat is not None):
             for i in err_stat:
                 if isinstance(err_stat[i], dict):
                     for j in err_stat[i]:

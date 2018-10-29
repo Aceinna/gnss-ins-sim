@@ -597,18 +597,20 @@ class Sim(object):
             data_dir: valid data dir.
         '''
         # check data dir
-        if data_dir is None:
+        # data_dir is not specified, automatically create one
+        if data_dir == '':
             data_dir = os.path.abspath('.//demo_saved_data//')
-        if not os.path.exists(data_dir):
-            data_dir = os.path.abspath('.//demo_saved_data//')
-        else:
+            if data_dir[-1] != '//':
+                data_dir = data_dir + '//'
+            data_dir = data_dir + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '//'
             data_dir = os.path.abspath(data_dir)
-        if data_dir[-1] != '//':
-            data_dir = data_dir + '//'
-        data_dir = data_dir + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '//'
-        data_dir = os.path.abspath(data_dir)
+        # create data dir
         if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
+            try:
+                data_dir = os.path.abspath(data_dir)
+                os.makedirs(data_dir)
+            except:
+                raise IOError('Cannot create dir: %s.'% data_dir)
         return data_dir
 
     def __add_associated_data_to_results(self):

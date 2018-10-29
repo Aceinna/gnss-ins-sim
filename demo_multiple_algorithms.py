@@ -45,9 +45,9 @@ def test_path_gen():
                       mode=None,
                       env=None,
                       algorithm=[algo1, algo2])
-    sim.run(3)
+    sim.run(2)
     # save simulation data to files
-    sim.results('.//demo_saved_data//')
+    sim.results('')
     # plot data
     sim.plot(['att_euler'], opt={'att_euler': 'error'})
 

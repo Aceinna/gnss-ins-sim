@@ -50,7 +50,7 @@ class Sim_data(object):
         self.description = description
         # units of self.data
         if units is None:
-            self.units = []
+            self.units = ['']
         else:
             self.units = list(units)
         # output units should have same length as units

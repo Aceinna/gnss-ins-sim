@@ -123,7 +123,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     if output_def.shape[0] >= 2:
         if output_def[1, 0] == 1:
             enable_gps_or_odo = True
-            gps_data = np.zeros((sim_count_max, 7))
+            gps_data = np.zeros((sim_count_max, 8))
             output_def[1, 1] = sim_osr * round(out_freq / output_def[1, 1])
         elif output_def[1, 0] == 2:
             enable_gps_or_odo = True
@@ -162,7 +162,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     idx_high_freq = 0       # data index for imu, nav, mag
     idx_low_freq = 0        # data index for gps, odo
     for i in range(0, motion_def.shape[0]):
-        com_type = round(motion_def[i, 0])     # command type of this segment
+        com_type = round(motion_def[i, 0])      # command type of this segment
+        gps_visibility = motion_def[i, 8]       # gps visibility       
         # get command of this segment
         '''if i == 2:
             print("haha")'''
@@ -276,6 +277,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                         gps_data[idx_low_freq, 4] = vel_n[0]
                         gps_data[idx_low_freq, 5] = vel_n[1]
                         gps_data[idx_low_freq, 6] = vel_n[2]
+                        gps_data[idx_low_freq, 7] = gps_visibility
                     elif output_def[1, 0] == 2:             # odometer
                         #odo_data[idx_low_freq, :] = np.hstack((idx_low_freq,
                         #                                       odo_dist, odo_vel))

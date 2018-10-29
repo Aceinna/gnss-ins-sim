@@ -40,9 +40,9 @@ def test_path_gen():
                       algorithm=None)
     sim.run(1)
     # save simulation data to files
-    sim.results('.//demo_saved_data//')
+    sim.results('')
     # plot data, 3d plot of reference positoin, 2d plots of gyro and accel
-    sim.plot(['ref_pos', 'gyro', 'accel'], opt={'ref_pos': '3d'})
+    sim.plot(['ref_pos', 'gyro', 'gps_visibility'], opt={'ref_pos': '3d'})
 
 if __name__ == '__main__':
     test_path_gen()

@@ -70,6 +70,8 @@ class InsDataMgr(object):
         self.gps_time = Sim_data(name='gps_time',\
                                  description='GPS sample time',\
                                  units=['sec'])
+        self.gps_visibility = Sim_data(name='gps_visibility',\
+                                       description='GPS visibility')
         self.ref_pos = Sim_data(name='ref_pos',\
                                 description='true pos in the navigation frame',\
                                 units=['rad', 'rad', 'm'],\
@@ -221,6 +223,7 @@ class InsDataMgr(object):
             self.ref_frame.name: self.ref_frame,
             self.time.name: self.time,
             self.gps_time.name: self.gps_time,
+            self.gps_visibility.name: self.gps_visibility,
             self.ref_pos.name: self.ref_pos,
             self.ref_vel.name: self.ref_vel,
             self.ref_att_euler.name: self.ref_att_euler,
@@ -442,7 +445,7 @@ class InsDataMgr(object):
             x_axis = self.time
             # choose proper x axis data for specific y axis data
             if what_to_plot == self.ref_gps.name or what_to_plot == self.gps.name or\
-                what_to_plot == self.gps_time.name:
+                what_to_plot == self.gps_visibility.name or what_to_plot == self.gps_time.name:
                 x_axis = self.gps_time
             elif what_to_plot in self.__algo_output and self.algo_time.name in self.available:
                 x_axis = self.algo_time

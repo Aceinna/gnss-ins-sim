@@ -29,6 +29,8 @@ class InsAlgoMgr(object):
         self.nin = 0
         self.nout = 0
         self.nalgo = 0
+        self.input_alloc = []
+        self.output_alloc = []
         # check algorithm
         if self.algo is not None:
             self.__check_algo()
@@ -58,51 +60,38 @@ class InsAlgoMgr(object):
         results = []
         for i in range(self.nout):
             results.append({})
+        # generate keys to run simulation
         if keys is None:
-            # prepare input to the algorithms
-            for ele in input_data:
-                if isinstance(ele, dict):
-                    set_of_input.append(ele[0])   # using only key=0. If no key=0, error
-                else:
-                    set_of_input.append(ele)
-            # run the algorithms
-            for i in range(self.nalgo):
-                # algo name will be used as a key to index results of this algo
-                this_algo_name = self.get_algo_name(i)
-                # run the algo with given input
-                self.algo[i].reset()    # reset/initialize before run
-                self.algo[i].run(set_of_input)
-                # get results of this algo
-                this_results = self.algo[i].get_results()
-                # put results of this algo into final results
-                for j in range(self.nout):
-                    results[j][this_algo_name] = this_results[j]
-        # run the algorithm mutiple times according to keys
-        else:
+            keys = [0]  # defauly, only run once
+            # if there are multiple simulations runs
+            for i in input_data:
+                if isinstance(i, dict):
+                    keys = list(i.keys())
+                    break
+        # run each algorithm
+        for i in range(self.nalgo):
+            # algo name will be used as a key to index results of this algo
+            this_algo_name = self.get_algo_name(i)
+            # run the algorithm for each simulation
             for key in keys:
-                # prepare the algorith input of this run
+                self.algo[i].reset()    # reset/initialize before each run
+                # prepare input
                 set_of_input = []
-                for ele in input_data:
-                    if isinstance(ele, dict):
-                        if key in ele:
-                            set_of_input.append(ele[key])
+                for j in self.input_alloc[i]:  # j is the index of input of this algo in self.input
+                    if isinstance(input_data[j], dict):
+                        if key in input_data[j]:
+                            set_of_input.append(input_data[j][key])
                         else:
                             raise ValueError("set_of_input has keys %s, but you are requiring %s"\
-                                             % (ele.keys(), key))
+                                            % (input_data[j].keys(), key))
                     else:
-                        set_of_input.append(ele)
-                # run the algorithms
-                for i in range(self.nalgo):
-                    # algo name will be used as a key to index results of this algo
-                    this_algo_name = self.get_algo_name(i)
-                    # run the algorithm once
-                    self.algo[i].reset()    # reset/initialize before run
-                    self.algo[i].run(set_of_input)
-                    # get algorithm output of this run
-                    this_results = self.algo[i].get_results()
-                    # add algorithm output of this run to results
-                    for j in range(self.nout):
-                        results[j][this_algo_name+'_'+str(key)] = this_results[j]
+                        set_of_input.append(input_data[j])
+                self.algo[i].run(set_of_input)
+                # get algorithm output of this run
+                this_results = self.algo[i].get_results()
+                # add algorithm output of this run to results
+                for j in range(len(self.output_alloc[i])):
+                    results[self.output_alloc[i][j]][this_algo_name+'_'+str(key)] = this_results[j]
         return results
 
     def get_algo_name(self, i):
@@ -133,23 +122,27 @@ class InsAlgoMgr(object):
             Raise ValueError if algorithm input and output have unsupported elements
             Raise TypeError if algorithm input or output is not a list or tuple
         '''
+        # check if all algorithms has at least one input and at least one output
         try:
-            ## get input and output info of the first algorithm
-            self.input = self.algo[0].input
-            self.output = self.algo[0].output
-            self.nin = len(self.input)
-            self.nout = len(self.output)
-            self.nalgo = len(self.algo)
-            # algorithm must have at least one input and one output
-            if self.nin < 1 or self.nout < 1:
-                self.algo = None
-                print(self.input)
-                print(self.output)
-                raise ValueError
-            ## check if the other algorithms have the same input and output as the first algorithm
-            for i in range(1, self.nalgo):
-                if self.algo[i].input != self.input or self.algo[i].output != self.output:
-                    self.algo = None
-                    raise ValueError("Algorithm #%s has different intput or output."% i)
+            for algo in self.algo:
+                if len(algo.input) < 1 or len(algo.output) < 1:
+                    raise ValueError
         except:
             raise ValueError('algorithm input or output is not a valid list or tuple.')
+        # get input for all algoriths
+        for algo in self.algo:
+            self.input = list(set(self.input).union(set(algo.input)))
+            self.output = list(set(self.output).union(set(algo.output)))
+        # how to allocate input/output to each algorithm
+        for algo in self.algo:
+            idx = []
+            for i in algo.input:
+                idx.append(self.input.index(i))
+            self.input_alloc.append(idx)
+            idx = []
+            for i in algo.output:
+                idx.append(self.output.index(i))
+            self.output_alloc.append(idx)
+        self.nin = len(self.input)
+        self.nout = len(self.output)
+        self.nalgo = len(self.algo)

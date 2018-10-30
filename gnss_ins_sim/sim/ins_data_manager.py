@@ -287,7 +287,7 @@ class InsDataMgr(object):
         Args:
             data_name: data name
             data: a scalar, a numpy array or a dict of the above two. If data is a dict, each
-                value in it should be of same type (scalr or numpy array), same size and same
+                value in it should be of same type (scalar or numpy array), same size and same
                 units.
             key: There are more than one set of data, key is an index of data added this time.
                 If key is None, data can be a scalr, a numpy array or a dict of the above two.

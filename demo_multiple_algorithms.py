@@ -49,7 +49,7 @@ def test_path_gen():
     # save simulation data to files
     sim.results('')
     # plot data
-    sim.plot(['att_euler'], opt={'att_euler': 'error'})
+    sim.plot(['att_euler', 'ab', 'wb'])
 
 if __name__ == '__main__':
     test_path_gen()

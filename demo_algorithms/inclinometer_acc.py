@@ -25,13 +25,12 @@ class TiltAcc(object):
         '''
         # algorithm description
         self.name = 'StaticTilt'
-        self.input = ['fs', 'gyro', 'accel']#, 'mag']
+        self.input = ['accel']#, 'mag']
         self.output = ['att_quat']
         self.batch = True
         self.results = None
         # algorithm vars
         self.ini = 0                                # indicate if attitude is initialized
-        self.dt = 1.0                               # sample period, sec
         self.q = np.array([1.0, 0.0, 0.0, 0.0])     # quaternion
         self.err_int = np.array([0.0, 0.0, 0.0])    # integral of error
         self.kp_acc = 0.1
@@ -44,9 +43,7 @@ class TiltAcc(object):
             set_of_input is a tuple or list consistent with self.input
         '''
         # get input
-        self.dt = 1.0 / set_of_input[0]
-        gyro = set_of_input[1]
-        accel = set_of_input[2]
+        accel = set_of_input[0]
         # mag = set_of_input[3]
         n = accel.shape[0]
         # calculate

@@ -321,7 +321,6 @@ class InsDataMgr(object):
             else:
                 raise ValueError("Unsupported algorithm output: %s."% i)
 
-
     def get_data(self, data_names):
         '''
         Get data section of data_names.

@@ -125,6 +125,10 @@ class DMU380Sim(object):
         # platform
         if platform.system() == 'Windows':
             self.ext = '.dll'
+            if '64' in platform.architecture()[0]:
+                self.ext = '-x64' + self.ext
+            else:
+                self.ext = '-x86' + self.ext
         # algorithm description
         self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility']
         self.output = ['algo_time', 'pos', 'att_euler', 'wb']

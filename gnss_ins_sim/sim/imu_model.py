@@ -54,8 +54,7 @@ mag_high_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
 
 ## built-in GPS error profiles
 gps_low_accuracy = {'stdp': np.array([5.0, 5.0, 7.0]),
-                    'stdv': np.array([0.05, 0.05, 0.05]),
-                    'avail': 0.95}
+                    'stdv': np.array([0.05, 0.05, 0.05])}
 class IMU(object):
     '''
     IMU class
@@ -86,10 +85,9 @@ class IMU(object):
                 iron or hard iron is not provided, defautls will be used.
             axis: 6 for IMU, 9 for IMU+magnetometer
             gps: True if GPS exists, False if not.
-            gps_op: a dictionary to specify the GPS error model.
+            gps_opt: a dictionary to specify the GPS error model.
                 'stdp': position RMS error, meters
-                'stdv': vertical RMS error, meters
-                'avail': availability percentage, (0.0, 1.0]
+                'stdv': vertical RMS error, meters/second
         '''
         # check axis
         self.magnetometer = False
@@ -171,11 +169,10 @@ class IMU(object):
                 self.gps_err = gps_low_accuracy
             elif isinstance(gps_opt, dict):
                 if 'stdp' in gps_opt and\
-                   'stdv' in gps_opt and\
-                   'avail' in gps_opt:
+                   'stdv' in gps_opt:
                     self.gps_err = gps_opt
                 else:
-                    raise ValueError('gps_opt should have key: stdp, stdv and avail')
+                    raise ValueError('gps_opt should have key: stdp and stdv')
             else:
                 raise TypeError('gps_opt should be None or a dict')
         else:
@@ -250,15 +247,9 @@ class IMU(object):
         else:
             raise TypeError('accel_error is not valid.')
 
-    def set_gps(self, gps=True, gps_opt=None):
+    def set_gps(self, gps_error=None):
         '''
-        set GPS options
-        '''
-        pass
-
-    def set_mag_error(self, mag_error='low-accuracy'):
-        '''
-        set accel error model
+        set GPS error model
         Args:
             mag_error: magnetometer error model.
                 This can be a string to use the built-in mag models:
@@ -270,7 +261,34 @@ class IMU(object):
                     'hi': hard iron, default is 3x1 zero vector.
                     'std': mag noise std.
         '''
-        if not  self.magnetometer:
+        if not self.gps:
+            return
+        if gps_error is None:
+            self.gps_err = gps_low_accuracy
+        elif isinstance(gps_error, dict):
+            if 'stdp' in gps_error and\
+                'stdv' in gps_error:
+                self.gps_err = gps_error
+            else:
+                raise ValueError('gps_error should have key: stdp and stdv')
+        else:
+            raise TypeError('gps_error should be None or a dict')
+
+    def set_mag_error(self, mag_error='low-accuracy'):
+        '''
+        set magnetometer error model
+        Args:
+            mag_error: magnetometer error model.
+                This can be a string to use the built-in mag models:
+                    'low-accuracy':
+                    'mid-accuracy':
+                    'high-accuracy':
+                or a dictionary to custom the IMU model:
+                    'si': soft iron, default is a 3x3 identity matrix.
+                    'hi': hard iron, default is 3x1 zero vector.
+                    'std': mag noise std.
+        '''
+        if not self.magnetometer:
             return
         if isinstance(mag_error, str):
             if mag_error == 'low-accuracy':                  # 'low-accuracy'

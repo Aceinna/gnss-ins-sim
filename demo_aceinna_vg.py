@@ -39,9 +39,9 @@ def test_dmu380_sim():
 
     #### Algorithm
     # DMU380 algorithm
-    from demo_algorithms import dmu380_vg
+    from demo_algorithms import aceinna_vg
     cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
-    algo = dmu380_vg.DMU380Sim(cfg_file)
+    algo = aceinna_vg.DMU380Sim(cfg_file)
 
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, fs],

@@ -125,6 +125,10 @@ class DMU380Sim(object):
         # platform
         if platform.system() == 'Windows':
             self.ext = '.dll'
+            if '64' in platform.architecture()[0]:
+                self.ext = '-x64' + self.ext
+            else:
+                self.ext = '-x86' + self.ext
         # algorithm description
         self.input = ['fs', 'gyro', 'accel']
         self.output = ['algo_time', 'att_euler', 'wb']
@@ -133,7 +137,7 @@ class DMU380Sim(object):
         # algorithm vars
         this_dir = os.path.dirname(__file__)
         self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities' + self.ext)
-        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/libdmu380_algo_sim' + self.ext)
+        self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/aceinna_vg' + self.ext)
         if not (os.path.exists(self.config_lib) and os.path.exists(self.sim_lib)):
             if not self.build_lib():
                 raise OSError('Shared libs not found.')

@@ -9,6 +9,7 @@ Created on 2018-03-15
 
 # import
 import os
+import struct
 import platform
 import math
 import numpy as np
@@ -125,7 +126,7 @@ class DMU380Sim(object):
         # platform
         if platform.system() == 'Windows':
             self.ext = '.dll'
-            if '64' in platform.architecture()[0]:
+            if struct.calcsize("P") == 8:
                 self.ext = '-x64' + self.ext
             else:
                 self.ext = '-x86' + self.ext

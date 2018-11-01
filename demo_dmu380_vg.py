@@ -28,7 +28,7 @@ def test_dmu380_sim():
                'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
                'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
                'gyro_b_corr': np.array([100.0, 100.0, 100.0]),
-               'accel_b': np.array([50.0e-3, 50.0e-3, 50.0e-3]),
+               'accel_b': np.array([50.0e-3, 50.0e-3, 50.0e-3]) * 0.0,
                'accel_vrw': np.array([0.03119, 0.03009, 0.04779]) * 1.0,
                'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0,
                'accel_b_corr': np.array([200.0, 200.0, 200.0]),
@@ -39,14 +39,14 @@ def test_dmu380_sim():
 
     #### Algorithm
     # DMU380 algorithm
-    from demo_algorithms import dmu380_sim
+    from demo_algorithms import dmu380_vg
     cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
-    algo = dmu380_sim.DMU380Sim(cfg_file)
+    algo = dmu380_vg.DMU380Sim(cfg_file)
 
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, fs],
-                      motion_def_path+"//motion_def.csv",
-                    #   "//mnt//share//jd_figure8.csv",
+                      motion_def_path+"//motion_def-static.csv",
+                    #   ".//demo_saved_data//car_test_20180929//",
                       ref_frame=1,
                       imu=imu,
                       mode=None,

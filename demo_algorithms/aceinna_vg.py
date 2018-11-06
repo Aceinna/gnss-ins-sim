@@ -91,7 +91,15 @@ class SIM_COMFIG(Structure):
                 ("_measCovarMult_roll", c_bool),
                 ("measCovarMult_roll", c_float),
                 ("_measCovarMult_pitch", c_bool),
-                ("measCovarMult_pitch", c_float)]
+                ("measCovarMult_pitch", c_float),
+                ("_gpsItow", c_bool),
+                ("gpsItow", c_uint32),
+                ("_tenHertzCntrOffset", c_bool),
+                ("_subFrameCntrOffset", c_bool),
+                ("tenHertzCntrOffset", c_uint8),
+                ("subFrameCntrOffset", c_int8),
+                ("_gpsValid", c_bool),
+                ("gpsValid", c_bool)]
 
 class EKF_STATE(Structure):
     '''

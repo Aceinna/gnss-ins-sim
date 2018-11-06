@@ -77,11 +77,11 @@ gps = True to generate GPS data, gps = False not.
 Motion profile specifies the initial states of the vehicle and motion command that drives the vehicle to move, as shown in the following table.
 
 | Ini lat (deg) | ini lon (deg) | ini alt (m) | ini vx_body (m/s) | ini vy_body (m/s) | ini vz_body (m/s) | ini yaw (deg) | ini pitch (deg) | ini roll (deg) |
-|---|---|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 | 32 | 120 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
-| 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
-| ... | ...  | ...  | ...  | ... | ... | ... | ... |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 200 | 1 |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
 
 The initial position should be given in the LLA (latitude, longitude and altitude) form. The initial velocity is specified in the vehicle body frame. The initial attitude is represented by Euler angles of ZYX rotation sequence.
 
@@ -101,7 +101,7 @@ Five command types are supported
 ### An example of motion profile
 
 | Ini lat (deg) | ini lon (deg) | ini alt (m) | ini vx_body (m/s) | ini vy_body (m/s) | ini vz_body (m/s) | ini yaw (deg) | ini pitch (deg) | ini roll (deg) |
-|---|---|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 | 32 | 120 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
 | 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
@@ -126,15 +126,15 @@ Five command types are supported
 The initial latitude, longitude and altitude of the vehicle are 32deg, 120deg and 0 meter, respectively. The initial velocity of the vehicle is 0. The initial Euler angles are 0deg pitch, 0deg roll and 0deg yaw, which means the vehicle is level and its x axis points to the north.
 
 | 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
-|---|---|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 This command is of type 1. Command type1 directly gives Euler angle change rate and velocity change rate. In this case, they are zeros. That means keep the current state (being static) of the vehicle for 200sec. During this period, GPS is visible.
 
 | 5 | 0 | 45 | 0 | 10 | 0 | 0 | 250 | 1 |
-|---|---|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 This command is of type 5. Command type 5 defines attitude change and absolute velocity. In this case, the pitch angle will be increased by 45deg, and the velocity along the x axis of the body frame will be accelerated to 10m/s. This command should be executed within 250sec.
 
 | 3 | 90 | -45 | 0 | 0 | 0 | 0 | 25 | 1 |
-|---|---|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 This command is of type 3. Command type 3 defines attitude change and velocity change. In this case, the yaw angle will be increased by 90deg, which is a right turn. The pitch angle is decreased by 45deg. The velocity of the vehicle does not change. This command should be executed within 25sec.
 
 The following figure shows the trajectory of the motion commands if the above table. The trajectory sections corresponding to the above three commands are marked by command types 1, 5 and 3.

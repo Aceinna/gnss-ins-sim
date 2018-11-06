@@ -93,10 +93,10 @@ Five command types are supported
 | Command type | Comment |
 |---|---|
 | 1 | Directly define the Euler angles change rate and body frame velocity change rate. The change rates are given by column 2~7. The units are deg/s and m/s/s. Column 8 gives how long the command will last. If you want to fully control execution time of each command by your own, you should always choose motion type to be 1 |
-| 2 | Define the absolute attitude and absolute velocity to reach. The target attitude and velocity are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. If actual executing time is less than max time, the remaining time will not be used and the next command will be executed immediately. If the command cannot be finished within max time, the next command will be executed after max time. |
-| 3 | Define attitude change and velocity change. The attitude and velocity changes are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. |
-| 4 | Define absolute attitude and velocity change. The absolute attitude and velocity change are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. |
-| 5 | Define attitude change and absolute velocity. The attitude change and absolute velocity are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. |
+| 2 | Define the absolute attitude and absolute velocity to reach. The target attitude and velocity are given by column 2~7. The units are deg and m/s. Column 8 defines the maximum time to execute the command. If actual executing time is less than max time, the remaining time will not be used and the next command will be executed immediately. If the command cannot be finished within max time, the next command will be executed after max time. |
+| 3 | Define attitude change and velocity change. The attitude and velocity changes are given by column 2~7. The units are deg and m/s. Column 8 defines the maximum time to execute the command. |
+| 4 | Define absolute attitude and velocity change. The absolute attitude and velocity change are given by column 2~7. The units are deg and m/s. Column 8 defines the maximum time to execute the command. |
+| 5 | Define attitude change and absolute velocity. The attitude change and absolute velocity are given by column 2~7. The units are deg and m/s. Column 8 defines the maximum time to execute the command. |
 
 ### An example of motion profile
 
@@ -125,16 +125,19 @@ Five command types are supported
 
 The initial latitude, longitude and altitude of the vehicle are 32deg, 120deg and 0 meter, respectively. The initial velocity of the vehicle is 0. The initial Euler angles are 0deg pitch, 0deg roll and 0deg yaw, which means the vehicle is level and its x axis points to the north.
 
-| 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
+| command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
 |---|---|---|---|---|---|---|---|---|
+| 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
 This command is of type 1. Command type1 directly gives Euler angle change rate and velocity change rate. In this case, they are zeros. That means keep the current state (being static) of the vehicle for 200sec. During this period, GPS is visible.
 
-| 5 | 0 | 45 | 0 | 10 | 0 | 0 | 250 | 1 |
+| command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
 |---|---|---|---|---|---|---|---|---|
+| 5 | 0 | 45 | 0 | 10 | 0 | 0 | 250 | 1 |
 This command is of type 5. Command type 5 defines attitude change and absolute velocity. In this case, the pitch angle will be increased by 45deg, and the velocity along the x axis of the body frame will be accelerated to 10m/s. This command should be executed within 250sec.
 
-| 3 | 90 | -45 | 0 | 0 | 0 | 0 | 25 | 1 |
+| command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
 |---|---|---|---|---|---|---|---|---|
+| 3 | 90 | -45 | 0 | 0 | 0 | 0 | 25 | 1 |
 This command is of type 3. Command type 3 defines attitude change and velocity change. In this case, the yaw angle will be increased by 90deg, which is a right turn. The pitch angle is decreased by 45deg. The velocity of the vehicle does not change. This command should be executed within 25sec.
 
 The following figure shows the trajectory of the motion commands if the above table. The trajectory sections corresponding to the above three commands are marked by command types 1, 5 and 3.
@@ -150,18 +153,23 @@ algo = allan_analysis.Allan() # an Allan analysis demo algorithm
 
 An algorithm is an object of a Python class. It should at least include the following members:
 
-### self.input
+### self.input and self.output
 
 The member variable 'input' tells **gnss-ins-sim** what data the algorithm need. 'input' is a tuple or list of strings.
-Each string in 'input' corresponds to a set of data generated and provided by **gnss-ins-sim**.
 
-Supported input:
+The member variable 'output' tells **gnss-ins-sim** what data the algorithm returns. 'output' is a tuple or list of strings.
+
+Each string in 'input' and 'output' corresponds to a set of data supported by **gnss-ins-sim**. The following is a list of supported data by **gnss-ins-sim**.
 
 | name | description |
 |-|-|
-| 'ref_frame' | Reference frame. 0 to use the NED frame as the navigation frame, 1 to use a virtual inertial frame. For the NED frame, its origin is located at the vehicle center, its x axis is in the local horizontal plane and points northwards, its y axis is in the local horizontal plane and points eastwards, and its z axis points downwards. For the virtual inertial frame, the Earth rotation will be ignored. This frame can be considered as an NED frame fixed at the initial position.|
-| 'time' | Time series corresponds to IMU samples, units: sec. |
+| 'ref_frame' | Reference frame used as the navigation frame and the attitude reference. <br> 0: NED (default), with x axis pointing along geographic north, y axis pointing eastward, z axis pointing downward. Position will be expressed in LLA form, and the velocity of the vehicle relative to the ECEF frame will be expressed in local NED frame. <br> 1: a virtual inertial frame with constant g, x axis pointing along geographic or magnetic north, z axis pointing along g, y axis completing a right-handed coordinate system. Positive and velocity will both be in the [x y z] form in this frame. <br> **Notice: For this virtual inertial frame, position is indeed the sum of the initial position in ecef and the relative position in the virutal inertial frame. Indeed, two vectors expressed in different frames should not be added. This is done in this way here just to preserve all useful information to generate .kml files. Keep this in mind if you use this result.|
 | 'fs' | Sample frequency of IMU, units: Hz |
+| 'fs_gps' | Sample frequency of GNSS, units: Hz |
+| 'fs_mag' | Sample frequency of magnetometer, units: Hz |
+| 'time' | Time series corresponds to IMU samples, units: sec. |
+| 'gps_time' | Time series corresponds to GNSS samples, units: sec. |
+| 'gps_visibility' | Indicate if GPS is available. 1 means yes, and 0 means no. |
 | 'ref_pos' | True position in the navigation frame. When users choose NED (ref_frame=0) as the navigation frame, positions will be given in the form of [Latitude, Longitude, Altitude], units: ['rad', 'rad', 'm']. When users choose the virtual inertial frame, positions (initial position + positions relative to the  origin of the frame) will be given in the form of [x, y, z], units:  ['m', 'm', 'm']. |
 | 'ref_vel' | True velocity w.r.t the navigation/reference frame expressed in the body frame, units: ['m/s', 'm/s', 'm/s']. |
 | 'ref_att_euler' | True attitude (Euler angles, ZYX rotation sequency), units: ['rad', 'rad', 'rad'] |
@@ -170,38 +178,24 @@ Supported input:
 | 'ref_accel' | True acceleration in the body frame, units: ['m/s^2', 'm/s^2', 'm/s^2'] |
 | 'ref_mag' | True geomagnetic field in the body frame, units: ['uT', 'uT', 'uT'] (only available when axis=9 in IMU object) |
 | 'ref_gps' | True GPS position/velocity, ['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'] for NED (LLA), ['m', 'm', 'm', 'm/s', 'm/s', 'm/s'] for virtual inertial frame (xyz) (only available when gps=True in IMU object) |
-| 'gps_time' | Time series correspond to GPS samples, units: sec |
 | 'gyro' | Gyroscope measurements, 'ref_gyro' with errors |
 | 'accel' | Accelerometer measurements, 'ref_accel' with errors |
 | 'mag' | Magnetometer measurements, 'ref_mag' with errors |
 | 'gps' | GPS measurements, 'ref_gps' with errors |
-
-### self.output
-
-The member variable 'output' tells **gnss-ins-sim** what data the algorithm returns. 'output' is a tuple or list of strings.
-Each element in 'output' corresponds to a set of data that can be understood by **gnss-ins-sim**.
-
-Supported output:
-
-| name | description |
-|-|-|
 | 'algo_time' | Time series corresponding to algorithm output, units: ['s'] |
-| 'allan_t' | Time series of Allan analysis, units: ['s'] |
-| 'allan_std_gyro' | Allan std of gyro, units: ['rad/s', 'rad/s', 'rad/s'] |
-| 'allan_std_accel' | Allan std of accel, units: ['m/s2', 'm/s2', 'm/s2'] |
+| 'ad_gyro' | Allan std of gyro, units: ['rad/s', 'rad/s', 'rad/s'] |
+| 'ad_accel' | Allan std of accel, units: ['m/s2', 'm/s2', 'm/s2'] |
 | 'pos' | Simulation position from algo, units: ['rad', 'rad', 'm'] for NED (LLA), ['m', 'm', 'm'] for virtual inertial frame (xyz). |
 | 'vel' | Simulation velocity from algo, units: ['m/s', 'm/s', 'm/s'] |
 | 'att_euler' | Simulation attitude (Euler, ZYX)  from algo, units: ['rad', 'rad', 'rad'] |
 | 'att_quat' | Simulation attitude (quaternion)  from algo |
 | 'wb' | Gyroscope bias estimation, units: ['rad/s', 'rad/s', 'rad/s'] |
 | 'ab' | Accelerometer bias estimation, units: ['m/s^2', 'm/s^2', 'm/s^2'] |
-
-### self.batch
-
-| value | description |
-| - | - |
-| batch=True | Put all data from t0 to tf (default) |
-| batch=False | Sequentially put data from t0 to tf (not supported yet) |
+| 'gyro_cal' | Calibrated gyro output, units: ['rad/s', 'rad/s', 'rad/s'] |
+| 'accel_cal' | Calibrated acceleromter output, units: ['m/s^2', 'm/s^2', 'm/s^2'] |
+| 'mag_cal' | Calibrated magnetometer output, units: ['uT', 'uT', 'uT'] |
+| 'soft_iron' | 3x3 soft iron calibration matrix |
+| 'hard_iron' | Hard iron calibration, units: ['uT', 'uT', 'uT'] |
 
 ### self.run(self, set_of_input)
 
@@ -259,7 +253,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
         algorithm=algo)
 ```
 
-ins_sim.Sim supports running multiple algorithms in one simulation. All the algorithms should have the same input and same output. In this case, the parameter algorithm should be a list of user defined algorithms.
+**gnss-ins-sim** supports running multiple algorithms in one simulation. You can refer to demo_multiple_algorihtms.py for example.
 
 There are three kinds of vibration models:
 

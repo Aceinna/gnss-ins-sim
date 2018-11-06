@@ -249,7 +249,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 
 ## Step 4 Run the simulation
 
-### step 3.1 Create the simulation object
+### step 4.1 Create the simulation object
 
 ```python
   sim = ins_sim.Sim(
@@ -284,7 +284,7 @@ There are three kinds of vibration models:
 | 'n-mHz-sinusoidal' | sinusoidal vibration of m Hz, amplitude is n m/s^2 |
 | numpy array of size (n,4) | single-sided PSD. [freqency, x, y, z], m^2/s^4/Hz |
 
-### Step 3.2 Run the simulation
+### Step 4.2 Run the simulation
 
 ```python
 sim.run()     # run for 1 time

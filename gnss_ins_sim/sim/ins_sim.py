@@ -55,7 +55,7 @@ class Sim(object):
                         4: absolute att, relative vel.
                         5: relative att, absolute vel.
                     col 2-7: motion command (deg, m/s).
-                        [yaw, pitch, roll, vx (velocity along body x axis), reserved, reserved].
+                        [yaw, pitch, roll, vx (velocity along body x axis), vy, vz].
                         For motion type 1, the above Euler angles and velocity should be
                         change rate, corresponding units are (deg/s, m/s/s).
                     col 8: maximum time for the given segment, sec. Max time together with the
@@ -65,7 +65,7 @@ class Sim(object):
                         command cannot be finished within max time, the next command will be
                         executed after max time. If you want to fully control execution time by
                         your own, you should always choose motion type to be 1.
-                    col 9: reserved.
+                    col 9: gps visibility, should be 1 or 0.
 
             ref_frame: reference frame used as the navigation frame and the attitude reference.
                         0: NED (default), with x axis pointing along geographic north,

@@ -1,6 +1,6 @@
-# GNSS-IMU-SIM
+# GNSS-INS-SIM
 
-**GNSS-IMU-SIM** is an IMU simulation project, which generates reference trajectories, IMU sensor output, GPS output, odometer output and magnetometer output. Users choose/set up the sensor model, define the waypoints and provide algorithms, and **gnss-imu-sim** can generate required data for the algorithms, run the algorithms, plot simulation results, save simulations results, and generate a brief summary.
+**GNSS-INS-SIM** is an GNSS/INS simulation project, which generates reference trajectories, IMU sensor output, GPS output, odometer output and magnetometer output. Users choose/set up the sensor model, define the waypoints and provide algorithms, and **gnss-ins-sim** can generate required data for the algorithms, run the algorithms, plot simulation results, save simulations results, and generate a brief summary.
 
 ## Requirements
 
@@ -17,9 +17,10 @@ We provide the following demos:
 | demo_allan.py | A demo of Allan analysis of gyroscope and accelerometer data. The generated Allan deviation is shown in figures.|
 | demo_free_integration.py | A demo of a simple strapdown system. The simulation runs for 1000 times. The statistics of the INS results of the 1000 simulations are generated.|
 | demo_inclinometer_mahony.py | A demo of an dynamic inclinometer algorithm based on Mahony's theory. This demos shows how to generate error plot of interested data.|
-| demo_dmu380_sim.py | A demo of DMU380 algorithm. The DMU380 algorithm is first compiled as a shared library. This demo shows how to call the shared library.|
+| demo_aceinna_vg.py | A demo of DMU380 dynamic tilt algorithm. The algorithm is first compiled as a shared library. This demo shows how to call the shared library.|
+| demo_aceinna_ins.py | A demo of DMU380 dynamic GNSS/INS algorithm. The algorithm is first compiled as a shared library. This demo shows how to call the shared library.|
 | demo_multiple_algorithms.py | A demo of multiple algorithms in a simulation. This demo shows how to compare resutls of multiple algorithm.|
-| demo_gen_data_from_files.py | This demo shows how to generate data from logged data files.|
+| demo_gen_data_from_files.py | This demo shows how to do simulation from logged data files.|
 
 ## Step 1 Define the IMU model
 
@@ -71,7 +72,77 @@ axis = 9 to generate magnetometer data besides gyro and accelerometer data.
 
 gps = True to generate GPS data, gps = False not.
 
-## Step 2 Create your algorithm
+## Step 2 Create a motion profile
+
+Motion profile specifies the initial states of the vehicle and motion command that drives the vehicle to move, as shown in the following table.
+
+| Ini lat (deg) | ini lon (deg) | ini alt (m) | ini vx_body (m/s) | ini vy_body (m/s) | ini vz_body (m/s) | ini yaw (deg) | ini pitch (deg) | ini roll (deg) |
+|---|---|---|---|---|---|---|---|---|---|
+| 32 | 120 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
+| 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
+| ... | ...  | ...  | ...  | ... | ... | ... | ... |
+
+The initial position should be given in the LLA (latitude, longitude and altitude) form. The initial velocity is specified in the vehicle body frame. The initial attitude is represented by Euler angles of ZYX rotation sequence.
+
+Motion commands defines how the vehicle moves from its initial state. The simulation will generate true angular velocity, acceleration, magnetic field, position, velocity and attitude according to the commands. Combined with sensor error models, these true values are used to generate gyroscope, accelerometer, magnetometer and GPS output.
+There is only one motion command in the following table. Indeed, you can add more motion commands to specify the attitude and velocity of the vehicle. You can also define GPS visibility of the vehicle during the execution of each motion command.
+
+Five command types are supported
+
+| Command type | Comment |
+|---|---|
+| 1 | Directly define the Euler angles change rate and body frame velocity change rate. The change rates are given by column 2~7. The units are deg/s and m/s/s. Column 8 gives how long the command will last. If you want to fully control execution time of each command by your own, you should always choose motion type to be 1 |
+| 2 | Define the absolute attitude and absolute velocity to reach. The target attitude and velocity are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. If actual executing time is less than max time, the remaining time will not be used and the next command will be executed immediately. If the command cannot be finished within max time, the next command will be executed after max time. |
+| 3 | Define attitude change and velocity change. The attitude and velocity changes are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. |
+| 4 | Define absolute attitude and velocity change. The absolute attitude and velocity change are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. |
+| 5 | Define attitude change and absolute velocity. The attitude change and absolute velocity are given by column 2~7. The units are deg/s and m/s. Column 8 defines the maximum time to execute the command. |
+
+### An example of motion profile
+
+| Ini lat (deg) | ini lon (deg) | ini alt (m) | ini vx_body (m/s) | ini vy_body (m/s) | ini vz_body (m/s) | ini yaw (deg) | ini pitch (deg) | ini roll (deg) |
+|---|---|---|---|---|---|---|---|---|---|
+| 32 | 120 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| command type | yaw (deg) | pitch (deg) | roll (deg) | vx_body (m/s) | vy_body (m/s) | vz_body (m/s) | command duration (s) |	GPS visibility |
+| 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
+| 5 | 0 | 45 | 0 | 10 | 0 | 0 | 250 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 1 |
+| 3 | 90 | -45 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 3 | 180 | 0 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 3 | -180 | 0 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 3 | 180 | 0 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 3 | -180 | 0 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 3 | 180 | 0 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 3 | -180 | 0 | 0 | 0 | 0 | 0 | 25 | 1 |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | 50 | 1 |
+| 5 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 1 |
+
+The initial latitude, longitude and altitude of the vehicle are 32deg, 120deg and 0 meter, respectively. The initial velocity of the vehicle is 0. The initial Euler angles are 0deg pitch, 0deg roll and 0deg yaw, which means the vehicle is level and its x axis points to the north.
+
+| 1 | 0| 0 | 0 | 0 | 0 | 0 | 200 | 1 |
+|---|---|---|---|---|---|---|---|---|---|
+This command is of type 1. Command type1 directly gives Euler angle change rate and velocity change rate. In this case, they are zeros. That means keep the current state (being static) of the vehicle for 200sec. During this period, GPS is visible.
+
+| 5 | 0 | 45 | 0 | 10 | 0 | 0 | 250 | 1 |
+|---|---|---|---|---|---|---|---|---|---|
+This command is of type 5. Command type 5 defines attitude change and absolute velocity. In this case, the pitch angle will be increased by 45deg, and the velocity along the x axis of the body frame will be accelerated to 10m/s. This command should be executed within 250sec.
+
+| 3 | 90 | -45 | 0 | 0 | 0 | 0 | 25 | 1 |
+|---|---|---|---|---|---|---|---|---|---|
+This command is of type 3. Command type 3 defines attitude change and velocity change. In this case, the yaw angle will be increased by 90deg, which is a right turn. The pitch angle is decreased by 45deg. The velocity of the vehicle does not change. This command should be executed within 25sec.
+
+The following figure shows the trajectory of the motion commands if the above table. The trajectory sections corresponding to the above three commands are marked by command types 1, 5 and 3.
+<div align=center>
+<img width="500"  src="https://github.com/Aceinna/gnss-ins-sim/blob/master/gnss_ins_sim/docs/images/motion_profile_demo.png"/>
+</div>
+
+## Step 3 Create your algorithm
 
 ```python
 algo = allan_analysis.Allan() # an Allan analysis demo algorithm
@@ -81,8 +152,8 @@ An algorithm is an object of a Python class. It should at least include the foll
 
 ### self.input
 
-The member variable 'input' tells **gnss-imu-sim** what data the algorithm need. 'input' is a tuple or list of strings.
-Each string in 'input' corresponds to a set of data generated and provided by **gnss-imu-sim**.
+The member variable 'input' tells **gnss-ins-sim** what data the algorithm need. 'input' is a tuple or list of strings.
+Each string in 'input' corresponds to a set of data generated and provided by **gnss-ins-sim**.
 
 Supported input:
 
@@ -107,8 +178,8 @@ Supported input:
 
 ### self.output
 
-The member variable 'output' tells **gnss-imu-sim** what data the algorithm returns. 'output' is a tuple or list of strings.
-Each element in 'output' corresponds to a set of data that can be understood by **gnss-imu-sim**.
+The member variable 'output' tells **gnss-ins-sim** what data the algorithm returns. 'output' is a tuple or list of strings.
+Each element in 'output' corresponds to a set of data that can be understood by **gnss-ins-sim**.
 
 Supported output:
 
@@ -134,7 +205,7 @@ Supported output:
 
 ### self.run(self, set_of_input)
 
-This is the main procedure of the algorithm. **gnss-imu-sim** will call this procedure to run the algorithm.
+This is the main procedure of the algorithm. **gnss-ins-sim** will call this procedure to run the algorithm.
 'set_of_input' is a list of data that is consistent with self.input.
 For example, if you set self.input = ['fs', 'accel', 'gyro'], you should get the corresponding data this way:
 
@@ -148,7 +219,7 @@ For example, if you set self.input = ['fs', 'accel', 'gyro'], you should get the
 
 ### self.get_results(self)
 
-**gnss-imu-sim** will call this procedure to get resutls from the algorithm. The return should be consistent with self.output.
+**gnss-ins-sim** will call this procedure to get resutls from the algorithm. The return should be consistent with self.output.
 For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_gyro'], you should return the results this way:
 
 ```python
@@ -161,7 +232,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 
 ### self.reset(self)
 
-**gnss-imu-sim** will call this procedure after run the algorithm. This is necessary when you want to run the algorithm more than one time and some states of the algorithm should be reinitialized.
+**gnss-ins-sim** will call this procedure after run the algorithm. This is necessary when you want to run the algorithm more than one time and some states of the algorithm should be reinitialized.
 
 ## Step 3 Run the simulation
 

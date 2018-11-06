@@ -2,12 +2,26 @@
 
 **GNSS-INS-SIM** is an GNSS/INS simulation project, which generates reference trajectories, IMU sensor output, GPS output, odometer output and magnetometer output. Users choose/set up the sensor model, define the waypoints and provide algorithms, and **gnss-ins-sim** can generate required data for the algorithms, run the algorithms, plot simulation results, save simulations results, and generate a brief summary.
 
-## Requirements
+# Contents
+
+------
+
+* [Requirements](#requirements)
+* [Demos](#demos)
+* [Get started](#get-started)
+    * [Step 1 Define the IMU model](#step-1-define-the-imu-model)
+    * [Step 2 Create a motion profile](#step-2-create-a-motion-profile)
+    * [Step 3 Create your algorithm](#step-3-create-your-algorithm)
+    * [Step 4 Run the simulation](#step-4-run-the-simulation)
+    * [Step 5 Show results](#step-5-show-results)
+* [Acknowledgement](#Acknowledgement)
+
+# Requirements
 
 - Numpy ( version>1.10 )
 - Matplotlib
 
-## Demos
+# Demos
 
 We provide the following demos to show how to use this tool:
 
@@ -21,6 +35,8 @@ We provide the following demos to show how to use this tool:
 | demo_aceinna_ins.py | A demo of DMU380 GNSS/INS fusion algorithm. The algorithm is first compiled as a shared library. This demo shows how to call the shared library. This is the algorithm inside Aceinna's INS products.|
 | demo_multiple_algorithms.py | A demo of multiple algorithms in a simulation. This demo shows how to compare resutls of multiple algorithm.|
 | demo_gen_data_from_files.py | This demo shows how to do simulation from logged data files.|
+
+# Get started
 
 ## Step 1 Define the IMU model
 
@@ -231,7 +247,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 
 **gnss-ins-sim** will call this procedure after run the algorithm. This is necessary when you want to run the algorithm more than one time and some states of the algorithm should be reinitialized.
 
-## Step 3 Run the simulation
+## Step 4 Run the simulation
 
 ### step 3.1 Create the simulation object
 
@@ -276,7 +292,7 @@ sim.run(1)    # run for 1 time
 sim.run(100)  # run for 100 times
 ```
 
-### Step 3.3 Show results
+## Step 5 Show results
 
 ```python
 # generate a simulation summary,
@@ -291,7 +307,7 @@ sim.results()
 sim.plot(['ref_pos', 'gyro'], opt={'ref_pos': '3d'})
 ```
 
-## Acknowledgement
+# Acknowledgement
 
 - Geomagnetic field model [https://github.com/cmweiss/geomag/tree/master/geomag](https://github.com/cmweiss/geomag/tree/master/geomag)
 - MRepo [http://www.instk.org](http://www.instk.org/)

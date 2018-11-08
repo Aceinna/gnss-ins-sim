@@ -58,7 +58,7 @@ def test_dmu380_sim():
     # generate simulation results, summary, and save data to files
     sim.results()  # do not save data
     # plot data
-    sim.plot(['pos', 'att_euler'], opt={'pos':'error', 'att_euler':'error'})
+    sim.plot(['pos', 'vel', 'att_euler'], opt={'pos':'error', 'att_euler':'error'})
 
 if __name__ == '__main__':
     test_dmu380_sim()

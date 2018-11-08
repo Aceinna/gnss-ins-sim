@@ -140,7 +140,7 @@ class DMU380Sim(object):
                 self.ext = '-x86' + self.ext
         # algorithm description
         self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility']
-        self.output = ['algo_time', 'pos', 'att_euler', 'wb']
+        self.output = ['algo_time', 'pos', 'vel', 'att_euler', 'wb']
         self.batch = True
         self.results = None
         # algorithm vars
@@ -183,6 +183,7 @@ class DMU380Sim(object):
         # algo output
         time_step = np.zeros((n,))
         pos = np.zeros((n, 3))
+        vel = np.zeros((n, 3))
         euler_angles = np.zeros((n, 3))
         rate_bias = np.zeros((n, 3))
         # run
@@ -210,6 +211,9 @@ class DMU380Sim(object):
                 pos[output_len, 0] = ekf_state.kfPosN[0] / R2D
                 pos[output_len, 1] = ekf_state.kfPosN[1] / R2D
                 pos[output_len, 2] = ekf_state.kfPosN[2]
+                vel[output_len, 0] = ekf_state.kfVelN[0]
+                vel[output_len, 1] = ekf_state.kfVelN[1]
+                vel[output_len, 2] = ekf_state.kfVelN[2]
                 euler_angles[output_len, 0] = ekf_state.kfEulerAngles[2]
                 euler_angles[output_len, 1] = ekf_state.kfEulerAngles[1]
                 euler_angles[output_len, 2] = ekf_state.kfEulerAngles[0]
@@ -220,6 +224,7 @@ class DMU380Sim(object):
         # results
         self.results = [time_step[0:output_len],\
                         pos[0:output_len, :],\
+                        vel[0:output_len, :],\
                         euler_angles[0:output_len, :],\
                         rate_bias[0:output_len, :]]
 

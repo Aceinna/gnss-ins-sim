@@ -47,7 +47,7 @@ def test_dmu380_sim():
 
     #### start simulation
     sim = ins_sim.Sim([fs, fs, fs],
-                      motion_def_path+"//motion_def-ins.csv",
+                      motion_def_path+"//motion_def-long_drive.csv",
                     #   ".//demo_saved_data//car_test_20180929//",
                       ref_frame=0,
                       imu=imu,
@@ -56,7 +56,7 @@ def test_dmu380_sim():
                       algorithm=algo)
     sim.run(1)
     # generate simulation results, summary, and save data to files
-    sim.results()  # do not save data
+    sim.results('', gen_kml=True)  # do not save data
     # plot data
     sim.plot(['pos', 'vel', 'att_euler'], opt={'pos':'error', 'att_euler':'error'})
 

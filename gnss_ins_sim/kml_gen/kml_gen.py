@@ -57,13 +57,15 @@ def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert
     if template_file is None:
         template_file = os.path.join(os.path.dirname(__file__), 'template.kml')
     else:
-        if not os.path.isabs(template_file):     # add by DXG
+        if not os.path.isabs(template_file):
             template_file = os.path.join(os.path.dirname(__file__), template_file)
     fp = open(template_file)
     lines = ''
     for line in fp:
         if line == 'REPALCE THIS WITH COORDINATES\n':
-            for i in range(0, n):
+            max_points = 40000
+            step = math.ceil(n/max_points)
+            for i in range(0, n, step):
                 if i == 0:
                     lines = lines + '\t\t\t\t'
                 lines = lines + ('%f,%f,%f ' %(lla[i, 1], lla[i, 0], lla[i, 2]))

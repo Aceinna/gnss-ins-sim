@@ -358,14 +358,14 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
         w_ie = earth_param[5]
         rm_effective = rm + pos_n[2]
         rn_effective = rn + pos_n[2]
-        gravity = np.array([0, 0, -g])
+        gravity = np.array([0, 0, g])
         w_en_n[0] = vel_n[1] / rn_effective              # wN
         w_en_n[1] = -vel_n[0] / rm_effective             # wE
         w_en_n[2] = -vel_n[1] * sl /cl / rn_effective    # wD
         w_ie_n[0] = w_ie * cl
         w_ie_n[2] = -w_ie * sl
     else:
-        gravity = [0, 0, -g]
+        gravity = [0, 0, g]
 
     # Calculate rotation rate of b w.r.t n expressed in n.
     # Calculate rotation rate from Euler angle derivative using ZYX rot seq.
@@ -394,7 +394,7 @@ def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_fra
     gyro = c_nb.T.dot(w_nb_n + w_en_n + w_ie_n)
     # Acceleration output
     w_ie_b = c_nb.T.dot(w_ie_n)
-    acc = vel_dot_b + attitude.cross3(w_ie_b+gyro, vel_b) + c_nb.T.dot(gravity)
+    acc = vel_dot_b + attitude.cross3(w_ie_b+gyro, vel_b) - c_nb.T.dot(gravity)
     return acc, gyro, vel_dot_n, pos_dot_n
 
 def parse_motion_def(motion_def_seg, att, vel):

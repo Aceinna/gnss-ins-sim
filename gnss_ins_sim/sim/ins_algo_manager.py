@@ -7,6 +7,8 @@ Created on 2018-04-28
 @author: dongxiaoguang
 """
 
+import copy
+
 class InsAlgoMgr(object):
     '''
     A class that manage all algorithms in an INS solution. Plann to support multiple algorithms
@@ -86,7 +88,7 @@ class InsAlgoMgr(object):
                                             % (input_data[j].keys(), key))
                     else:
                         set_of_input.append(input_data[j])
-                self.algo[i].run(set_of_input)
+                self.algo[i].run(copy.deepcopy(set_of_input))   # deepcopy to avoid being changed
                 # get algorithm output of this run
                 this_results = self.algo[i].get_results()
                 # add algorithm output of this run to results

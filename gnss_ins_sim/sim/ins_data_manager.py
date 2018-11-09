@@ -80,7 +80,7 @@ class InsDataMgr(object):
         self.ref_vel = Sim_data(name='ref_vel',\
                                 description='true vel in the body frame',\
                                 units=['m/s', 'm/s', 'm/s'],\
-                                legend=['ref_vel_N', 'ref_vel_E', 'ref_vel_D'])
+                                legend=['ref_vel_x', 'ref_vel_y', 'ref_vel_z'])
         self.ref_att_euler = Sim_data(name='ref_att_euler',\
                                 description='true attitude (Euler angles, ZYX)',\
                                 units=['rad', 'rad', 'rad'],\
@@ -163,7 +163,7 @@ class InsDataMgr(object):
         self.vel = Sim_data(name='vel',\
                             description='simulation velocity from algo',\
                             units=['m/s', 'm/s', 'm/s'],\
-                            legend=['vel_N', 'vel_E', 'vel_D'])
+                            legend=['vel_x', 'vel_y', 'vel_z'])
         self.att_quat = Sim_data(name='att_quat',\
                                  description='simulation attitude (quaternion)  from algo',\
                                  legend=['q0', 'q1', 'q2', 'q3'])

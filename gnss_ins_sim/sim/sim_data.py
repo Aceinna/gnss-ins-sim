@@ -333,7 +333,7 @@ def unit_conversion_scale(src_unit, dst_unit):
     Calculate unit conversion scale.
     '''
     m = len(dst_unit)
-    scale = np.zeros((m,))
+    scale = np.ones((m,))
     for i in range(m):
         # deg to rad
         if src_unit[i] == 'deg' and dst_unit[i] == 'rad':
@@ -368,10 +368,12 @@ def convert_unit_ndarray_scalar(x, scale):
     if isinstance(x, np.ndarray):
         if x.ndim == 2:
             for i in range(min(m, x.shape[1])):
-                if scale[i] != 0.0:
+                if scale[i] != 1.0:
                     x[:, i] = x[:, i] * scale[i]
         elif x.ndim == 1:
-            if scale[0] != 0.0:
+            if len(x) == m:
+                x = x * scale
+            else:
                 x = x * scale[0]
     elif isinstance(x, (int, float)):
         x = x * scale[0]
@@ -479,7 +481,6 @@ def plot3d_in_one_figure(y, title='Figure', grid='on', legend=None, extra_opt=''
     # grid
     if grid.lower() != 'off':
         plt.grid()
-
 
 def plot3d_proj_in_one_figure(y, title='Figure', grid='on', legend=None, extra_opt=''):
     '''

@@ -77,7 +77,7 @@ class Sim(object):
                            x axis pointing along geographic/magnetic north,
                            z axis pointing along g,
                            y axis completing a right-handed coordinate system.
-                           Positive and velocity will both be in the [x y z] form in this frame.
+                           Position and velocity will both be in the [x y z] form in this frame.
                            **Notice: For this virtual inertial frame, position is indeed the sum of
                            the initial position in ecef and the relative position in the virutal
                            inertial frame. Indeed, two vectors expressed in different frames should

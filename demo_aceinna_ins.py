@@ -36,7 +36,7 @@ def test_dmu380_sim():
               }
     gps_err = {'stdp': np.array([5.0, 5.0, 7.0]) * 1.0,
                'stdv': np.array([0.05, 0.05, 0.05]) * 1.0}
-    # do not generate GPS and magnetometer data
+    # generate GPS and magnetometer data
     imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True, gps_opt=gps_err)
 
     #### Algorithm

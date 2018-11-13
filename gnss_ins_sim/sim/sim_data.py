@@ -350,8 +350,9 @@ def unit_conversion_scale(src_unit, dst_unit):
         elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/hr':
             scale[i] = 3600.0/D2R
         else:
-            pass
-            # print('No need or not know how to convert from %s to %s.'% (src_unit, dst_unit))
+            if src_unit[i] != dst_unit[i]:
+                print('Cannot convert unit from %s in %s to %s.'\
+                      % (src_unit[i], src_unit, dst_unit[i]))
     return scale
 
 def convert_unit_ndarray_scalar(x, scale):

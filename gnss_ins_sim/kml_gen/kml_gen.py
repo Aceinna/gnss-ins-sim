@@ -31,6 +31,7 @@ def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert
         kml_contents: string contents of kml file.
     '''
     # get lla from pos
+    pos = pos.copy()
     n = pos.shape[0]
     if convert_to_lla is False:
         lla = pos

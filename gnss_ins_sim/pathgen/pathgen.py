@@ -111,10 +111,15 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     ### convert time duration to simulation cycles
     sim_count_max = 0
     for i in range(0, motion_def.shape[0]):
+        if motion_def[i, 7] < 0:
+            raise ValueError("Time duration of %s-th command has negative time duration: %s."\
+                             % (i, motion_def[i, 7]))
         seg_count = motion_def[i, 7] * out_freq         # max count for this segment
-        sim_count_max += seg_count                      # data count of all segments
+        sim_count_max += math.ceil(seg_count)           # data count of all segments
         motion_def[i, 7] = round(seg_count * sim_osr)   # simulation count
-
+    # total sim_count_max must be above 0
+    if sim_count_max <= 0:
+        raise ValueError("Total time duration in the motion definition file must be above 0.")
     ### create output arrays
     sim_count_max = int(sim_count_max)
     imu_data = np.zeros((sim_count_max, 7))

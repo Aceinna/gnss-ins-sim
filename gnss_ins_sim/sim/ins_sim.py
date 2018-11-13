@@ -194,10 +194,6 @@ class Sim(object):
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:
-            if len(self.dmgr.time.data) == 0:
-                print("You may provide an invalid motion profile. No data generated.")
-                self.sim_results = False
-                return None
             #### generate associated data
             self.__add_associated_data_to_results()
 
@@ -241,8 +237,6 @@ class Sim(object):
                     'projection': project the 3D plot on xy, xz and yz plane, respectively.
             extra_opt: only strings to specify matplotlib properties is supported.
         '''
-        if not self.sim_results:
-            return
         # check sim_idx
         if sim_idx is None:                 # no index specified, plot all data
             sim_idx = list(range(self.sim_count))

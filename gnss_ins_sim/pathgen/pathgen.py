@@ -538,7 +538,7 @@ def bias_drift(corr_time, drift, n, fs):
             a = 1 - 1/fs/corr_time[i]
             b = 1/fs*drift[i]
             #sensor_bias_drift[0, :] = np.random.randn(3) * drift
-            drift_noise = np.random.randn(n-1, 3)
+            drift_noise = np.random.randn(n, 3)
             for j in range(1, n):
                 sensor_bias_drift[j, i] = a*sensor_bias_drift[j-1, i] + b*drift_noise[j-1, i]
         else:

@@ -286,6 +286,8 @@ class Sim(object):
                     self.dmgr.fs.name + '] = ' +\
                     str(self.dmgr.fs.data) + ' ' +\
                     self.dmgr.fs.units[0] + '\n'
+        # reference frame
+        self.sum += self.dmgr.ref_frame.description + ': ' + str(self.dmgr.ref_frame.data) + '\n'
         # simulation time duration
         self.sum += 'Simulation time duration: ' + \
                     str(len(self.dmgr.time.data)/self.dmgr.fs.data) + ' s' + '\n'

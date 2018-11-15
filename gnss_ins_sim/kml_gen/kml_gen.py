@@ -65,7 +65,7 @@ def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert
     for line in fp:
         if line == 'REPALCE THIS WITH COORDINATES\n':
             max_points = 40000
-            step = math.ceil(n/max_points)
+            step = int(math.ceil(n/max_points))
             for i in range(0, n, step):
                 if i == 0:
                     lines = lines + '\t\t\t\t'

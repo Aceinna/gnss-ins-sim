@@ -40,6 +40,9 @@ class FreeIntegration(object):
         self.r0 = ini_pos_vel_att[0:3]
         self.v0 = ini_pos_vel_att[3:6]
         self.att0 = ini_pos_vel_att[6:9]
+        self.gravity = None
+        if len(ini_pos_vel_att) > 9:
+            self.gravity = ini_pos_vel_att[9]
 
     def run(self, set_of_input):
         '''
@@ -62,8 +65,11 @@ class FreeIntegration(object):
         c_bn = np.eye((3))
         if self.ref_frame == 1:
             # Earth gravity
-            earth_param = geoparams.geo_param(self.r0)    # geo parameters
-            g_n = np.array([0, 0, earth_param[2]])
+            if self.gravity is None:
+                earth_param = geoparams.geo_param(self.r0)    # geo parameters
+                g_n = np.array([0, 0, earth_param[2]])
+            else:
+                g_n = np.array([0, 0, self.gravity])
             for i in range(n):
                 #### initialize
                 if i == 0:
@@ -109,7 +115,10 @@ class FreeIntegration(object):
                 w_ie = earth_param[5]
                 rm_effective = rm + self.pos[i-1, 2]
                 rn_effective = rn + self.pos[i-1, 2]
-                g_n = np.array([0, 0, g])
+                if self.gravity is None:
+                    g_n = np.array([0, 0, g])
+                else:
+                    g_n = np.array([0, 0, self.gravity])
                 w_en_n[0] = self.vel[i-1, 1] / rn_effective              # wN
                 w_en_n[1] = -self.vel[i-1, 0] / rm_effective             # wE
                 w_en_n[2] = -self.vel[i-1, 1] * sl /cl / rn_effective    # wD

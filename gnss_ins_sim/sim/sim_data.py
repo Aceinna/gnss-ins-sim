@@ -241,14 +241,35 @@ class Sim_data(object):
                                           legend=self.legend,\
                                           extra_opt=extra_opt)
             else:
-                plot_in_one_figure(x_data, y_data,\
-                                   logx=self.logx, logy=self.logy,\
-                                   title=self.name + '_' + str(i),\
-                                   xlabel=x.name + ' (' + x.output_units[0] + ')',\
-                                   ylabel=self.name + ' (' + str(self.output_units) + ')',\
-                                   grid=self.grid,\
-                                   legend=self.legend,\
-                                   extra_opt=extra_opt)
+                # plot latitude and longitude in one fig, and altitude in another
+                if self.units == ['deg', 'deg', 'm'] or self.units == ['rad', 'rad', 'm']:
+                    # latitude and longitude
+                    plot_in_one_figure(x_data, y_data[:, 0:2],\
+                                    logx=self.logx, logy=self.logy,\
+                                    title=self.name + '_LatLon_' + str(i),\
+                                    xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                    ylabel=self.name + ' (' + str(self.output_units[0:2]) + ')',\
+                                    grid=self.grid,\
+                                    legend=self.legend[0:2],\
+                                    extra_opt=extra_opt)
+                    # altitude
+                    plot_in_one_figure(x_data, y_data[:, 2],\
+                                    logx=self.logx, logy=self.logy,\
+                                    title=self.name + '_Alt_' + str(i),\
+                                    xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                    ylabel=self.name + ' (' + str(self.output_units[2]) + ')',\
+                                    grid=self.grid,\
+                                    legend=[self.legend[2]],\
+                                    extra_opt=extra_opt)
+                else:
+                    plot_in_one_figure(x_data, y_data,\
+                                    logx=self.logx, logy=self.logy,\
+                                    title=self.name + '_' + str(i),\
+                                    xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                    ylabel=self.name + ' (' + str(self.output_units) + ')',\
+                                    grid=self.grid,\
+                                    legend=self.legend,\
+                                    extra_opt=extra_opt)
 
     def __plot_array(self, x, ref=None, plot3d=0, extra_opt=''):
         '''
@@ -298,7 +319,28 @@ class Sim_data(object):
                                       legend=self.legend,\
                                       extra_opt=extra_opt)
         else:
-            plot_in_one_figure(x_data, y_data,\
+            # plot latitude and longitude in one fig, and altitude in another
+            if self.units == ['deg', 'deg', 'm'] or self.units == ['rad', 'rad', 'm']:
+                # latitude and longitude
+                plot_in_one_figure(x_data, y_data[:, 1:2],\
+                                logx=self.logx, logy=self.logy,\
+                                title=self.name + '_LatLon',\
+                                xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                ylabel=self.name + ' (' + str(self.output_units[0:2]) + ')',\
+                                grid=self.grid,\
+                                legend=self.legend[0:2],\
+                                extra_opt=extra_opt)
+                # altitude
+                plot_in_one_figure(x_data, y_data[:, 2],\
+                                logx=self.logx, logy=self.logy,\
+                                title=self.name + '_Alt',\
+                                xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                ylabel=self.name + ' (' + str(self.output_units[2]) + ')',\
+                                grid=self.grid,\
+                                legend=[self.legend[2]],\
+                                extra_opt=extra_opt)
+            else:
+                plot_in_one_figure(x_data, y_data,\
                                logx=self.logx, logy=self.logy,\
                                xlabel=x.name + ' (' + x.output_units[0] + ')',\
                                ylabel=self.name + ' (' + str(self.output_units) + ')',\

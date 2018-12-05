@@ -16,6 +16,7 @@ from .ins_data_manager import InsDataMgr
 from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
 from .. attitude import attitude
+from ..geoparams import geoparams
 
 D2R = math.pi/180.0
 # built-in mobility
@@ -311,14 +312,21 @@ class Sim(object):
             err_stat = self.dmgr.get_error_stat(data_name, end_point=end_point,\
                                                 angle=is_angle, use_output_units=True)
             if err_stat is not None:
+                # There is error stats, add a headerline
                 if err_stat_header_line is False:
                     err_stat_header_line = True
                     self.sum += '\n------------------------------------------------------------\n'
                     self.sum += 'The following are error statistics.'
+                # Units of the error stats
+                err_units = self.dmgr.get_data_all(data_name).output_units[0]
+                # convert LLA position error to NED position error
+                if data_name == self.dmgr.pos.name and self.dmgr.ref_frame.data == 0:
+                    self.__lla_err(err_stat)
+                    err_units = 'm'
                 self.sum += '\n-----------statistics for ' +\
                             self.dmgr.get_data_all(data_name).description +\
                             ' (in units of ' +\
-                            self.dmgr.get_data_all(data_name).output_units[0] +')\n'
+                            err_units +')\n'
                 if isinstance(err_stat['max'], dict):
                     for sim_run in sorted(err_stat['max'].keys()):
                         self.sum += '\tSimulation run ' + str(sim_run) + ':\n'
@@ -372,6 +380,9 @@ class Sim(object):
                 data = np.genfromtxt(full_file_name, delimiter=',', skip_header=1)
                 # get data units in file
                 units = self.__get_data_units(full_file_name)
+                # see if position info mathes reference frame
+                # if data_name == self.dmgr.ref_pos.name or data_name == self.dmgr.pos.name:
+                #     if ref_frame == 1 and unit == ['deg',]
                 # print([data_name, data_key, units])
                 self.dmgr.add_data(data_name, data, data_key, units)
 
@@ -681,4 +692,30 @@ class Sim(object):
             return dst
         else:
             raise ValueError('%s is not a dict or numpy array.'% src.name)
+
+    def __lla_err(self, err_stat):
+        '''
+        convert LLA error in [deg, deg, m] to NED position error in [m, m, m].
+        This is just an estimation and can providing good accuracy when comparing
+        points in a small area.
+        '''
+        final_lla = self.dmgr.ref_pos.data[-1, :]
+        earth_param = geoparams.geo_param(final_lla)
+        rm = earth_param[0]
+        rn = earth_param[1]
+        rm_effective = rm + final_lla[2]
+        rn_effective = (rn + final_lla[2]) * math.cos(final_lla[0])
+        scale = np.array((rm_effective*attitude.D2R, rn_effective*attitude.D2R, 1.0))
+        if isinstance(err_stat['max'], dict):
+            for sim_run in sorted(err_stat['max'].keys()):
+                err_stat['max'][sim_run] = err_stat['max'][sim_run] * scale
+                err_stat['avg'][sim_run] = err_stat['avg'][sim_run] * scale
+                err_stat['std'][sim_run] = err_stat['std'][sim_run] * scale
+        else:
+            err_stat['max'] = err_stat['max'] * scale
+            err_stat['avg'] = err_stat['avg'] * scale
+            err_stat['std'] = err_stat['std'] * scale
+
+
+
 

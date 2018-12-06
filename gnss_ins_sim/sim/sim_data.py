@@ -180,6 +180,7 @@ class Sim_data(object):
             plot3d: 1--3D plot, 2--3D plot projected on xy, xz and yz, otherwise--2D plot
             extra_opt: strings to specify matplotlib properties.
         '''
+        extra_opt = extra_opt['mpl_opt']
         if self.plottable:
             if isinstance(self.data, dict):
                 self.__plot_dict(x, key, ref, plot3d, extra_opt)

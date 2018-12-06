@@ -696,15 +696,16 @@ class Sim(object):
     def __lla_err(self, err_stat):
         '''
         convert LLA error in [deg, deg, m] to NED position error in [m, m, m].
+        The NED frame is defined by the first LLA.
         This is just an estimation and can providing good accuracy when comparing
         points in a small area.
         '''
-        final_lla = self.dmgr.ref_pos.data[-1, :]
-        earth_param = geoparams.geo_param(final_lla)
+        first_lla = self.dmgr.ref_pos.data[0, :]
+        earth_param = geoparams.geo_param(first_lla)
         rm = earth_param[0]
         rn = earth_param[1]
-        rm_effective = rm + final_lla[2]
-        rn_effective = (rn + final_lla[2]) * math.cos(final_lla[0])
+        rm_effective = rm + first_lla[2]
+        rn_effective = (rn + first_lla[2]) * math.cos(first_lla[0])
         scale = np.array((rm_effective*attitude.D2R, rn_effective*attitude.D2R, 1.0))
         if isinstance(err_stat['max'], dict):
             for sim_run in sorted(err_stat['max'].keys()):

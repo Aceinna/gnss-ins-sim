@@ -84,8 +84,33 @@ def lla2xyz(lla):
     x = rho * math.cos(lla[1])
     y = rho * math.sin(lla[1])
     z = (r*(1.0-E_SQR) + lla[2]) * sl
-
     return np.array([x, y, z])
+
+def lla2xyz_batch(lla):
+    '''
+    [Lat Lon Alt] position to xyz position
+    Args:
+        lla: [Lat, Lon, Alt], [rad, rad, meter], numpy array of size (n,3)
+    return:
+        WGS-84 position, [x, y, z], [m, m, m], numpy array of size (n,3)
+    '''
+    # only one LLA
+    if lla.ndim == 1:
+        return lla2xyz(lla)
+    # multiple LLA
+    n = lla.shape[0]
+    xyz = np.zeros((n, 3))
+    for i in range(0, n):
+        sl = math.sin(lla[i, 0])
+        cl = math.cos(lla[i, 0])
+        sl_sqr = sl * sl
+        r = Re / math.sqrt(1.0 - E_SQR*sl_sqr)
+        rho = (r + lla[i, 2]) * cl
+
+        xyz[i, 0] = rho * math.cos(lla[i, 1])
+        xyz[i, 1] = rho * math.sin(lla[i, 1])
+        xyz[i, 2] = (r*(1.0-E_SQR) + lla[i, 2]) * sl
+    return xyz
 
 def xyz2lla(xyz):
     '''
@@ -122,3 +147,4 @@ def xyz2lla(xyz):
     N = Re/math.sqrt(1.0-e2*slat*slat)
     alt = rho*math.cos(lat) + (xyz[2] + e2*N*slat)*slat - N
     return np.array([lat, lon, alt])
+

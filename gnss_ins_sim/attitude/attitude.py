@@ -591,6 +591,15 @@ def dcm2euler(dcm, rot_seq='zyx'):
     else:
         return False
 
+def ecef_to_ned(lat, lon):
+    '''
+    transformation matrix from the ECEF frame to the NED frame defined by lat and lon.
+    Args:
+        lat: latitude, rad
+        lon: longitude, rad
+    '''
+    return rot_y(-math.pi/2.0 - lat).dot(rot_z(lon))
+
 def three_axis_rot(r11, r12, r21, r31, r32):
     r1 = math.atan2(r11, r12)
     r2 = math.asin(r21)

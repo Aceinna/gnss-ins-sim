@@ -443,12 +443,16 @@ class InsDataMgr(object):
         if data_name == self.pos.name and self.ref_frame.data == 0:
             if err_opt == 'ned':
                 lla = 1
+                err.description = 'ERROR of NED position'
                 err.units = ['m', 'm', 'm']
                 err.output_units = ['m', 'm', 'm']
+                err.legend = ['pos_N', 'pos_E', 'pos_D']
             elif err_opt == 'ecef':
                 lla = 2
+                err.description = 'ERROR of ECEF position'
                 err.units = ['m', 'm', 'm']
                 err.output_units = ['m', 'm', 'm']
+                err.legend = ['pos_x', 'pos_y', 'pos_z']
         if isinstance(self.__all[data_name].data, dict):
             ref_data = None
             for i in self.__all[data_name].data:

@@ -416,7 +416,7 @@ class InsDataMgr(object):
         err_stat['units'] = str(self.__err[err_data_name].output_units)
         return err_stat
 
-    def calc_data_err(self, data_name, ref_data_name, angle=False, extra_opt=''):
+    def calc_data_err(self, data_name, ref_data_name, angle=False, err_opt=''):
         '''
         Calculate error of one set of data.
         Args:
@@ -424,7 +424,7 @@ class InsDataMgr(object):
             ref_data_name: name of the reference of the intput data
             angle: True if this is angle error. Angle error will be converted to be within
                 [-pi, pi] before calculating statistics.
-            extra_opt: error options
+            err_opt: error options
         Returns:
             an Sim_data object corresponds to data_name
         '''
@@ -439,11 +439,11 @@ class InsDataMgr(object):
         # handling position error
         lla = 0
         if data_name == self.pos.name and self.ref_frame.data == 0:
-            if extra_opt == 'ned':
+            if err_opt == 'ned':
                 lla = 1
                 err.units = ['m', 'm', 'm']
                 err.output_units = ['m', 'm', 'm']
-            elif extra_opt == 'ecef':
+            elif err_opt == 'ecef':
                 lla = 2
                 err.units = ['m', 'm', 'm']
                 err.output_units = ['m', 'm', 'm']
@@ -498,8 +498,8 @@ class InsDataMgr(object):
         if lla == 0:
             err = x - r
             if angle:
-                for j in range(len(x.flat)):
-                    x.flat[j] = attitude.angle_range_pi(x.flat[j])
+                for j in range(len(err.flat)):
+                    err.flat[j] = attitude.angle_range_pi(err.flat[j])
         else:
             # convert x and r to ECEF first
             x_ecef = geoparams.lla2xyz_batch(x)
@@ -529,7 +529,7 @@ class InsDataMgr(object):
                 data_saved.append(data)
         return data_saved
 
-    def plot(self, what_to_plot, keys, opt=None, extra_opt=''):
+    def plot(self, what_to_plot, keys, angle=False, opt=None, extra_opt=''):
         '''
         Plot specified results.
         Args:
@@ -569,12 +569,11 @@ class InsDataMgr(object):
             elif what_to_plot in self.__algo_output and self.algo_time.name in self.available:
                 x_axis = self.algo_time
             # plot
-            # if data in what_to_plot and data in ref have different dimension, interp is needed.
             if ref_data_name is not None:
                 err_data_name = 'err_' + what_to_plot
                 # error data not generated yet, generate it
                 if err_data_name not in self.__err:
-                    data_err = self.calc_data_err(what_to_plot, ref_data_name, False, extra_opt)
+                    data_err = self.calc_data_err(what_to_plot, ref_data_name, angle=angle)
                     if data_err is not None:
                         self.__err[data_err.name] = data_err
                 # error data generated, plot it

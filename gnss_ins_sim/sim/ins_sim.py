@@ -272,7 +272,10 @@ class Sim(object):
             else:
                 keys = sim_idx
             # plot data
-            self.dmgr.plot(data, keys, opt, extra_opt)
+            is_angle = False
+            if data in self.interested_error:
+                is_angle = self.interested_error[data] == 'angle'
+            self.dmgr.plot(data, keys, is_angle, opt, extra_opt)
         # show figures
         plt.show()
 

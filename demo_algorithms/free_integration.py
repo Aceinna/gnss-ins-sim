@@ -135,8 +135,8 @@ class FreeIntegration(object):
                             attitude.cross3(2*w_ie_n + w_en_n, self.vel[i-1, :])
                 self.vel[i, :] = self.vel[i-1, :] + vel_dot_n * self.dt
                 #### propagate position
-                lat_dot = self.vel[i-1, 0] / (rm  + self.pos[i-1, 2])
-                lon_dot = self.vel[i-1, 1] / (rn  + self.pos[i-1, 2]) / cl
+                lat_dot = self.vel[i-1, 0] / rm_effective
+                lon_dot = self.vel[i-1, 1] / rn_effective / cl
                 alt_dot = -self.vel[i-1, 2]
                 self.pos[i, 0] = self.pos[i-1, 0] + lat_dot * self.dt
                 self.pos[i, 1] = self.pos[i-1, 1] + lon_dot * self.dt

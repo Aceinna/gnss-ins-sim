@@ -192,6 +192,9 @@ class Sim(object):
             end_point: True for end-point error statistics, False for process error statistics.
             gen_kml: True to generate two .kml files containing the reference position and the
                     simulation position (output by algorithms), respectively.
+            extra_opt: Extra options to generate the results. It can be a string option to
+                calculate errors. The following options are supported:
+                    'ned': NED position error.
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:

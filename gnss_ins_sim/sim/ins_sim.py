@@ -170,7 +170,7 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
-    def results(self, data_dir=None, end_point=False, gen_kml=False):
+    def results(self, data_dir=None, end_point=False, gen_kml=False, extra_opt=''):
         '''
         Simulation results.
         Save results to .csv files containing all data generated.
@@ -212,7 +212,7 @@ class Sim(object):
                 self.dmgr.save_kml_files(data_dir)
 
             #### simulation summary and save summary to file
-            self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
+            self.__summary(data_dir, data_saved, end_point=end_point, extra_opt=extra_opt)
 
             #### simulation results are generated
             self.sim_results = True
@@ -276,7 +276,7 @@ class Sim(object):
         # show figures
         plt.show()
 
-    def __summary(self, data_dir, data_saved, end_point=False):
+    def __summary(self, data_dir, data_saved, end_point=False, extra_opt=''):
         '''
         Summary of sim results.
         '''
@@ -310,7 +310,8 @@ class Sim(object):
                 continue
             is_angle = self.interested_error[data_name] == 'angle'
             err_stat = self.dmgr.get_error_stat(data_name, end_point=end_point,\
-                                                angle=is_angle, use_output_units=True)
+                                                angle=is_angle, use_output_units=True,\
+                                                extra_opt=extra_opt)
             if err_stat is not None:
                 # There is error stats, add a headerline
                 if err_stat_header_line is False:
@@ -318,11 +319,7 @@ class Sim(object):
                     self.sum += '\n------------------------------------------------------------\n'
                     self.sum += 'The following are error statistics.'
                 # Units of the error stats
-                err_units = self.dmgr.get_data_all(data_name).output_units[0]
-                # convert LLA position error to NED position error
-                if data_name == self.dmgr.pos.name and self.dmgr.ref_frame.data == 0:
-                    self.__lla_err(err_stat)
-                    err_units = 'm'
+                err_units = err_stat['units']
                 self.sum += '\n-----------statistics for ' +\
                             self.dmgr.get_data_all(data_name).description +\
                             ' (in units of ' +\

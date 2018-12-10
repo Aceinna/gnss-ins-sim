@@ -51,11 +51,10 @@ def test_free_integration():
     # run the simulation
     sim.run(1)
     # generate simulation results, summary
-    sim.results('', end_point=False, gen_kml=True)
+    sim.results(end_point=False, extra_opt='ned')
     # plot
-    sim.plot(['pos', 'vel', 'att_euler', 'accel'],\
-             opt={'pos':'error', 'vel':'error', 'att_euler': 'error'},\
-             extra_opt={'pos':'ned', 'mpl_opt':''})
+    sim.plot(['pos', 'vel', 'att_euler', 'accel'],
+             opt={'pos':'error', 'vel':'error', 'att_euler': 'error'})
 
 if __name__ == '__main__':
     test_free_integration()

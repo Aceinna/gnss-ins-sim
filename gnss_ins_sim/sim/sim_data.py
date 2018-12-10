@@ -14,8 +14,6 @@ import matplotlib.mlab as mlab
 from mpl_toolkits.mplot3d import Axes3D
 from ..attitude import attitude
 
-D2R = math.pi/180
-
 class Sim_data(object):
     '''
     Simulation data
@@ -307,18 +305,18 @@ def unit_conversion_scale(src_unit, dst_unit):
     for i in range(m):
         # deg to rad
         if src_unit[i] == 'deg' and dst_unit[i] == 'rad':
-            scale[i] = D2R
+            scale[i] = attitude.D2R
         elif src_unit[i] == 'deg/s' and dst_unit[i] == 'rad/s':
-            scale[i] = D2R
+            scale[i] = attitude.D2R
         elif src_unit[i] == 'deg/hr' and dst_unit[i] == 'rad/s':
-            scale[i] = D2R / 3600.0
+            scale[i] = attitude.D2R / 3600.0
         # rad to deg
         elif src_unit[i] == 'rad' and dst_unit[i] == 'deg':
-            scale[i] = 1.0/D2R
+            scale[i] = 1.0 / attitude.D2R
         elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/s':
-            scale[i] = 1.0/D2R
+            scale[i] = 1.0 / attitude.D2R
         elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/hr':
-            scale[i] = 3600.0/D2R
+            scale[i] = 3600.0 / attitude.D2R
         else:
             if src_unit[i] != dst_unit[i]:
                 print('Cannot convert unit from %s in %s to %s.'\

@@ -18,7 +18,6 @@ from ..pathgen import pathgen
 from .. attitude import attitude
 from ..geoparams import geoparams
 
-D2R = math.pi/180.0
 # built-in mobility
 high_mobility = np.array([1.0, 0.5, 2.0])   # m/s/s, rad/s/s, rad/s
 
@@ -506,15 +505,15 @@ class Sim(object):
             raise ValueError('motion definition file must have nine columns \
                               and at least four rows (two header rows + at least two data rows).')
         ini_pos_n = ini_state[0:3]
-        ini_pos_n[0] = ini_pos_n[0] * D2R
-        ini_pos_n[1] = ini_pos_n[1] * D2R
+        ini_pos_n[0] = ini_pos_n[0] * attitude.D2R
+        ini_pos_n[1] = ini_pos_n[1] * attitude.D2R
         ini_vel_b = ini_state[3:6]
-        ini_att = ini_state[6:9] * D2R
+        ini_att = ini_state[6:9] * attitude.D2R
         if waypoints.ndim == 1: # if waypoints is of size (n,), change it to (1,n)
             waypoints = waypoints.reshape((1, len(waypoints)))
         motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7, 8]]
         # convert deg to rad
-        motion_def[:, 1:4] = motion_def[:, 1:4] * D2R
+        motion_def[:, 1:4] = motion_def[:, 1:4] * attitude.D2R
         # replace nan with 0.0, doing this to be compatible with older version motion def files.
         motion_def[np.isnan(motion_def)] = 0.0
 
@@ -540,8 +539,8 @@ class Sim(object):
             elif isinstance(mode, np.ndarray):      # customize the sim mode
                 if mode.shape == (3,):
                     mobility[0] = mode[0]
-                    mobility[1] = mode[1] * D2R
-                    mobility[2] = mode[2] * D2R
+                    mobility[1] = mode[1] * attitude.D2R
+                    mobility[2] = mode[2] * attitude.D2R
                 else:
                     raise TypeError('mode should be of size (3,)')
             else:

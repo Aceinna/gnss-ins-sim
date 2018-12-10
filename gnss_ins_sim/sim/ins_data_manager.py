@@ -73,7 +73,7 @@ class InsDataMgr(object):
         self.gps_visibility = Sim_data(name='gps_visibility',\
                                        description='GPS visibility')
         self.ref_pos = Sim_data(name='ref_pos',\
-                                description='true pos in the navigation frame',\
+                                description='true LLA pos in the navigation frame',\
                                 units=['rad', 'rad', 'm'],\
                                 output_units=['deg', 'deg', 'm'],\
                                 legend=['ref_pos_lat', 'ref_pos_lon', 'ref_pos_alt'])
@@ -90,23 +90,23 @@ class InsDataMgr(object):
                                      description='true attitude (quaternion)',\
                                      legend=['q0', 'q1', 'q2', 'q3'])
         self.ref_gyro = Sim_data(name='ref_gyro',\
-                                 description='true angular velocity',\
+                                 description='true angular velocity in the body frame',\
                                  units=['rad/s', 'rad/s', 'rad/s'],\
                                  output_units=['deg/s', 'deg/s', 'deg/s'],\
                                  legend=['ref_gyro_x', 'ref_gyro_y', 'ref_gyro_z'])
         self.ref_accel = Sim_data(name='ref_accel',\
-                                  description='True accel',\
+                                  description='true accel in the body frame',\
                                   units=['m/s^2', 'm/s^2', 'm/s^2'],\
                                   legend=['ref_accel_x', 'ref_accel_y', 'ref_accel_z'])
         self.ref_gps = Sim_data(name='ref_gps',\
-                                description='true GPS pos/vel',\
+                                description='true GPS LLA position and NED velocity',\
                                 units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
                                 output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                                 legend=['ref_gps_lat', 'ref_gps_lon', 'ref_gps_alt',\
                                         'ref_gps_vN', 'ref_gps_vE', 'ref_gps_vD'])
                                 # downsampled true pos/vel
         self.ref_mag = Sim_data(name='ref_mag',\
-                                description='true magnetic field',\
+                                description='true magnetic field in the body frame',\
                                 units=['uT', 'uT', 'uT'],\
                                 legend=['ref_mag_x', 'ref_mag_y', 'ref_mag_z'])
         # sensor measurements
@@ -120,7 +120,7 @@ class InsDataMgr(object):
                               units=['m/s^2', 'm/s^2', 'm/s^2'],\
                               legend=['accel_x', 'accel_y', 'accel_z'])
         self.gps = Sim_data(name='gps',\
-                            description='GPS measurements',\
+                            description='GPS LLA position and NED velocity measurements',\
                             units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
                             output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                             legend=['gps_lat', 'gps_lon', 'gps_alt',\
@@ -194,7 +194,8 @@ class InsDataMgr(object):
                                  legend=['AD_ax', 'AD_ay', 'AD_az'])
         # if using virtual inertial frame
         if self.ref_frame.data == 1:
-            # position units and legned
+            # description, position units and legned
+            self.ref_pos.description = 'true position in the local NED frame'
             self.ref_pos.units = ['m', 'm', 'm']
             self.ref_pos.output_units = ['m', 'm', 'm']
             self.ref_pos.legend = ['ref_pos_x', 'ref_pos_y', 'ref_pos_z']
@@ -205,10 +206,12 @@ class InsDataMgr(object):
             self.ref_vel.legend = ['ref_vel_x', 'ref_vel_y', 'ref_vel_z']
             self.vel.legend = ['vel_x', 'vel_y', 'vel_z']
             # GPS units and legend
+            self.ref_gps.description = 'true GPS position and velocity in the local NED frame'
             self.ref_gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.ref_gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.ref_gps.legend = ['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
                                    'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz']
+            self.gps.description = 'GPS position and velocity measurements in the local NED frame'
             self.gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.gps.legend = ['gps_x', 'gps_y', 'gps_z',\
@@ -302,7 +305,7 @@ class InsDataMgr(object):
                 If data is a numpy of size(m,n), units should be a list of n strings
                 to define the units.
                 If data is a dict, units should be the same as the above two depending on if
-                each value in the dict is a scalr or a numpy array.
+                each value in the dict is a scalar or a numpy array.
         '''
         if data_name in self.__all:
             self.__all[data_name].add_data(data, key, units)

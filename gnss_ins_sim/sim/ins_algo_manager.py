@@ -11,8 +11,7 @@ import copy
 
 class InsAlgoMgr(object):
     '''
-    A class that manage all algorithms in an INS solution. Plann to support multiple algorithms
-    in case users want to compare results of different algorithms in a simulation.
+    A class that manages all algorithms in an INS solution.
     '''
     def __init__(self, algo):
         '''

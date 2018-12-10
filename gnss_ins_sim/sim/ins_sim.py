@@ -45,7 +45,8 @@ class Sim(object):
                 row 2: initial states, which include:
                     col 1-3: initial position (LLA, deg, meter),
                     col 4-6: initial velocity in body frame(m/s),
-                    col 7-9: initial attitude (Euler angles, deg)
+                    col 7-9: initial attitude (Euler angles that rotate the reference frame to the
+                        body frame according to the ZYX rotation sequence, deg).
                 row 3: header line for motion command
                 row >=2: motion commands, which include
                     col 1: motion type. The following types are supported:
@@ -71,8 +72,9 @@ class Sim(object):
                         0: NED (default), with x axis pointing along geographic north,
                            y axis pointing eastward,
                            z axis pointing downward.
-                           Position will be expressed in LLA form, and the velocity of the vehicle
-                           relative to the ECEF frame will be expressed in local NED frame.
+                           Position will be expressed in LLA form, and the reference velocity of
+                           the vehicle relative to the ECEF frame will be expressed in the body
+                           frame, and GPS velocity will be expressed in the NED frame.
                         1: a virtual inertial frame with constant g,
                            x axis pointing along geographic/magnetic north,
                            z axis pointing along g,
@@ -82,7 +84,7 @@ class Sim(object):
                            the initial position in ecef and the relative position in the virutal
                            inertial frame. Indeed, two vectors expressed in different frames should
                            not be added. This is done in this way here just to preserve all useful
-                           information to generate .kml files. 
+                           information to generate .kml files.
                            Keep this in mind if you use this result.
 
             imu: Define the IMU error model. See IMU in imu_model.py.
@@ -694,31 +696,3 @@ class Sim(object):
             return dst
         else:
             raise ValueError('%s is not a dict or numpy array.'% src.name)
-
-    def __lla_err(self, err_stat):
-        '''
-        convert LLA error in [deg, deg, m] to NED position error in [m, m, m].
-        The NED frame is defined by the first LLA.
-        This is just an estimation and can providing good accuracy when comparing
-        points in a small area.
-        '''
-        first_lla = self.dmgr.ref_pos.data[0, :]
-        earth_param = geoparams.geo_param(first_lla)
-        rm = earth_param[0]
-        rn = earth_param[1]
-        rm_effective = rm + first_lla[2]
-        rn_effective = (rn + first_lla[2]) * math.cos(first_lla[0])
-        scale = np.array((rm_effective*attitude.D2R, rn_effective*attitude.D2R, 1.0))
-        if isinstance(err_stat['max'], dict):
-            for sim_run in sorted(err_stat['max'].keys()):
-                err_stat['max'][sim_run] = err_stat['max'][sim_run] * scale
-                err_stat['avg'][sim_run] = err_stat['avg'][sim_run] * scale
-                err_stat['std'][sim_run] = err_stat['std'][sim_run] * scale
-        else:
-            err_stat['max'] = err_stat['max'] * scale
-            err_stat['avg'] = err_stat['avg'] * scale
-            err_stat['std'] = err_stat['std'] * scale
-
-
-
-

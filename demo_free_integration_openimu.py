@@ -40,6 +40,9 @@ def test_free_integration():
     # create the algorithm object
     algo = free_integration.FreeIntegration(ini_pos_vel_att)
 
+    from demo_algorithms import inclinometer_acc
+    algo2 = inclinometer_acc.TiltAcc()
+
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, 0.0],
                       log_dir,
@@ -47,7 +50,7 @@ def test_free_integration():
                       imu=imu,
                       mode=None,
                       env=None,
-                      algorithm=algo)
+                      algorithm=[algo, algo2])
     # run the simulation
     sim.run(1)
     # generate simulation results, summary

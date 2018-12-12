@@ -16,17 +16,19 @@ class FreeIntegration(object):
     '''
     Integrate gyro to get attitude, double integrate linear acceleration to get position.
     '''
-    def __init__(self, ini_pos_vel_att):
+    def __init__(self, ini_pos_vel_att, earth_rot=True):
         '''
         Args:
             ini_pos_vel_att: 9x1 initial position, velocity and attitude.
                 3x1 position in the form of LLA, units: [rad, rad, m];
                 3x1 velocity in the body frame, units: m/s;
                 3x1 Euler anels [yaw, pitch, roll], rotation sequency is ZYX, rad.
+            earth_rot: Consider the Earth rotation or not. Only used when ref_frame=0.
         '''
         # algorithm description
         self.input = ['ref_frame', 'fs', 'gyro', 'accel']
         self.output = ['att_euler', 'pos', 'vel']
+        self.earth_rot = earth_rot
         self.batch = True
         self.results = None
         # algorithm vars
@@ -122,8 +124,9 @@ class FreeIntegration(object):
                 w_en_n[0] = self.vel[i-1, 1] / rn_effective              # wN
                 w_en_n[1] = -self.vel[i-1, 0] / rm_effective             # wE
                 w_en_n[2] = -self.vel[i-1, 1] * sl /cl / rn_effective    # wD
-                w_ie_n[0] = w_ie * cl
-                w_ie_n[2] = -w_ie * sl
+                if self.earth_rot:
+                    w_ie_n[0] = w_ie * cl
+                    w_ie_n[2] = -w_ie * sl
                 #### propagate euler angles
                 w_nb_b = gyro[i-1, :] - c_bn.dot(w_en_n + w_ie_n)
                 self.att[i, :] = attitude.euler_update_zyx(self.att[i-1, :], w_nb_b, self.dt)

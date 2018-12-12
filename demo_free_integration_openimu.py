@@ -38,7 +38,7 @@ def test_free_integration():
     if not using_external_g:
         ini_pos_vel_att = ini_pos_vel_att[0:9]
     # create the algorithm object
-    algo = free_integration.FreeIntegration(ini_pos_vel_att)
+    algo = free_integration.FreeIntegration(ini_pos_vel_att, earth_rot=False)
 
     from demo_algorithms import inclinometer_acc
     algo2 = inclinometer_acc.TiltAcc()
@@ -54,7 +54,7 @@ def test_free_integration():
     # run the simulation
     sim.run(1)
     # generate simulation results, summary
-    sim.results('', extra_opt='ned')
+    sim.results('', end_point=True, extra_opt='ned')
     # plot
     sim.plot(['pos', 'vel', 'att_euler', 'accel'],
              opt={'pos':'error', 'vel':'error', 'att_euler':'error'})

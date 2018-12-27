@@ -508,8 +508,8 @@ class InsDataMgr(object):
                     err.flat[j] = attitude.angle_range_pi(err.flat[j])
         else:
             # convert x and r to ECEF first
-            x_ecef = geoparams.lla2xyz_batch(x)
-            r_ecef = geoparams.lla2xyz_batch(r)
+            x_ecef = geoparams.lla2ecef_batch(x)
+            r_ecef = geoparams.lla2ecef_batch(r)
             err = x_ecef - r_ecef
             # convert ecef err to NED err
             if lla == 1:

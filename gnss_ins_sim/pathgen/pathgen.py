@@ -163,7 +163,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             geo_mag_n[1] = 0.0
     ## start trajectory generation
     if ref_frame == 1:      # if using virtual inertial frame, convert LLA to ECEF xyz
-        pos_n = geoparams.lla2xyz(pos_n)
+        pos_n = geoparams.lla2ecef(pos_n)
     idx_high_freq = 0       # data index for imu, nav, mag
     idx_low_freq = 0        # data index for gps, odo
     for i in range(0, motion_def.shape[0]):

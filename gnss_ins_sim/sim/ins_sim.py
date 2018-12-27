@@ -389,7 +389,7 @@ class Sim(object):
                 units = self.__get_data_units(full_file_name)
                 # see if position info mathes reference frame
                 # if data_name == self.dmgr.ref_pos.name or data_name == self.dmgr.pos.name:
-                #     if ref_frame == 1 and unit == ['deg',]
+                #     self.__convert_pos(data, units, self.dmgr.ref_frame.data)
                 # print([data_name, data_key, units])
                 self.dmgr.add_data(data_name, data, data_key, units)
 
@@ -720,3 +720,31 @@ class Sim(object):
             return dst
         else:
             raise ValueError('%s is not a dict or numpy array.'% src.name)
+
+    def __convert_pos(self, data, units, ref_frame):
+        '''
+        Convert position data into a proper form.
+        For example, if units are [deg deg m] or [rad rad m] and ref_frame is 1, convertion
+        is needed. LLA form position will be converted to [x y z] form. Vice Versa.
+        Args:
+            data: nx3 numpy array, can be in [Lat Lon Alt] or [x y z] form.
+            units: units of the data.
+            ref_frame: reference frame of the simulation. 0:NED, 1:virtual inertial
+        Returns:
+            data: nx3 numpy array after convertion.
+            units: units of converted dta
+        '''
+        if ref_frame == 1:
+            # deg to rad
+            if units == ['deg', 'deg', 'm']:
+                units = ['rad', 'rad', 'm']
+                data[:, 0] = data[:, 0] * attitude.D2R
+                data[:, 1] = data[:, 1] * attitude.D2R
+            # lla2ned
+            if units == ['rad', 'rad', 'm']:
+                units = ['m', 'm', 'm']
+        elif ref_frame == 0:
+            # ned2lla
+            if units == ['m', 'm', 'm']:
+                units = ['rad', 'rad', 'm']
+        return data, units

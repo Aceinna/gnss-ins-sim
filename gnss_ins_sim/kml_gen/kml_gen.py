@@ -41,12 +41,12 @@ def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert
         # ned to lla
         lla = np.zeros(pos.shape)
         # virtual inertial frame is defined by initial position
-        lla[0, :] = geoparams.xyz2lla(pos[0, :])
+        lla[0, :] = geoparams.ecef2lla(pos[0, :])
         c_ne = attitude.ecef_to_ned(lla[0,0], lla[0,1])
         for i in range(1, n):
             ned_pos = pos[i, :]-pos[0, :]
             ecef_pos = pos[0, :] + c_ne.T.dot(ned_pos)
-            lla[i, :] = geoparams.xyz2lla(ecef_pos)
+            lla[i, :] = geoparams.ecef2lla(ecef_pos)
         # rad to deg
         lla[:, 0] = lla[:, 0] * R2D
         lla[:, 1] = lla[:, 1] * R2D

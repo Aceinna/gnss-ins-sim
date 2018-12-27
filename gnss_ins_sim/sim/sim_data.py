@@ -88,7 +88,7 @@ class Sim_data(object):
                 units.
             key: There are more than one set of data, key is an index of data added this time.
                 If key is None, data can be a scalr, a numpy array or a dict of the above two.
-                If key is a valid dict key, data can be a scalr or a numpy.
+                If key is a valid dict key, data can be a scalar or a numpy.
             units: Units of the input data. If you know clearly no units convertion is needed, set
                 units to None. If you do not know what units are used in the class InsDataMgr,
                 you'd better provide the units of the data. Units convertion will be done

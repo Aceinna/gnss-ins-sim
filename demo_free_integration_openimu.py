@@ -14,7 +14,8 @@ from gnss_ins_sim.attitude import attitude
 from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 
-log_dir = "E:/Projects/python-imu380-mult/free_integration_data/"
+log_dir = "E:/Projects/python-imu380-mult/free_integration_data/nxp/"
+log_dir = "E:/Projects/python-imu380-mult/free_integration_data/bosch/"
 fs = 100.0          # IMU sample frequency
 using_external_g = True
 

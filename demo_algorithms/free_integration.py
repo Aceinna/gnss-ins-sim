@@ -76,7 +76,7 @@ class FreeIntegration(object):
                 #### initialize
                 if i == 0:
                     self.att[i, :] = self.att0
-                    self.pos[i, :] = geoparams.lla2xyz(self.r0)
+                    self.pos[i, :] = geoparams.lla2ecef(self.r0)
                     self.vel_b[i, :] = self.v0
                     c_bn = attitude.euler2dcm(self.att[i, :])
                     self.vel[i, :] = c_bn.T.dot(self.v0)

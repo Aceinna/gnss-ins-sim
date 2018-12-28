@@ -19,7 +19,7 @@ class FreeIntegration(object):
     def __init__(self, ini_pos_vel_att, earth_rot=True):
         '''
         Args:
-            ini_pos_vel_att: 9x1 initial position, velocity and attitude.
+            ini_pos_vel_att: 9x1 numpy array containing initial position, velocity and attitude.
                 3x1 position in the form of LLA, units: [rad, rad, m];
                 3x1 velocity in the body frame, units: m/s;
                 3x1 Euler anels [yaw, pitch, roll], rotation sequency is ZYX, rad.
@@ -39,6 +39,20 @@ class FreeIntegration(object):
         self.vel = None
         self.vel_b = None
         # ini state
+        self.set_of_inis = 1        # number of sets of inis
+        self.run_times = int(0)     # algo run times. If run_times <= set_of_inis, the i-th run
+                                    # uses the i-th set of initial states. Otherwise, the first
+                                    # set of initial states will be used
+        # only one set of inis is provided, multiple runs have the same inis.
+        if ini_pos_vel_att.ndim == 1:
+            self.set_of_inis = 1
+            ini_pos_vel_att = ini_pos_vel_att.reshape((ini_pos_vel_att.shape[0], 1))
+        # multiple set of inis is provided, multiple runs can have different inis.
+        elif ini_pos_vel_att.ndim == 2:
+            self.set_of_inis = ini_pos_vel_att.shape[1]
+        else:
+            raise ValueError('Initial states should be a 1D or 2D numpy array, \
+                              but the dimension is %s.'% ini_pos_vel_att.ndim)
         self.r0 = ini_pos_vel_att[0:3]
         self.v0 = ini_pos_vel_att[3:6]
         self.att0 = ini_pos_vel_att[6:9]
@@ -52,6 +66,7 @@ class FreeIntegration(object):
         Args:
             set_of_input is a tuple or list consistent with self.input
         '''
+        self.run_times += 1
         # get input
         if set_of_input[0] == 0:
             self.ref_frame = 0
@@ -66,20 +81,24 @@ class FreeIntegration(object):
         self.vel_b = np.zeros((n, 3))   # body vel
         c_bn = np.eye((3))
         if self.ref_frame == 1:
+            # which set of initial states to use
+            idx = self.run_times - 1
+            if self.run_times > self.set_of_inis:
+                idx = 0
             # Earth gravity
             if self.gravity is None:
                 earth_param = geoparams.geo_param(self.r0)    # geo parameters
                 g_n = np.array([0, 0, earth_param[2]])
             else:
-                g_n = np.array([0, 0, self.gravity])
+                g_n = np.array([0, 0, self.gravity[idx]])
             for i in range(n):
                 #### initialize
                 if i == 0:
-                    self.att[i, :] = self.att0
-                    self.pos[i, :] = geoparams.lla2ecef(self.r0)
-                    self.vel_b[i, :] = self.v0
+                    self.att[i, :] = self.att0[:, idx]
+                    self.pos[i, :] = geoparams.lla2ecef(self.r0[:, idx])
+                    self.vel_b[i, :] = self.v0[:, idx]
                     c_bn = attitude.euler2dcm(self.att[i, :])
-                    self.vel[i, :] = c_bn.T.dot(self.v0)
+                    self.vel[i, :] = c_bn.T.dot(self.vel_b[i, :])
                     continue
                 #### propagate Euler angles
                 self.att[i, :] = attitude.euler_update_zyx(self.att[i-1, :], gyro[i-1, :], self.dt)
@@ -96,16 +115,20 @@ class FreeIntegration(object):
                 self.vel[i, :] = c_bn.T.dot(self.vel_b[i, :])   # velocity in navigation frame
                 self.pos[i, :] = self.pos[i-1, :] + self.vel[i-1, :] * self.dt
         else:
+            # which set of initial states to use
+            idx = self.run_times - 1
+            if self.run_times > self.set_of_inis:
+                idx = 0
             w_en_n = np.zeros(3)
             w_ie_n = np.zeros(3)
             for i in range(n):
                 #### initialize
                 if i == 0:
-                    self.att[i, :] = self.att0
-                    self.pos[i, :] = self.r0
-                    self.vel_b[i, :] = self.v0
+                    self.att[i, :] = self.att0[:, idx]
+                    self.pos[i, :] = self.r0[:, idx]
+                    self.vel_b[i, :] = self.v0[:, idx]
                     c_bn = attitude.euler2dcm(self.att[i, :])
-                    self.vel[i, :] = c_bn.T.dot(self.v0)
+                    self.vel[i, :] = c_bn.T.dot(self.vel_b[i, :])
                     continue
                 #### geo parameters
                 earth_param = geoparams.geo_param(self.pos[i-1, :])
@@ -120,7 +143,7 @@ class FreeIntegration(object):
                 if self.gravity is None:
                     g_n = np.array([0, 0, g])
                 else:
-                    g_n = np.array([0, 0, self.gravity])
+                    g_n = np.array([0, 0, self.gravity[idx]])
                 w_en_n[0] = self.vel[i-1, 1] / rn_effective              # wN
                 w_en_n[1] = -self.vel[i-1, 0] / rm_effective             # wE
                 w_en_n[2] = -self.vel[i-1, 1] * sl /cl / rn_effective    # wD

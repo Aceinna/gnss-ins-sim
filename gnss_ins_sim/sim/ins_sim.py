@@ -388,8 +388,8 @@ class Sim(object):
                 # get data units in file
                 units = self.__get_data_units(full_file_name)
                 # see if position info mathes reference frame
-                # if data_name == self.dmgr.ref_pos.name or data_name == self.dmgr.pos.name:
-                #     self.__convert_pos(data, units, self.dmgr.ref_frame.data)
+                if data_name == self.dmgr.ref_pos.name or data_name == self.dmgr.pos.name:
+                    data, units = self.__convert_pos(data, units, self.dmgr.ref_frame.data)
                 # print([data_name, data_key, units])
                 self.dmgr.add_data(data_name, data, data_key, units)
 
@@ -743,8 +743,18 @@ class Sim(object):
             # lla2ned
             if units == ['rad', 'rad', 'm']:
                 units = ['m', 'm', 'm']
+                # relative motion in ECEF
+                data = geoparams.lla2ecef_batch(data)
+                ini_pos_ecef = data[0, :]   # initial ECEF position
+                data = data - ini_pos_ecef
+                # relative motion in ECEF to NED, NED defined by first LLA
+                c_ne = attitude.ecef_to_ned(data[0, 0], data[0, 1])
+                data = data.dot(c_ne.T)
+                data = data + ini_pos_ecef
         elif ref_frame == 0:
-            # ned2lla
+            # ned2lla or ecef2lla
+            #  Because if the data are in NED or ECEF is unknown, this is not supported.
             if units == ['m', 'm', 'm']:
                 units = ['rad', 'rad', 'm']
+                print("Unsupported position conversion from xyz to LLA.")
         return data, units

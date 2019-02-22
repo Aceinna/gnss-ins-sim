@@ -15,6 +15,7 @@ import numpy as np
 # global
 VERSION = '1.0'
 TWO_PI = 2.0*math.pi
+HALF_PI = 0.5*math.pi
 D2R = math.pi/180.0
 R2D = 180.0/math.pi
 
@@ -696,6 +697,26 @@ def euler_update_zyx(x, w, dt):
     y[0] += phi_dot * dt
     y[1] += theta_dot * dt
     y[2] += psi_dot * dt
+    # limit value
+    # pitch is more complicated
+    if y[1] > HALF_PI:
+        y[1] = math.pi - y[1]
+        y[0] = y[0] + math.pi
+        y[2] = y[2] + math.pi
+    elif y[1] < -HALF_PI:
+        y[1] = -math.pi - y[1]
+        y[0] = y[0] + math.pi
+        y[2] = y[2] + math.pi
+    # yaw is within [-pi, pi]
+    if y[0] > math.pi:
+        y[0] = y[0] - TWO_PI
+    elif y[0] < -math.pi:
+        y[0] = y[0] + TWO_PI
+    # roll is within [-pi, pi]
+    if y[2] > math.pi:
+        y[2] = y[2] - TWO_PI
+    elif y[2] < -math.pi:
+        y[2] = y[2] + TWO_PI
     return y
 
 def rotation_quat(w, dt):

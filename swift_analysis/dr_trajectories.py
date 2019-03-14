@@ -10,6 +10,7 @@
 
 import os
 import sys
+import glob
 import shutil
 import argparse
 import tempfile
@@ -112,6 +113,11 @@ def perturbed_initial_condition(ini_pos_vel_att):
 def run_and_save_results(args, motion_def):
     resultsdir = args.outdir
     stagingdir = os.path.join(resultsdir, "staging")
+    # Before running, warn if the resultsdir holds existing results.
+    if glob.glob("{}/dr_*.csv".format(resultsdir)):
+        print("WARNING: DR trajectory results already exist in the given results directory.")
+        print("         You may end up with a mismatched set.")
+    # Setup and run N simulations.
     imu = imu_model.IMU(accuracy=IMU_MODELS[args.imu], axis=6, gps=False)
     ini_pos_vel_att = read_initial_condition(motion_def)
     for i in range(args.N):

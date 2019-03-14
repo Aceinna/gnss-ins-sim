@@ -83,10 +83,10 @@ def make_motion_def(args):
     init_values = [32., 120., 0., speed_ms, 0., 0., 0., 0., 0.]
     traj_values = [1, 0., 0., 0., 0., 0., 0., args.dur, 0]
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-        print(init_header, file=f)
-        print(",".join([str(v) for v in init_values]), file=f)
-        print(traj_header, file=f)
-        print(",".join([str(v) for v in traj_values]), file=f)
+        f.write(init_header + "\n")
+        f.write(",".join([str(v) for v in init_values]) + "\n")
+        f.write(traj_header + "\n")
+        f.write(",".join([str(v) for v in traj_values]) + "\n")
         return f.name
     
 def read_initial_condition(motion_def):
@@ -134,8 +134,10 @@ def run_and_save_results(args, motion_def):
         sim.run(1)
         # We don't care for the printed results.
         with open(os.devnull, 'w') as devnull:
-            with contextlib.redirect_stdout(devnull): 
-                sim.results(stagingdir, end_point=True)
+            stdout = sys.stdout
+            sys.stdout = devnull
+            sim.results(stagingdir, end_point=True)
+            sys.stdout = stdout
         collate_sim_results(stagingdir, os.path.join(resultsdir, "dr_{}.csv".format(i)))
     shutil.rmtree(stagingdir)
 

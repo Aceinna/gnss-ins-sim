@@ -27,8 +27,10 @@ INIT_ATT_ERROR = 0.05
 
 # IMU noise parameters
 IMU_MODELS = {
+
 # TODO(niels)
 'bmi160': {},
+
 'imu381': {'gyro_b': np.array([0.0, 0.0, 0.0]),
            'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
            'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
@@ -37,7 +39,18 @@ IMU_MODELS = {
            'accel_vrw': np.array([0.03119, 0.03009, 0.04779]) * 1.0,
            'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0,
            'accel_b_corr': np.array([200.0, 200.0, 200.0]),
-           'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0}
+           'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0},
+
+'terrible': {'gyro_b': np.array([0.0, 0.0, 0.0]),
+             'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0e2,
+             'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0e2,
+             'gyro_b_corr': np.array([100.0, 100.0, 100.0]),
+             'accel_b': np.array([0.0e-3, 0.0e-3, 0.0e-3]),
+             'accel_vrw': np.array([0.03119, 0.03009, 0.04779]) * 1.0e2,
+             'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0e2,
+             'accel_b_corr': np.array([200.0, 200.0, 200.0]),
+             'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0}
+
 }
 
 # Conversion constants.
@@ -136,4 +149,5 @@ if __name__ == "__main__":
     # Generate and run motion defs.
     motion_def = make_motion_def(args)
     run_and_save_results(args, motion_def)
+    os.remove(motion_def)
 

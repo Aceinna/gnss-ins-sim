@@ -25,7 +25,9 @@ INIT_VEL_ERROR = 0.01
 # stddev of initial attitude error in deg
 INIT_ATT_ERROR = 0.05
 
+# IMU noise parameters
 IMU_MODELS = {
+# TODO(niels)
 'bmi160': {},
 'imu381': {'gyro_b': np.array([0.0, 0.0, 0.0]),
            'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
@@ -38,10 +40,39 @@ IMU_MODELS = {
            'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0}
 }
 
+# Conversion constants.
 D2R = np.pi / 180.0
+MPH2MS = 0.44704
 
 def make_motion_def(args):
-    return None
+    init_header = ",".join(["ini lat (deg)",
+                            "ini lon (deg)",
+                            "ini alt (m)",
+                            "ini vx_body (m/s)",
+                            "ini vy_body (m/s)",
+                            "ini vz_body (m/s)",
+                            "ini yaw (deg)",
+                            "ini pitch (deg)",
+                            "ini roll (deg)"])
+    traj_header = ",".join(["command type",
+                            "yaw (deg)",
+                            "pitch (deg)",
+                            "roll (deg)",
+                            "vx_body (m/s)",
+                            "vy_body (m/s)",
+                            "vz_body (m/s)",
+                            "command duration (s)",
+                            "GPS visibility"])
+
+    speed_ms = args.speed * MPH2MS
+    init_values = [32., 120., 0., speed_ms, 0., 0., 0., 0., 0.]
+    traj_values = [1, 0., 0., 0., 0., 0., 0., args.dur, 0]
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        print(init_header, file=f)
+        print(",".join([str(v) for v in init_values]), file=f)
+        print(traj_header, file=f)
+        print(",".join([str(v) for v in traj_values]), file=f)
+        return f.name
     
 def read_initial_condition(motion_def):
     ini_pos_vel_att = np.genfromtxt(motion_def,
@@ -89,8 +120,8 @@ if __name__ == "__main__":
                         help='Output directory.')
     parser.add_argument('--N', type=int, required=True,
                         help='Number of trajectories to generate.')
-    parser.add_argument('--dur', type=float, required=True,
-                        help='Duration of trajectories.')
+    parser.add_argument('--dur', type=int, required=True,
+                        help='Duration of trajectories in seconds.')
     parser.add_argument('--speed', type=float, required=True,
                         help='Speed in mph.')
     parser.add_argument('--imu', choices=IMU_MODELS.keys(), required=True,
@@ -104,6 +135,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # Generate and run motion defs.
     motion_def = make_motion_def(args)
-    motion_def = "../demo_motion_def_files/motion_def.csv"
     run_and_save_results(args, motion_def)
 

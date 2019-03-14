@@ -10,12 +10,14 @@
 
 import os
 import sys
+import shutil
 import argparse
 import tempfile
+import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 
-import numpy as np
 from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 from demo_algorithms import free_integration
@@ -102,12 +104,14 @@ def perturbed_initial_condition(ini_pos_vel_att):
                                                 np.eye(3) * INIT_VEL_ERROR)
     ini_att_err = np.random.multivariate_normal(np.zeros((3,)),
                                                 np.eye(3) * INIT_ATT_ERROR) * D2R
-    ini_pos_vel_att[3:6] += init_vel_err
-    ini_pos_vel_att[6:9] += init_att_err
+    ini_pos_vel_att[3:6] += ini_vel_err
+    ini_pos_vel_att[6:9] += ini_att_err
     return ini_pos_vel_att
 
 
 def run_and_save_results(args, motion_def):
+    resultsdir = args.outdir
+    stagingdir = os.path.join(resultsdir, "staging")
     imu = imu_model.IMU(accuracy=IMU_MODELS[args.imu], axis=6, gps=False)
     ini_pos_vel_att = read_initial_condition(motion_def)
     for i in range(args.N):
@@ -124,7 +128,20 @@ def run_and_save_results(args, motion_def):
                            env=None,
                            algorithm=algo)
         sim.run(1)
-        sim.results(args.outdir, end_point=True)
+        sim.results(stagingdir, end_point=True)
+        collate_sim_results(stagingdir, os.path.join(resultsdir, "dr_{}.csv".format(i)))
+    shutil.rmtree(stagingdir)
+
+def collate_sim_results(simresultsdir, outfile):
+    SIM_RESULTS_FILES = ['time.csv', 
+                         'pos-algo0_0.csv', 
+                         'ref_pos.csv',
+                         'accel-0.csv', 
+                         'gyro-0.csv']
+    paths = [os.path.join(simresultsdir, f) for f in SIM_RESULTS_FILES]
+    df = pd.concat([pd.read_csv(os.path.join(simresultsdir, f)) for f in SIM_RESULTS_FILES],
+                   axis=1)
+    df.to_csv(outfile, index=None) 
 
 if __name__ == "__main__":
     # Collect arguments.

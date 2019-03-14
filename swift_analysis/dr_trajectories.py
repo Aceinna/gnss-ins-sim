@@ -14,6 +14,7 @@ import glob
 import shutil
 import argparse
 import tempfile
+import contextlib
 import numpy as np
 import pandas as pd
 
@@ -30,7 +31,6 @@ INIT_ATT_ERROR = 0.05
 
 # IMU noise parameters
 IMU_MODELS = {
-
 # TODO(niels)
 'bmi160': {},
 
@@ -53,7 +53,6 @@ IMU_MODELS = {
              'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0e2,
              'accel_b_corr': np.array([200.0, 200.0, 200.0]),
              'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0}
-
 }
 
 # Conversion constants.
@@ -109,7 +108,6 @@ def perturbed_initial_condition(ini_pos_vel_att):
     ini_pos_vel_att[6:9] += ini_att_err
     return ini_pos_vel_att
 
-
 def run_and_save_results(args, motion_def):
     resultsdir = args.outdir
     stagingdir = os.path.join(resultsdir, "staging")
@@ -134,7 +132,10 @@ def run_and_save_results(args, motion_def):
                            env=None,
                            algorithm=algo)
         sim.run(1)
-        sim.results(stagingdir, end_point=True)
+        # We don't care for the printed results.
+        with open(os.devnull, 'w') as devnull:
+            with contextlib.redirect_stdout(devnull): 
+                sim.results(stagingdir, end_point=True)
         collate_sim_results(stagingdir, os.path.join(resultsdir, "dr_{}.csv".format(i)))
     shutil.rmtree(stagingdir)
 

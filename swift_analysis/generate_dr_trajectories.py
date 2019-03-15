@@ -32,6 +32,10 @@ INIT_ATT_ERROR = 0.05
 G = 9.80665 # m/s^2
 UG = G / 1.0e6 # m/s^2
 
+
+# Vibrations experienced during 55mph highway 101 driving
+DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.855]g-random'
+
 '''
     'gyro_b': gyro bias, deg/hr
     'gyro_arw': gyro angle random walk, deg/rt-hr
@@ -148,13 +152,17 @@ def run_and_save_results(args, motion_def):
             init_cond = perturbed_initial_condition(ini_pos_vel_att)  
         else:
             init_cond = ini_pos_vel_att
+        if args.enable_vibrations:
+            env=DEFAULT_VIBRATIONS
+        else:
+            env=None
         algo = free_integration.FreeIntegration(init_cond)
         sim = ins_sim.Sim([args.fs, 0.0, 0.0],
                            motion_def,
                            ref_frame=0,
                            imu=imu,
                            mode=None,
-                           env=None,
+                           env=env,
                            algorithm=algo)
         sim.run(1)
         # We don't care for the printed results.

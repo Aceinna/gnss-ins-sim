@@ -29,10 +29,35 @@ INIT_VEL_ERROR = 0.01
 # stddev of initial attitude error in deg
 INIT_ATT_ERROR = 0.05
 
+G = 9.80665 # m/s^2
+UG = G / 1.0e6 # m/s^2
+
+'''
+    'gyro_b': gyro bias, deg/hr
+    'gyro_arw': gyro angle random walk, deg/rt-hr
+    'gyro_b_stability': gyro bias instability, deg/hr
+    'gyro_b_corr': gyro bias isntability correlation time, sec
+    'accel_b': accel bias, m/s2
+    'accel_vrw' : accel velocity random walk, m/s/rt-hr
+    'accel_b_stability': accel bias instability, m/s2
+    'accel_b_corr': accel bias isntability correlation time, sec
+    'mag_si': soft iron, default is a 3x3 identity matrix.
+    'mag_hi': hard iron, default is 3x1 zero vector.
+    'mag_std': mag noise std.
+
+'''
+
 # IMU noise parameters
 IMU_MODELS = {
 # TODO(niels)
-'bmi160': {},
+'bmi160': {'gyro_b': np.array([0.0, 0.0, 0.0]),
+             'gyro_arw': np.array([0.3160, 0.3160, 0.3160]),
+             'gyro_b_stability': np.array([4.3730, 4.3730, 4.3730]),
+             'gyro_b_corr': np.array([202.68, 202.68, 202.68]),
+             'accel_b': np.array([0.0, 0.0, 0.0]),
+             'accel_vrw': np.array([1., 1., 1.]) * 0.07322625555, ## Thi
+             'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
+             'accel_b_corr': np.array([48.24, 48.24, 48.24])},
 
 'imu381': {'gyro_b': np.array([0.0, 0.0, 0.0]),
            'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,

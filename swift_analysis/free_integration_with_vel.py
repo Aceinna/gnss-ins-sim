@@ -33,7 +33,7 @@ class FreeIntegrationWithVel(object):
             earth_rot: Consider the Earth rotation or not. Only used when ref_frame=0.
         '''
         # algorithm description
-        self.input = ['ref_frame', 'fs', 'gyro', 'accel', 'ref_vel', 'ref_att_euler']
+        self.input = ['ref_frame', 'fs', 'gyro', 'accel', 'ref_vel']
         self.output = ['att_euler', 'pos', 'vel']
         self.earth_rot = earth_rot
         self.meas_vel_stddev = meas_vel_stddev 
@@ -67,7 +67,6 @@ class FreeIntegrationWithVel(object):
         gyro = set_of_input[2]
         accel = set_of_input[3]
         ref_vel_n = set_of_input[4]
-        ref_att_euler = set_of_input[5]
         n = accel.shape[0]
         # Free IMU integration
         self.att = np.zeros((n, 3))
@@ -106,12 +105,6 @@ class FreeIntegrationWithVel(object):
                 c_bn = attitude.euler2dcm(self.att[i, :])
 
                 self.vel[i, :] = c_bn.T.dot(self.vel_b[i, :])   # velocity in navigation frame
-                #### NOTE: SWIFT MODIFICATION
-                if self.meas_vel_stddev is not None:
-                    ref_c_bn = attitude.euler2dcm(ref_att_euler[i, :])
-                    ref_vel_b = ref_c_bn.T.dot(ref_vel_n[i, :])
-                    ref_vel_b += np.random.normal(scale=self.meas_vel_stddev, size=(3,))
-                    self.vel[i, :] = c_bn.dot(ref_vel_b)
                 self.pos[i, :] = self.pos[i-1, :] + self.vel[i-1, :] * self.dt
         else:
             w_en_n = np.zeros(3)
@@ -159,11 +152,9 @@ class FreeIntegrationWithVel(object):
                 #### NOTE: SWIFT MODIFICATION
                 if self.meas_vel_stddev is not None:
                     vel_noise = np.random.normal(scale=self.meas_vel_stddev)
-                    ref_c_bn = attitude.euler2dcm(ref_att_euler[i, :])
-                    ref_vel_b = ref_c_bn.T.dot(ref_vel_n[i-1, :])
-                    normalized_vel_b = ref_vel_b / np.linalg.norm(ref_vel_b)
-                    noisy_vel_b = ref_vel_b + vel_noise * normalized_vel_b
-                    self.vel[i-1, :] = c_bn.dot(noisy_vel_b)
+                    vel_mag = np.linalg.norm(ref_vel_n[i-1, :])
+                    vel_dir_n = self.vel[i-1, :] / np.linalg.norm(self.vel[i-1, :])
+                    self.vel[i-1, :] = (vel_mag + vel_noise) * vel_dir_n
                 #### propagate position
                 lat_dot = self.vel[i-1, 0] / rm_effective
                 lon_dot = self.vel[i-1, 1] / rn_effective / cl

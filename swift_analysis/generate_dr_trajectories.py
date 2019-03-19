@@ -22,17 +22,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "..
 
 from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
-from demo_algorithms import free_integration
+from free_integration_with_vel import FreeIntegrationWithVel
 
 # stddev of initial velocity error in m/s
 INIT_VEL_ERROR = 0.01
 # stddev of initial attitude error in deg
 INIT_ATT_ERROR = 0.05
 
+# stddev of spoof wheel odom velocity measurements in m/s
+WHEELODOM_VEL_STDDEV = 0.01
+
 G = 9.80665 # m/s^2
 UG = G / 1.0e6 # m/s^2
 H2S = 3600 # hours to seconds
-
 
 # Vibrations experienced during 55mph highway 101 driving
 #DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.0855]g-random'
@@ -186,7 +188,7 @@ def run_and_save_results(args, motion_def):
             env=DEFAULT_VIBRATIONS
         else:
             env=None
-        algo = free_integration.FreeIntegration(init_cond)
+        algo = FreeIntegrationWithVel(init_cond, meas_vel_stddev=args.odom_sigma)
         sim = ins_sim.Sim([args.fs, 0.0, 0.0],
                            motion_def,
                            ref_frame=0,
@@ -234,6 +236,8 @@ if __name__ == "__main__":
                         help='Enable simulated vibrations.')
     parser.add_argument('--enable-init-error', action='store_true', default=False,
                         help='Enable small errors in the initial state estimate.')
+    parser.add_argument('--odom-sigma', type=float, required=False,
+                        help='(Optional) Standard deviation of wheel-odom velocity measurements.')
     args = parser.parse_args()
     # Generate and run motion defs.
     motion_def = make_motion_def(args)

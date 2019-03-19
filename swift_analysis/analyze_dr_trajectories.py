@@ -13,6 +13,7 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os.path
 
 resultsdir = sys.argv[1]
 
@@ -33,6 +34,7 @@ hori_errors = []
 vert_errors = []
 atrack_errors = []
 ctrack_errors = []
+hori_errors_10s = []
 for f in glob.glob("{}/dr_*.csv".format(resultsdir)):
     df = pd.read_csv(f) 
     t = df[COL_TIME].values    
@@ -49,10 +51,15 @@ for f in glob.glob("{}/dr_*.csv".format(resultsdir)):
     ref_y = EARTHRAD * D2R * ref_lat
     ref_x = EARTHRAD * D2R * ref_lon * np.cos(D2R * 32.)
     vert_errors.append(np.abs(ref_alt - dut_alt))
-    hori_errors.append(np.linalg.norm([ref_x - dut_x, ref_y - dut_y], axis=0))
+    hori = np.linalg.norm([ref_x - dut_x, ref_y - dut_y], axis=0)
+    hori_errors_10s.append(hori[-1])
+    hori_errors.append(hori)
     atrack_errors.append((ref_x - dut_x)[-1])
     ctrack_errors.append((ref_y - dut_y)[-1])
 
+
+print("Mean error at 10 seconds",  np.mean(hori_errors_10s))
+fig = plt.figure(figsize=(12,6))
 plt.subplot(221)
 plt.scatter(np.ravel(times)[::10], np.ravel(hori_errors)[::10], color=(0., 0., 1., 0.05))
 plt.title("Horizontal Error Magnitude")
@@ -68,5 +75,8 @@ plt.scatter(np.ravel(atrack_errors), np.ravel(ctrack_errors), color=(0., 0., 1.,
 plt.title("Error Scatter")
 plt.xlabel("Horizontal Along-Track Error (m)")
 plt.ylabel("Horizontal Cross-Track Error (m)")
+plt.tight_layout()
 
+fig.savefig(os.path.join(resultsdir, "analytics.png"))
 plt.show()
+

@@ -31,10 +31,12 @@ INIT_ATT_ERROR = 0.05
 
 G = 9.80665 # m/s^2
 UG = G / 1.0e6 # m/s^2
+H2S = 3600 # hours to seconds
 
 
 # Vibrations experienced during 55mph highway 101 driving
-DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.855]g-random'
+#DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.0855]g-random'
+DEFAULT_VIBRATIONS = '[0.0215 0.0215 0.075]g-random'
 
 '''
     'gyro_b': gyro bias, deg/hr
@@ -53,15 +55,43 @@ DEFAULT_VIBRATIONS = '[0.0256 0.0174 0.855]g-random'
 
 # IMU noise parameters
 IMU_MODELS = {
+
 # TODO(niels)
-'bmi160': {'gyro_b': np.array([0.0, 0.0, 0.0]),
-             'gyro_arw': np.array([0.3160, 0.3160, 0.3160]),
-             'gyro_b_stability': np.array([4.3730, 4.3730, 4.3730]),
-             'gyro_b_corr': np.array([202.68, 202.68, 202.68]),
-             'accel_b': np.array([0.0, 0.0, 0.0]),
-             'accel_vrw': np.array([1., 1., 1.]) * 0.07322625555,
+'bmw':      {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 0.8485,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 * H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.3393392888,
              'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
-             'accel_b_corr': np.array([48.24, 48.24, 48.24])},
+             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
+
+'had300':   {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 0.3900,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 * H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.30596748,
+             'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
+             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
+
+'asm330':   {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 0.2269,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 1.6814,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0833 * H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.1176798,
+             'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
+             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
+
+'bmi160':   {'gyro_b':            np.array([0., 0., 0.]),
+             'gyro_arw':          np.array([1., 1., 1.]) * 0.3160,
+             'gyro_b_stability':  np.array([1., 1., 1.]) * 4.3730,
+             'gyro_b_corr':       np.array([1., 1., 1.]) * 0.0563 *H2S,
+             'accel_b':           np.array([0., 0., 0.]),
+             'accel_vrw':         np.array([1., 1., 1.]) * 0.07322625555,
+             'accel_b_stability': np.array([1., 1., 1.]) * 33.9700 * UG,
+             'accel_b_corr':      np.array([1., 1., 1.]) * 0.0134 * H2S},
 
 'imu381': {'gyro_b': np.array([0.0, 0.0, 0.0]),
            'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,

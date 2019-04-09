@@ -68,18 +68,19 @@ def test_gen_data_from_files(data_dir):
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, 0.0],
                       data_dir,
-                      ref_frame=1,
+                      ref_frame=0,
                       imu=None,
                       mode=None,
                       env=None,
-                      algorithm=algo)
+                      algorithm=None)
     # run the simulation for 1000 times
-    sim.run(10)
+    sim.run(1)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results
-    sim.results(end_point=True)
+    sim.results('', end_point=True, gen_kml=True)
+    sim.plot(['att_euler'])
 
 if __name__ == '__main__':
-    dir_of_logged_files = ".//demo_saved_data//demo_gen_data_from_files"
-    gen_data_first(dir_of_logged_files)
+    dir_of_logged_files = "E://Projects//python-imu380-mult//ins_data//"
+    # gen_data_first(dir_of_logged_files)
     test_gen_data_from_files(dir_of_logged_files)

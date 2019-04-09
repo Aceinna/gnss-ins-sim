@@ -14,8 +14,8 @@ from gnss_ins_sim.attitude import attitude
 from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 
-log_dir = "E:/Projects/python-imu380-mult/free_integration_data/nxp/"
-log_dir = "E:/Projects/python-imu380-mult/free_integration_data/bosch/"
+# log_dir = "./demo_data_files/nxp/"
+log_dir = "./demo_data_files/bosch/"
 fs = 100.0          # IMU sample frequency
 using_external_g = True
 
@@ -27,15 +27,10 @@ def test_free_integration():
     imu = None
 
     #### Algorithm
-    # Free integration in a virtual inertial frame
     from demo_algorithms import free_integration
-    ini_pos_vel_att = np.genfromtxt(log_dir+"ini.txt")
-    # add initial states error if needed
-    ini_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
-    ini_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
-    ini_pos_vel_att[0:2] = ini_pos_vel_att[0:2] * attitude.D2R
-    ini_pos_vel_att[3:6] += ini_vel_err
-    ini_pos_vel_att[6:9] = (ini_pos_vel_att[6:9] + ini_att_err) * attitude.D2R
+    ini_pos_vel_att = np.genfromtxt(log_dir+"ini.txt", delimiter=',')
+    ini_pos_vel_att[0:2] *= attitude.D2R  # For Lat and Lon, deg to rad
+    ini_pos_vel_att[6:9] *= attitude.D2R  # Attitude from deg to rad
     if not using_external_g:
         ini_pos_vel_att = ini_pos_vel_att[0:9]
     # create the algorithm object
@@ -57,7 +52,7 @@ def test_free_integration():
     # generate simulation results, summary
     sim.results('', end_point=True, extra_opt='ned')
     # plot
-    sim.plot(['pos', 'vel', 'att_euler', 'accel'],
+    sim.plot(['pos', 'vel', 'att_euler', 'accel', 'gyro'],
              opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
 
 if __name__ == '__main__':

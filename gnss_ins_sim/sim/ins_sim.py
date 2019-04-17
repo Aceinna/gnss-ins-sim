@@ -561,9 +561,9 @@ class Sim(object):
                     mobility = high_mobility
             elif isinstance(mode, np.ndarray):      # customize the sim mode
                 if mode.shape == (3,):
-                    mobility[0] = mode[0]
-                    mobility[1] = mode[1] * attitude.D2R
-                    mobility[2] = mode[2] * attitude.D2R
+                    mobility = mode
+                    mobility[1] = mobility[1] * attitude.D2R
+                    mobility[2] = mobility[2] * attitude.D2R
                 else:
                     raise TypeError('mode should be of size (3,)')
             else:

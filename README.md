@@ -90,7 +90,7 @@ gps = True to generate GPS data, gps = False not.
 
 ## Step 2 Create a motion profile
 
-Motion profile specifies the initial states of the vehicle and motion command that drives the vehicle to move, as shown in the following table.
+A motion profile specifies the initial states of the vehicle and motion command that drives the vehicle to move, as shown in the following table.
 
 | Ini lat (deg) | ini lon (deg) | ini alt (m) | ini vx_body (m/s) | ini vy_body (m/s) | ini vz_body (m/s) | ini yaw (deg) | ini pitch (deg) | ini roll (deg) |
 |---|---|---|---|---|---|---|---|---|
@@ -101,10 +101,10 @@ Motion profile specifies the initial states of the vehicle and motion command th
 
 The initial position should be given in the LLA (latitude, longitude and altitude) form. The initial velocity is specified in the vehicle body frame. The initial attitude is represented by Euler angles of ZYX rotation sequence.
 
-Motion commands defines how the vehicle moves from its initial state. The simulation will generate true angular velocity, acceleration, magnetic field, position, velocity and attitude according to the commands. Combined with sensor error models, these true values are used to generate gyroscope, accelerometer, magnetometer and GPS output.
+Motion commands define how the vehicle moves from its initial state. The simulation will generate true angular velocity, acceleration, magnetic field, position, velocity and attitude according to the commands. Combined with sensor error models, these true values are used to generate gyroscope, accelerometer, magnetometer and GPS output.
 There is only one motion command in the above table. Indeed, you can add more motion commands to specify the attitude and velocity of the vehicle. You can also define GPS visibility of the vehicle for each command.
 
-Five command types are supported
+Five command types are supported, as listed below.
 
 | Command type | Comment |
 |---|---|

@@ -105,6 +105,10 @@ class InsDataMgr(object):
                                 legend=['ref_gps_lat', 'ref_gps_lon', 'ref_gps_alt',\
                                         'ref_gps_vN', 'ref_gps_vE', 'ref_gps_vD'])
                                 # downsampled true pos/vel
+        self.ref_odo = Sim_data(name='ref_odo',\
+                                description='true odometer velocity',\
+                                units=['m/s'],\
+                                legend=['ref_odo'])
         self.ref_mag = Sim_data(name='ref_mag',\
                                 description='true magnetic field in the body frame',\
                                 units=['uT', 'uT', 'uT'],\
@@ -125,6 +129,10 @@ class InsDataMgr(object):
                             output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                             legend=['gps_lat', 'gps_lon', 'gps_alt',\
                                     'gps_vN', 'gps_vE', 'gps_vD'])
+        self.odo = Sim_data(name='odo',\
+                                description='odometer velocity measurement',\
+                                units=['m/s'],\
+                                legend=['odo'])
         self.mag = Sim_data(name='mag',\
                             description='magnetometer measurements',\
                             units=['uT', 'uT', 'uT'],\
@@ -219,7 +227,7 @@ class InsDataMgr(object):
         ########## all data ##########
         # __all include all data that may occur in an INS solution.
         self.__all = {
-            # input data
+            # error-free data
             self.fs.name: self.fs,
             self.fs_gps.name: self.fs_gps,
             self.fs_mag.name: self.fs_mag,
@@ -234,11 +242,13 @@ class InsDataMgr(object):
             self.ref_gyro.name: self.ref_gyro,
             self.ref_accel.name: self.ref_accel,
             self.ref_gps.name: self.ref_gps,
+            self.ref_odo.name: self.ref_odo,
             self.ref_mag.name: self.ref_mag,
             # sensor data
             self.gyro.name: self.gyro,
             self.accel.name: self.accel,
             self.gps.name: self.gps,
+            self.odo.name: self.odo,
             self.mag.name: self.mag,
             # calibration algorithm output
             self.gyro_cal.name: self.gyro_cal,

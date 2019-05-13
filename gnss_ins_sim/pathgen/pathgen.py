@@ -46,7 +46,10 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 5: relative att, absolute vel.
             motion_def[:,1:6]: motion params = [Att command, vel along body axis command].
             motion_def[:,7] = maximum time for the given segment, sec.
-        output_def: [[simulation_over_sample_rate imu_freq];[1 gps_freq] or [2 odo_freq]], Hz.
+        output_def: [[simulation_over_sample_rate imu_freq];
+                     [1 gps_freq]
+                     [1 odo_freq]], Hz.
+                     1 means to enable GPS or odometer, otherwise to disable.
         mobility: [max_acceleration, max_angular_acceleration, max_angular_velocity]
         ref_frame: reference frame used as the navigation frame,
             0: NED (default).
@@ -124,18 +127,23 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     sim_count_max = int(sim_count_max)
     imu_data = np.zeros((sim_count_max, 7))
     nav_data = np.zeros((sim_count_max, 10))
-    enable_gps_or_odo = False
-    if output_def.shape[0] >= 2:
+    enable_gps = False
+    enable_odo = False
+    if output_def.shape[0] == 3:
         if output_def[1, 0] == 1:
-            enable_gps_or_odo = True
+            enable_gps = True
             gps_data = np.zeros((sim_count_max, 8))
-            output_def[1, 1] = sim_osr * round(out_freq / output_def[1, 1])
-        elif output_def[1, 0] == 2:
-            enable_gps_or_odo = True
-            odo_data = np.zeros((sim_count_max, 5))
             output_def[1, 1] = sim_osr * round(out_freq / output_def[1, 1])
         else:
             output_def[1, 0] = -1
+        if output_def[2, 0] == 1:
+            enable_odo = True
+            odo_data = np.zeros((sim_count_max, 5))
+            output_def[2, 1] = sim_osr * round(out_freq / output_def[2, 1])
+        else:
+            output_def[2, 0] = -1
+    else:
+        raise ValueError("output_def should be of size 3x2.")
     if magnet:
         mag_data = np.zeros((sim_count_max, 4))
 
@@ -261,7 +269,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 # next cycle
                 acc_sum = np.zeros(3)
                 gyro_sum = np.zeros(3)
-                # update magnetometer results and write to file
+                # update magnetometer results
                 if magnet:
                     geo_mag_b = c_nb.T.dot(geo_mag_n)
                     #mag_data[idx_high_freq, :] = np.hstack((idx_high_freq, geo_mag_b))
@@ -269,28 +277,28 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                     mag_data[idx_high_freq, 1] = geo_mag_b[0]
                     mag_data[idx_high_freq, 2] = geo_mag_b[1]
                     mag_data[idx_high_freq, 3] = geo_mag_b[2]
+                # update odometer results
+                if enable_odo:
+                    #odo_data[idx_high_freq, :] = np.hstack((idx_high_freq,
+                    #                                       odo_dist, odo_vel))
+                    odo_data[idx_high_freq, 0] = sim_count
+                    odo_data[idx_high_freq, 1] = odo_dist
+                    odo_data[idx_high_freq, 2] = odo_vel[0]
+                    odo_data[idx_high_freq, 3] = odo_vel[1]
+                    odo_data[idx_high_freq, 4] = odo_vel[2]
                 # index increment
                 idx_high_freq += 1
             # GPS or odometer measurement
-            if enable_gps_or_odo:
+            if enable_gps:
                 if (sim_count % output_def[1, 1]) == 0:     # measurement period
-                    if output_def[1, 0] == 1:               # GPS
-                        gps_data[idx_low_freq, 0] = sim_count
-                        gps_data[idx_low_freq, 1] = pos_n[0] + pos_delta_n[0]
-                        gps_data[idx_low_freq, 2] = pos_n[1] + pos_delta_n[1]
-                        gps_data[idx_low_freq, 3] = pos_n[2] + pos_delta_n[2]
-                        gps_data[idx_low_freq, 4] = vel_n[0]
-                        gps_data[idx_low_freq, 5] = vel_n[1]
-                        gps_data[idx_low_freq, 6] = vel_n[2]
-                        gps_data[idx_low_freq, 7] = gps_visibility
-                    elif output_def[1, 0] == 2:             # odometer
-                        #odo_data[idx_low_freq, :] = np.hstack((idx_low_freq,
-                        #                                       odo_dist, odo_vel))
-                        odo_data[idx_low_freq, 0] = sim_count
-                        odo_data[idx_low_freq, 1] = odo_dist
-                        odo_data[idx_low_freq, 2] = odo_vel[0]
-                        odo_data[idx_low_freq, 3] = odo_vel[1]
-                        odo_data[idx_low_freq, 4] = odo_vel[2]
+                    gps_data[idx_low_freq, 0] = sim_count
+                    gps_data[idx_low_freq, 1] = pos_n[0] + pos_delta_n[0]
+                    gps_data[idx_low_freq, 2] = pos_n[1] + pos_delta_n[1]
+                    gps_data[idx_low_freq, 3] = pos_n[2] + pos_delta_n[2]
+                    gps_data[idx_low_freq, 4] = vel_n[0]
+                    gps_data[idx_low_freq, 5] = vel_n[1]
+                    gps_data[idx_low_freq, 6] = vel_n[2]
+                    gps_data[idx_low_freq, 7] = gps_visibility
                     # index increment
                     idx_low_freq += 1
 
@@ -314,10 +322,10 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     path_results['nav'] = nav_data[0:idx_high_freq, :]
     if magnet:
         path_results['mag'] = mag_data[0:idx_high_freq, :]
-    if output_def[1, 0] == 1:
+    if enable_odo:
+        path_results['odo'] = odo_data[0:idx_high_freq, :]
+    if enable_gps:
         path_results['gps'] = gps_data[0:idx_low_freq, :]
-    elif output_def[1, 0] == 2:
-        path_results['odo'] = odo_data[0:idx_low_freq, :]
     return path_results
 
 def calc_true_sensor_output(pos_n, vel_b, att, c_nb, vel_dot_b, att_dot, ref_frame, g):
@@ -587,18 +595,15 @@ def odo_gen(ref_odo, odo_err):
     Args:
         ref_odo: nx3, true odometer data, m/s.
         odo_err: odometer error profile.
-            'scale': 3x1, scale factor error.
-            'std': 3x1, RMS velocity error.
+            'scale': scalar, scale factor error.
+            'stdv': scalar, RMS velocity error.
     Returns:
-        odo_mea: nx3, measured odometer output.
+        odo_mea: nx1, measured odometer output.
     '''
     n = ref_odo.shape[0]
-    odo_noise = np.random.randn(n, 3)
-    scale_factor = odo_err['scale']
-    odo_noise[:, 0] = scale_factor[0]*ref_odo[:, 0] + odo_err['std'][0]*odo_noise[:, 0]
-    odo_noise[:, 1] = scale_factor[1]*ref_odo[:, 1] + odo_err['std'][1]*odo_noise[:, 1]
-    odo_noise[:, 2] = scale_factor[2]*ref_odo[:, 2] + odo_err['std'][2]*odo_noise[:, 2]
-    return odo_noise
+    odo_mea = np.random.randn(n)
+    odo_mea = odo_err['scale']*ref_odo + odo_err['stdv']*odo_mea
+    return odo_mea
 
 def mag_gen(ref_mag, mag_err):
     """

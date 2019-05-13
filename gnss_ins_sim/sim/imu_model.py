@@ -55,12 +55,18 @@ mag_high_accuracy = {'si': np.eye(3) + np.random.randn(3, 3)*0.0,
 ## built-in GPS error profiles
 gps_low_accuracy = {'stdp': np.array([5.0, 5.0, 7.0]),
                     'stdv': np.array([0.05, 0.05, 0.05])}
+
+## built-in odometer error profiles
+odo_low_accuracy = {'scale': 0.99,
+                    'stdv': 0.1}
 class IMU(object):
     '''
     IMU class
     '''
 
-    def __init__(self, accuracy='low-accuracy', axis=6, gps=True, gps_opt=None):
+    def __init__(self, accuracy='low-accuracy', axis=6,\
+                 gps=True, gps_opt=None,\
+                 odo=False, odo_opt=None):
         '''
         Args:
             accuracy: IMU grade.
@@ -88,6 +94,10 @@ class IMU(object):
             gps_opt: a dictionary to specify the GPS error model.
                 'stdp': position RMS error, meters
                 'stdv': vertical RMS error, meters/second
+            odo: True if odometer exists, False if not.
+            odo_opt: a dictionary to specify the odometer error model.
+                'scale': scale factor
+                'stdv': velocity measurement noise, meters/second.
         '''
         # check axis
         self.magnetometer = False
@@ -168,8 +178,7 @@ class IMU(object):
             if gps_opt is None:
                 self.gps_err = gps_low_accuracy
             elif isinstance(gps_opt, dict):
-                if 'stdp' in gps_opt and\
-                   'stdv' in gps_opt:
+                if 'stdp' in gps_opt and 'stdv' in gps_opt:
                     self.gps_err = gps_opt
                 else:
                     raise ValueError('gps_opt should have key: stdp and stdv')
@@ -178,6 +187,22 @@ class IMU(object):
         else:
             self.gps = False
             self.gps_err = None
+
+        # build odometer model
+        if odo:
+            self.odo = True
+            if odo_opt is None:
+                self.odo_err = odo_low_accuracy
+            elif isinstance(odo_opt, dict):
+                if 'scale' in odo_opt and 'stdv' in odo_opt:
+                    self.odo_err = odo_opt
+                else:
+                    raise ValueError('odo_opt should have key: scale and stdv')
+            else:
+                raise TypeError('odo_opt should be None or a dict')
+        else:
+            self.odo = False
+            self.odo_err = None
 
     def set_gyro_error(self, gyro_error='low-accuracy'):
         '''
@@ -251,15 +276,10 @@ class IMU(object):
         '''
         set GPS error model
         Args:
-            mag_error: magnetometer error model.
-                This can be a string to use the built-in mag models:
-                    'low-accuracy':
-                    'mid-accuracy':
-                    'high-accuracy':
-                or a dictionary to custom the IMU model:
-                    'si': soft iron, default is a 3x3 identity matrix.
-                    'hi': hard iron, default is 3x1 zero vector.
-                    'std': mag noise std.
+            gps_error: GPS error model
+                This can be either none or a dictionary to specify the GPS error model:
+                    'stdp': position RMS error, meters
+                    'stdv': velocity RMS error, meters/second
         '''
         if not self.gps:
             return
@@ -273,6 +293,28 @@ class IMU(object):
                 raise ValueError('gps_error should have key: stdp and stdv')
         else:
             raise TypeError('gps_error should be None or a dict')
+
+    def set_odo(self, odo_error=None):
+        '''
+        set odometer error model
+        Args:
+            odo_error: odometer error model
+                This can be either none or a dictionary to specify the odometer error model:
+                    'scale': scale factor
+                    'stdv': velocity RMS error, meters/second
+        '''
+        if not self.gps:
+            return
+        if odo_error is None:
+            self.odo_err = odo_low_accuracy
+        elif isinstance(odo_error, dict):
+            if 'stdp' in odo_error and\
+                'stdv' in odo_error:
+                self.gps_err = odo_error
+            else:
+                raise ValueError('odo_error should have key: stdp and stdv')
+        else:
+            raise TypeError('odo_error should be None or a dict')
 
     def set_mag_error(self, mag_error='low-accuracy'):
         '''

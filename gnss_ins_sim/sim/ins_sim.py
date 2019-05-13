@@ -400,12 +400,16 @@ class Sim(object):
         # read motion definition
         [ini_pva, motion_def] = self.__parse_motion()
         # output definitions
-        output_def = np.array([[1.0, self.fs[0]], [1.0, self.fs[0]]])
+        output_def = np.array([[1.0, self.fs[0]], [1.0, self.fs[0]], [1.0, self.fs[0]]])
         if self.imu.gps:
             output_def[1, 0] = 1.0
             output_def[1, 1] = self.fs[1]
         else:
             output_def[1, 0] = -1.0
+        if self.imu.odo:
+            output_def[2, 0] = 1.0
+        else:
+            output_def[2, 0] = -1.0
         # sim mode-->vehicle maneuver capability
         mobility = self.__parse_mode(self.mode)
 
@@ -424,6 +428,8 @@ class Sim(object):
             self.dmgr.add_data(self.dmgr.gps_visibility.name, rtn['gps'][:, 7])
         if self.imu.magnetometer:
             self.dmgr.add_data(self.dmgr.ref_mag.name, rtn['mag'][:, 1:4])
+        if self.imu.odo:
+            self.dmgr.add_data(self.dmgr.ref_odo.name, rtn['odo'][:, 2])
         # generate sensor data
         # environment-->vibraition params
         vib_def = self.__parse_env(self.env)
@@ -441,6 +447,9 @@ class Sim(object):
             if self.imu.magnetometer:
                 mag = pathgen.mag_gen(self.dmgr.ref_mag.data, self.imu.mag_err)
                 self.dmgr.add_data(self.dmgr.mag.name, mag, key=i)
+            if self.imu.odo:
+                odo = pathgen.odo_gen(self.dmgr.ref_odo.data, self.imu.odo_err)
+                self.dmgr.add_data(self.dmgr.odo.name, odo, key=i)
 
     def __get_data_name_and_key(self, file_name):
         '''

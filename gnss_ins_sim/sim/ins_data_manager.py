@@ -723,10 +723,10 @@ class InsDataMgr(object):
 
     def __get_data_groups(self, keys):
         '''
-        Check if the keys can be grouped. For example list of keys [algo0_0, algo0_1
-        algo1_0, algo1_1] can be divided into two groups: [algo0, algo1], and each group
-        contains two elements. This is used to calculate statistics of error of results
-        from multiple algorithms.
+        Check if the keys can be grouped. The key should be named as GROUP_idx.
+        For example list of keys [algo0_0, algo0_1 algo1_0, algo1_1] can be divided
+        into two groups: [algo0, algo1], and each group contains two elements. 
+        This is used to calculate statistics of error of results from multiple algorithms.
         Args:
             keys: dict keys
         Return:
@@ -734,7 +734,10 @@ class InsDataMgr(object):
         '''
         groups = []
         for i in keys:
-            idx = i.rfind('_')
+            idx = str(i).rfind('_')
+            if idx == -1:
+                groups = [] # one of the keys cannot be grouped, do not group
+                break
             group_name = i[0:idx]
             if group_name not in groups:
                 groups.append(group_name)

@@ -213,6 +213,7 @@ class Sim(object):
             #### generate .kml files
             if gen_kml is True:       # want to gen kml without specifying the data_dir
                 if data_dir is None:
+                    data_dir = ''
                     data_dir = self.__check_data_dir(data_dir)
                 self.dmgr.save_kml_files(data_dir)
 

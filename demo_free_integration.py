@@ -34,11 +34,14 @@ def test_free_integration():
                'accel_b_corr': np.array([200.0, 200.0, 200.0]),
                'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0
               }
+    odo_err = {'scale': 0.999,
+               'stdv': 0.1}
     # do not generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=6, gps=False)
+    imu = imu_model.IMU(accuracy=imu_err, axis=6, gps=False, odo=True, odo_opt=odo_err)
 
     #### Algorithm
     # Free integration in a virtual inertial frame
+    from demo_algorithms import free_integration_odo
     from demo_algorithms import free_integration
     '''
     Free integration requires initial states (position, velocity and attitude). You should provide
@@ -55,7 +58,8 @@ def test_free_integration():
     ini_pos_vel_att[3:6] += ini_vel_err
     ini_pos_vel_att[6:9] += ini_att_err * D2R
     # create the algorith object
-    algo = free_integration.FreeIntegration(ini_pos_vel_att)
+    algo1 = free_integration_odo.FreeIntegration(ini_pos_vel_att)
+    algo2 = free_integration.FreeIntegration(ini_pos_vel_att)
 
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, 0.0],
@@ -64,12 +68,14 @@ def test_free_integration():
                       imu=imu,
                       mode=None,
                       env=None,
-                      algorithm=algo)
+                      algorithm=[algo1, algo2])
     # run the simulation for 1000 times
-    sim.run(1000)
+    sim.run(10)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results
-    sim.results(end_point=True)
+    sim.results(end_point=True, gen_kml=True)
+    # plot postion error
+    # sim.plot(['pos'], opt={'pos':'error'})
 
 if __name__ == '__main__':
     test_free_integration()

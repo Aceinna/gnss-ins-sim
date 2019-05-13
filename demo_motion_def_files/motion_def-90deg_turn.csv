@@ -1,6 +1,6 @@
 ini lat (deg),ini lon (deg),ini alt (m),ini vx_body (m/s),ini vy_body (m/s),ini vz_body (m/s),ini yaw (deg),ini pitch (deg),ini roll (deg)
-32,120,0,10,0,0,90,0,0
+31.9965,120.004,0,10,0,0,315,0,0
 command type,yaw (deg),pitch (deg),roll (deg),vx_body (m/s),vy_body (m/s),vz_body (m/s),command duration (s),GPS visibility
 1,0,0,0,0,0,0,1,0
-1,-15,0,0,0,0,0,6,0
+1,15,0,0,0,0,0,6,0
 1,0,0,0,0,0,0,3,0

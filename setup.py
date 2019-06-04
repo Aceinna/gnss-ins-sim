@@ -16,6 +16,8 @@ setuptools.setup(
     url="https://github.com/Aceinna/gnss-ins-sim",
     packages=setuptools.find_packages(),
     classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",

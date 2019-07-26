@@ -14,6 +14,7 @@ import platform
 import math
 import numpy as np
 from ctypes import *
+from ctypes import wintypes
 
 # globals
 VERSION = '1.0'
@@ -138,6 +139,8 @@ class DMU380Sim(object):
                 self.ext = '-x64' + self.ext
             else:
                 self.ext = '-x86' + self.ext
+        else:
+            raise OSError('Only support windows.')
         # algorithm description
         self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility']
         self.output = ['algo_time', 'pos', 'vel', 'att_euler', 'wb']
@@ -249,6 +252,8 @@ class DMU380Sim(object):
         '''
         Reset the fusion process to uninitialized state.
         '''
+        windll.kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
+        windll.kernel32.FreeLibrary(self.sim_engine._handle)
         self.sim_engine = cdll.LoadLibrary(self.sim_lib)
         self.sim_engine.SimInitialize(pointer(self.sim_config))
 

@@ -59,4 +59,5 @@ def test_ins_loose():
     sim.plot(['ref_pos', 'pos'], opt={'ref_pos': '3d'})
 
 if __name__ == '__main__':
-    test_ins_loose()
+    print('Still under development. Please try demo_aceinna_ins.py.')
+    # test_ins_loose()

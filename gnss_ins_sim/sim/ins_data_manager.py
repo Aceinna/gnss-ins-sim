@@ -7,6 +7,7 @@ Created on 2018-04-24
 @author: dongxiaoguang
 """
 
+import math
 import numpy as np
 from . import sim_data
 from .sim_data import Sim_data
@@ -618,18 +619,50 @@ class InsDataMgr(object):
             convert_xyz_to_lla = True
         # ref position
         if 'ref_pos' in self.available:
+            if 'ref_att_euler' in self.available:
+                heading = self.__all['ref_att_euler'].data[:, 0] * attitude.R2D
+            else:
+                heading = None
+            max_points = self.__all['ref_pos'].data.shape[0] / self.__all['fs'].data
             kml_gen.kml_gen(data_dir,\
                             self.__all['ref_pos'].data,\
+                            heading=heading,\
                             name='ref_pos',\
-                            convert_to_lla=convert_xyz_to_lla)
+                            convert_to_lla=convert_xyz_to_lla,\
+                            color='ff0000ff',\
+                            max_points=max_points)
+        # gps position
+        if 'gps' in self.available:
+            for i in self.__all['gps'].data.keys():
+                pos_name = 'gps_' + str(i)
+                heading = np.zeros((self.__all['gps'].data[i].shape[0],))
+                for j in range(self.__all['gps'].data[i].shape[0]):
+                    heading[j] = math.atan2(self.__all['gps'].data[i][j,4],
+                                            self.__all['gps'].data[i][j,3]) * attitude.R2D
+                max_points = self.__all['gps'].data[i].shape[0] / self.__all['fs_gps'].data
+                kml_gen.kml_gen(data_dir,\
+                                self.__all['gps'].data[i],\
+                                heading=heading,\
+                                convert_to_lla=convert_xyz_to_lla,\
+                                name=pos_name,\
+                                color='ff00ff00',\
+                                max_points=max_points)
         # simulation position
         if 'pos' in self.available:
             for i in self.__all['pos'].data.keys():
                 pos_name = 'pos_' + str(i)
+                if 'att_euler' in self.available:
+                    heading = self.__all['att_euler'].data[i][:, 0] * attitude.R2D
+                else:
+                    heading = None
+                max_points = self.__all['pos'].data[i].shape[0] / self.__all['fs'].data
                 kml_gen.kml_gen(data_dir,\
                                 self.__all['pos'].data[i],\
+                                heading=heading,\
+                                convert_to_lla=convert_xyz_to_lla,\
                                 name=pos_name,\
-                                convert_to_lla=convert_xyz_to_lla)
+                                color='ffff0000',\
+                                max_points=max_points)
 
     def is_supported(self, data_name):
         '''

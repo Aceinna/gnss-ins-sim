@@ -25,16 +25,10 @@ class SIM_COMFIG(Structure):
     '''
     read config params from file, and put params in this structure
     '''
-    _fields_ = [("_pktType", c_bool),
-                ("pktType", c_uint8),
-                ("_inputDataRate", c_bool),
+    _fields_ = [("_inputDataRate", c_bool),
                 ("inputDataRate", c_uint8),
                 ("_outputDataRate", c_bool),
                 ("outputDataRate", c_uint8),
-                ("_rsType", c_bool),
-                ("rsTypeStr", c_char * 64),
-                ("_dmuVersion", c_bool),
-                ("dmuVersionStr", c_char * 64),
                 ("_hasMags", c_bool),
                 ("hasMags", c_bool),
                 ("_useMags", c_bool),
@@ -43,8 +37,6 @@ class SIM_COMFIG(Structure):
                 ("hasGps", c_bool),
                 ("_useGps", c_bool),
                 ("useGps", c_bool),
-                ("_algorithm", c_bool),
-                ("algorithm", c_bool),
                 ("_freeIntegrate", c_bool),
                 ("freeIntegrate", c_bool),
                 ("_dynamicMotion", c_bool),
@@ -52,7 +44,7 @@ class SIM_COMFIG(Structure):
                 ("_stationaryLockYaw", c_bool),
                 ("stationaryLockYaw", c_bool),
                 ("_turnSwitchThreshold", c_bool),
-                ("turnSwitchThreshold", c_ushort),
+                ("turnSwitchThreshold", c_float),
                 ("_hardIron_X", c_bool),
                 ("hardIron_X", c_float),
                 ("_hardIron_Y", c_bool),
@@ -67,8 +59,6 @@ class SIM_COMFIG(Structure):
                 ("accelLPFTypeStr", c_char * 64),
                 ("_accelSwitch", c_bool),
                 ("accelSwitch", c_float),
-                ("_origLlinAcelSwitch", c_bool),
-                ("origLlinAcelSwitch", c_bool),
                 ("_linAccelSwitchDelay", c_bool),
                 ("linAccelSwitchDelay", c_float),
                 ("_Free_Integration_Cntr", c_bool),
@@ -81,10 +71,10 @@ class SIM_COMFIG(Structure):
                 ("High_Gain_AHRS", c_float),
                 ("_Low_Gain_AHRS", c_bool),
                 ("Low_Gain_AHRS", c_float),
-                ("_Max_GPS_Drop_Time", c_bool),
-                ("Max_GPS_Drop_Time", c_int32),
-                ("_suppressDisgnosticMsgs", c_bool),
-                ("suppressDisgnosticMsgs", c_bool),
+                ("_maxGpsDropTime", c_bool),
+                ("maxGpsDropTime", c_int32),
+                ("_maxReliableDRTime", c_bool),
+                ("maxReliableDRTime", c_int32),
                 ("_procCovarMult_rateBias", c_bool),
                 ("procCovarMult_rateBias", c_float),
                 ("_procCovarMult_attitude", c_bool),
@@ -92,22 +82,42 @@ class SIM_COMFIG(Structure):
                 ("_measCovarMult_roll", c_bool),
                 ("measCovarMult_roll", c_float),
                 ("_measCovarMult_pitch", c_bool),
-                ("measCovarMult_pitch", c_float),
-                ("_gpsItow", c_bool),
-                ("gpsItow", c_uint32),
-                ("_tenHertzCntrOffset", c_bool),
-                ("_subFrameCntrOffset", c_bool),
-                ("tenHertzCntrOffset", c_uint8),
-                ("subFrameCntrOffset", c_int8),
-                ("_gpsValid", c_bool),
-                ("gpsValid", c_bool)]
+                ("measCovarMult_pitch", c_float)
+                ]
+
+class GPS_DATA(Structure):
+    '''
+    Input GPS data structure
+    '''
+    _fields_ = [("gpsFixType", c_uint8),
+                ("gpsUpdate", c_uint8),
+                ("numSatellites", c_uint8),
+                ("itow", c_uint),
+                ("latitude", c_double),
+                ("longitude", c_double),
+                ("vNed", c_double*3),
+                ("trueCourse", c_double),
+                ("rawGroundSpeed", c_double),
+                ("altitude", c_double),
+                ("GPSSecondFraction", c_double),
+                ("GPSmonth", c_uint8),
+                ("GPSday", c_uint8),
+                ("GPSyear", c_uint8),
+                ("GPSHour", c_char),
+                ("GPSMinute", c_char),
+                ("GPSSecond", c_char),
+                ("GPSHorizAcc", c_float),
+                ("GPSVertAcc", c_float),
+                ("HDOP", c_float),
+                ("geoidAboveEllipsoid", c_float),
+                ]
 
 class EKF_STATE(Structure):
     '''
     Return EFK state in this structure
     '''
     _fields_ = [("timeStep", c_uint32),
-                ("kfPosN", c_float*3),
+                ("kfPosN", c_double*3),
                 ("kfVelN", c_float*3),
                 ("kfQuat", c_float*4),
                 ("kfRateBias", c_float*3),
@@ -118,9 +128,7 @@ class EKF_STATE(Structure):
                 ("kfEulerAngles", c_float*3),
                 ("algoState", c_int),
                 ("algoTurnSwitch", c_ushort),
-                ("algoLinAccelSwitch", c_uint8),
-                ("algoAMag", c_float),
-                ("algoAFiltN", c_float * 3),]
+                ("algoLinAccelSwitch", c_uint8),]
 
 class DMU380Sim(object):
     '''
@@ -142,7 +150,7 @@ class DMU380Sim(object):
         else:
             raise OSError('Only support windows.')
         # algorithm description
-        self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility']
+        self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility', 'time', 'gps_time', ]
         self.output = ['algo_time', 'pos', 'vel', 'att_euler', 'wb']
         self.batch = True
         self.results = None
@@ -175,13 +183,23 @@ class DMU380Sim(object):
                 mag: numpy array of size (n,3), Gauss
         '''
         # get input
-        fs = set_of_input[0]
-        gyro = set_of_input[1]
-        accel = set_of_input[2]
-        gps = set_of_input[3]
-        gps_visibility = set_of_input[4]
+        idx = 0
+        fs = set_of_input[idx]
+        idx += 1
+        gyro = set_of_input[idx]
+        idx += 1
+        accel = set_of_input[idx]
+        idx += 1
+        gps = set_of_input[idx]
+        idx += 1
+        gps_visibility = set_of_input[idx]
+        idx += 1
+        time = set_of_input[idx]
+        idx += 1
+        gps_time = set_of_input[idx]
+        idx += 1
         if 'mag' in self.input:
-            mag = set_of_input[5]
+            mag = set_of_input[idx]
         n = accel.shape[0]
         # algo output
         time_step = np.zeros((n,))
@@ -190,40 +208,64 @@ class DMU380Sim(object):
         euler_angles = np.zeros((n, 3))
         rate_bias = np.zeros((n, 3))
         # run
+        g = GPS_DATA()
         ekf_state = EKF_STATE()
         output_len = 0
+        idx_gps = 0
         for i in range(0, n):
-            sensor_data = np.zeros((16,))
-            sensor_data[0:3] = gyro[i, :] * R2D
-            sensor_data[3:6] = accel[i, :] / 9.80665
+            a = np.zeros((3,))
+            w = np.zeros((3,))
+            m = np.zeros((3,))
+            a = accel[i, :] / 9.80665
+            w = gyro[i, :]
             if 'mag' in self.input:
-                sensor_data[6:9] = mag[i, :]/100.0
-            sensor_data[9:15] = gps[i, :]
-            sensor_data[9] = sensor_data[9] * R2D
-            sensor_data[10] = sensor_data[10] * R2D
-            sensor_data[15] = gps_visibility[i]
-            sensorReadings = sensor_data.ctypes.data_as(POINTER(c_double))
-            new_results = self.sim_engine.SimRun(sensorReadings)
+                m = mag[i, :] / 100.0
+            aptr = a.ctypes.data_as(POINTER(c_double))
+            wptr = w.ctypes.data_as(POINTER(c_double))
+            mptr = m.ctypes.data_as(POINTER(c_double))
+            # fill in GPS data
+            g.gpsUpdate = 0
+            if gps_time[idx_gps] == time[i]:
+                # there is a GPS update
+                g.gpsUpdate = 1
+                g.gpsFixType = int(gps_visibility[idx_gps])
+                g.latitude = gps[idx_gps, 0] * R2D
+                g.longitude = gps[idx_gps, 1] * R2D
+                g.altitude = gps[idx_gps, 2]
+                g.vNed[0] = gps[idx_gps, 3]
+                g.vNed[1] = gps[idx_gps, 4]
+                g.vNed[2] = gps[idx_gps, 5]
+                g.rawGroundSpeed = math.sqrt(g.vNed[0]*g.vNed[0] + g.vNed[1]*g.vNed[1])
+                g.trueCourse = math.atan2(g.vNed[1], g.vNed[0]) * R2D
+                # print(g.trueCourse, g.vNed[1], g.vNed[0])
+                g.HDOP = 1.0
+                g.GPSHorizAcc = g.HDOP * 3.0
+                g.GPSVertAcc = g.GPSHorizAcc * 1.5
+                g.itow = idx_gps
+                idx_gps += 1
+                if idx_gps == gps_time.shape[0]:
+                    idx_gps = gps_time.shape[0] - 1
+            
+            self.sim_engine.SimRun(aptr, wptr, mptr, pointer(g))
             # get output
-            if new_results == 1:
-                self.sim_engine.GetEKF_STATES(pointer(ekf_state))
-                # time_step[output_len] = ekf_state.timeStep / fs
-                time_step[output_len] = i / fs
-                # Euler angles order is [roll pitch yaw] in the algo
-                # We use yaw [pitch roll yaw] order in the simulation
-                pos[output_len, 0] = ekf_state.kfPosN[0] / R2D
-                pos[output_len, 1] = ekf_state.kfPosN[1] / R2D
-                pos[output_len, 2] = ekf_state.kfPosN[2]
-                vel[output_len, 0] = ekf_state.kfVelN[0]
-                vel[output_len, 1] = ekf_state.kfVelN[1]
-                vel[output_len, 2] = ekf_state.kfVelN[2]
-                euler_angles[output_len, 0] = ekf_state.kfEulerAngles[2]
-                euler_angles[output_len, 1] = ekf_state.kfEulerAngles[1]
-                euler_angles[output_len, 2] = ekf_state.kfEulerAngles[0]
-                rate_bias[output_len, 0] = ekf_state.kfRateBias[0]
-                rate_bias[output_len, 1] = ekf_state.kfRateBias[1]
-                rate_bias[output_len, 2] = ekf_state.kfRateBias[2]
-                output_len += 1
+            self.sim_engine.GetEKF_STATES(pointer(ekf_state))
+            # time_step[output_len] = ekf_state.timeStep / fs
+            time_step[output_len] = i / fs
+            # Euler angles order is [roll pitch yaw] in the algo
+            # We use yaw [pitch roll yaw] order in the simulation
+            pos[output_len, 0] = ekf_state.kfPosN[0] / R2D
+            pos[output_len, 1] = ekf_state.kfPosN[1] / R2D
+            pos[output_len, 2] = ekf_state.kfPosN[2]
+            vel[output_len, 0] = ekf_state.kfVelN[0]
+            vel[output_len, 1] = ekf_state.kfVelN[1]
+            vel[output_len, 2] = ekf_state.kfVelN[2]
+            euler_angles[output_len, 0] = ekf_state.kfEulerAngles[2]
+            euler_angles[output_len, 1] = ekf_state.kfEulerAngles[1]
+            euler_angles[output_len, 2] = ekf_state.kfEulerAngles[0]
+            rate_bias[output_len, 0] = ekf_state.kfRateBias[0]
+            rate_bias[output_len, 1] = ekf_state.kfRateBias[1]
+            rate_bias[output_len, 2] = ekf_state.kfRateBias[2]
+            output_len += 1
         # results
         self.results = [time_step[0:output_len],\
                         pos[0:output_len, :],\

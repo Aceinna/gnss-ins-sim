@@ -15,20 +15,64 @@ from ..attitude import attitude
 
 R2D = 180.0/math.pi
 
-def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert_to_lla=False):
+kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"
+     xmlns:gx = "http://www.google.com/kml/ext/2.2" > 
+<Document>
+      <Style id="track">
+         <IconStyle>
+            <color>%s</color>
+            <colorMode>normal</colorMode>
+            <scale> 0.50</scale>
+            <Icon>
+               <href>http://maps.google.com/mapfiles/kml/shapes/track.png</href>
+            </Icon>
+         </IconStyle>
+         <LabelStyle>
+            <color>%s</color>
+            <scale>7.000000e-01</scale>
+         </LabelStyle>
+      </Style>'''
+kmlstr_body = '''
+   <Placemark>
+      <styleUrl>#track</styleUrl>
+      <Style> <IconStyle>  <heading>%f</heading> </IconStyle>  </Style>
+      <Point>
+         <coordinates>%.9f,%.9f,%f</coordinates>
+      </Point>
+      <ExtendedData>
+         <Data name="Index">
+         <value>%d</value>
+         </Data>
+      </ExtendedData>
+   </Placemark>'''
+kmlstr_end = '''
+</Document>
+</kml>
+'''
+
+def kml_gen(data_dir, pos, heading=None, name='pathgen', convert_to_lla=False, 
+            color='ffff0000', max_points=None):
     '''
     Generate .kml file contents from position data.
     Args:
         data_dir: directory to save the .kml files.
         pos: nx3 [lat, lon, alt in rad and m, or [x, y, z] in m
-        template_file: template kml file. The line 'REPALCE THIS WITH COORDINATES'
-                       will be replaced by coordinates defined in pos.
+        heading: in unit of deg
         name: string name of this trajectory.
         convert_to_lla: true if position data are generated in a virtual inertial frame.
             xyz-form position data will be converted to [Lat Lon Alt] coordinates.
             See imu_sim and pathgen for details about the virtual inertial frame.
+        color: Color and opacity (alpha) values are expressed in hexadecimal notation.
+            The range of values for any one color is 0 to 255 (00 to ff). For alpha,
+            00 is fully transparent and ff is fully opaque. The order of expression is
+            aabbggrr, where aa=alpha (00 to ff); bb=blue (00 to ff); gg=green (00 to ff);
+            rr=red (00 to ff). For example, if you want to apply a blue color with 50 percent
+            opacity to an overlay, you would specify the following: <color>7fff0000</color>,
+            where alpha=0x7f, blue=0xff, green=0x00, and red=0x00.
+        max_points: the number of points in the generated kml file.
     Returns:
-        kml_contents: string contents of kml file.
+        None.
     '''
     # get lla from pos
     pos = pos.copy()
@@ -55,32 +99,33 @@ def kml_gen(data_dir, pos, template_file='template.kml', name='pathgen', convert
         file_name = data_dir + '//' + name + '_LLA.csv'
         np.savetxt(file_name, lla, header=header_line, delimiter=',', comments='')
     # gen kml according to data and template
-    if template_file is None:
-        template_file = os.path.join(os.path.dirname(__file__), 'template.kml')
-    else:
-        if not os.path.isabs(template_file):
-            template_file = os.path.join(os.path.dirname(__file__), template_file)
-    fp = open(template_file)
-    lines = ''
-    for line in fp:
-        if line == 'REPALCE THIS WITH COORDINATES\n':
-            max_points = 40000.0
-            step = int(math.ceil(n/max_points))
-            for i in range(0, n, step):
-                if i == 0:
-                    lines = lines + '\t\t\t\t'
-                lines = lines + ('%f,%f,%f ' %(lla[i, 1], lla[i, 0], lla[i, 2]))
-            lines = lines + '\n'
-        elif 'PATHGEN' in line:
-            line = line.replace('PATHGEN', name)
-            lines = lines + line
-        else:
-            lines = lines + line
-    # close template file
-    fp.close()
-    # write contents into .kml file
     kml_file = data_dir + '//' + name + '.kml'
-    fp = open(kml_file, 'w')
-    fp.write(lines)
-    fp.close()
+    f = open(kml_file, 'w+')
+    f.truncate()
+    # write header
+    lines = (kmlstr_header)% (color, color)
+    f.write(lines)
+    # write data
+    ndim = lla.ndim
+    if ndim == 1:
+        if heading is None:
+            lines = (kmlstr_body)% (0, lla[1], lla[0], lla[2], 0)
+        else:
+            lines = (kmlstr_body)% (heading, lla[1], lla[0], lla[2], 0)
+        f.write(lines)
+    else:
+        if max_points is None:
+            max_points = 8000.0
+        step = int(math.ceil(lla.shape[0]/max_points))
+        for i in range(0, lla.shape[0], step):
+            if lla[i][2] < 0:
+                lla[i][2] = 0
+            if heading is None:
+                lines = (kmlstr_body)% (0, lla[i][1], lla[i][0], lla[i][2], i)
+            else:
+                lines = (kmlstr_body)% (heading[i], lla[i][1], lla[i][0], lla[i][2], i)
+            f.write(lines)
+    # write end
+    f.write(kmlstr_end)
+    f.close()
     

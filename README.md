@@ -191,7 +191,7 @@ Each string in 'input' and 'output' corresponds to a set of data supported by **
 | 'algo_time' | Time series corresponding to algorithm output, units: ['s']. If your algorithm output data rate is different from the input data rate, you should include 'algo_time' in the algorithm output. |
 | 'gps_visibility' | Indicate if GPS is available. 1 means yes, and 0 means no. |
 | 'ref_pos' | True position in the navigation frame. When users choose NED (ref_frame=0) as the navigation frame, positions will be given in the form of [Latitude, Longitude, Altitude], units: ['rad', 'rad', 'm']. When users choose the virtual inertial frame, positions (initial position + positions relative to the  origin of the frame) will be given in the form of [x, y, z], units:  ['m', 'm', 'm']. |
-| 'ref_vel' | True velocity w.r.t the navigation/reference frame expressed in the body frame, units: ['m/s', 'm/s', 'm/s']. |
+| 'ref_vel' | True velocity w.r.t the navigation/reference frame expressed in the NED frame, units: ['m/s', 'm/s', 'm/s']. |
 | 'ref_att_euler' | True attitude (Euler angles, ZYX rotation sequency), units: ['rad', 'rad', 'rad'] |
 | 'ref_att_quat' | True attitude (quaternions) |
 | 'ref_gyro' | True angular velocity in the body frame, units: ['rad/s', 'rad/s', 'rad/s'] |

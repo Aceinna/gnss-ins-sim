@@ -171,7 +171,7 @@ class FreeIntegration(object):
                 c_bn = attitude.euler2dcm(self.att[i, :])
                 self.vel_b[i, :] = c_bn.dot(self.vel[i, :])
         # results
-        self.results = [self.att, self.pos, self.vel_b]
+        self.results = [self.att, self.pos, self.vel]
 
     def get_results(self):
         '''

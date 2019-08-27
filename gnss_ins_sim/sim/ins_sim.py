@@ -73,7 +73,7 @@ class Sim(object):
                            y axis pointing eastward,
                            z axis pointing downward.
                            Position will be expressed in LLA form, and the reference velocity of
-                           the vehicle relative to the ECEF frame will be expressed in the body
+                           the vehicle relative to the ECEF frame will be expressed in the NED
                            frame, and GPS velocity will be expressed in the NED frame.
                         1: a virtual inertial frame with constant g,
                            x axis pointing along geographic/magnetic north,

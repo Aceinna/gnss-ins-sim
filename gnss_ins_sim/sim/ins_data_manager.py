@@ -79,7 +79,7 @@ class InsDataMgr(object):
                                 output_units=['deg', 'deg', 'm'],\
                                 legend=['ref_pos_lat', 'ref_pos_lon', 'ref_pos_alt'])
         self.ref_vel = Sim_data(name='ref_vel',\
-                                description='true vel in the body frame',\
+                                description='true vel in the NED frame',\
                                 units=['m/s', 'm/s', 'm/s'],\
                                 legend=['ref_vel_x', 'ref_vel_y', 'ref_vel_z'])
         self.ref_att_euler = Sim_data(name='ref_att_euler',\

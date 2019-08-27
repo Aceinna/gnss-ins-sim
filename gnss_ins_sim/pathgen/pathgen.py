@@ -66,8 +66,8 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
             'imu':      True/ideal IMU measurements. Each line is organized as [index, acc, gyro],
                         index is an interger and increases at imu_output_freq.
             'nav':      True position, velocity and attitude (Euler angles, ZYX).
-                        ref_frame==0, [index, absolute_position_lla, velocity_in_body_frame, attitude],
-                        ref_frame==1, [index, absolute_position_xyz, velocity_in_body_frame, attitude],
+                        ref_frame==0, [index, absolute_position_lla, velocity_in_NED_frame, attitude],
+                        ref_frame==1, [index, absolute_position_xyz, velocity_in_NED_frame, attitude],
                         Notice: For absolute_position_xyz, it is indeed the sum of the initial
                         position in ecef and the relative position in the virutal inertial frame.
                         Index is synced with index in mimu.csv.
@@ -259,9 +259,9 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
                 nav_data[idx_high_freq, 1] = pos_n[0] + pos_delta_n[0]
                 nav_data[idx_high_freq, 2] = pos_n[1] + pos_delta_n[1]
                 nav_data[idx_high_freq, 3] = pos_n[2] + pos_delta_n[2]
-                nav_data[idx_high_freq, 4] = vel_b[0]
-                nav_data[idx_high_freq, 5] = vel_b[1]
-                nav_data[idx_high_freq, 6] = vel_b[2]
+                nav_data[idx_high_freq, 4] = vel_n[0]
+                nav_data[idx_high_freq, 5] = vel_n[1]
+                nav_data[idx_high_freq, 6] = vel_n[2]
                 euler_angles = attitude.euler_angle_range_three_axis(att)
                 nav_data[idx_high_freq, 7] = euler_angles[0] # yaw [-pi, pi]
                 nav_data[idx_high_freq, 8] = euler_angles[1] # pitch [-pi/2, pi/2]

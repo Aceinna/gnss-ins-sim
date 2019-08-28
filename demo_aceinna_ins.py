@@ -56,7 +56,7 @@ def test_dmu380_sim():
                       algorithm=algo)
     sim.run(1)
     # generate simulation results, summary, and save data to files
-    sim.results('.//demo_saved_data//tmp', gen_kml=True, extra_opt='ned')
+    sim.results('.//demo_saved_data//tmp', err_stats_start=210, gen_kml=True, extra_opt='ned')
     # plot data
     sim.plot(['pos', 'vel', 'att_euler'], opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
 

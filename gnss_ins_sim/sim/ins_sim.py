@@ -172,7 +172,7 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
-    def results(self, data_dir=None, end_point=False, gen_kml=False, extra_opt=''):
+    def results(self, data_dir=None, err_stats_start=0, gen_kml=False, extra_opt=''):
         '''
         Simulation results.
         Save results to .csv files containing all data generated.
@@ -191,7 +191,11 @@ class Sim(object):
                 att_euler-algo1.csv. That is, if the algorithm has name, the name is used in the
                 key. If the algorithm has no name, a name "algo"+order of the algorithm in the
                 algorithm list is used as the algorithm name in the key.
-            end_point: True for end-point error statistics, False for process error statistics.
+            err_stats_start: When calculating the error statistics, this argument specify the
+                starting point in seconds from where the error statistics are calculated. If it
+                is -1, end-point error statistics will be calculated. Any other negative value
+                will be the same as 0. If err_stats_start exceeds the max number of data points,
+                it will be converted to 0.
             gen_kml: True to generate two .kml files containing the reference position and the
                     simulation position (output by algorithms), respectively.
             extra_opt: Extra options to generate the results. It can be a string option to
@@ -218,7 +222,8 @@ class Sim(object):
                 self.dmgr.save_kml_files(data_dir)
 
             #### simulation summary and save summary to file
-            self.__summary(data_dir, data_saved, end_point=end_point, extra_opt=extra_opt)
+            self.__summary(data_dir, data_saved,
+                           err_stats_start=err_stats_start, extra_opt=extra_opt)
 
             #### simulation results are generated
             self.sim_results = True
@@ -287,7 +292,7 @@ class Sim(object):
         # show figures
         plt.show()
 
-    def __summary(self, data_dir, data_saved, end_point=False, extra_opt=''):
+    def __summary(self, data_dir, data_saved, err_stats_start=0, extra_opt=''):
         '''
         Summary of sim results.
         '''
@@ -315,36 +320,36 @@ class Sim(object):
                 self.sum += '\t' + i  + ': ' + self.dmgr.get_data_all(i).description + '\n'
 
         #### error statistics of algorithm output
-        err_stat_header_line = False
+        err_stats_header_line = False
         for data_name in self.interested_error:
             if data_name not in self.dmgr.available:
                 continue
             is_angle = self.interested_error[data_name] == 'angle'
-            err_stat = self.dmgr.get_error_stat(data_name, end_point=end_point,\
+            err_stats = self.dmgr.get_error_stats(data_name, err_stats_start=err_stats_start,\
                                                 angle=is_angle, use_output_units=True,\
                                                 extra_opt=extra_opt)
-            if err_stat is not None:
+            if err_stats_header_line is not None:
                 # There is error stats, add a headerline
-                if err_stat_header_line is False:
-                    err_stat_header_line = True
+                if err_stats_header_line is False:
+                    err_stats_header_line = True
                     self.sum += '\n------------------------------------------------------------\n'
                     self.sum += 'The following are error statistics.'
                 # Units of the error stats
-                err_units = err_stat['units']
+                err_units = err_stats['units']
                 self.sum += '\n-----------statistics for ' +\
                             self.dmgr.get_data_all(data_name).description +\
                             ' (in units of ' +\
                             err_units +')\n'
-                if isinstance(err_stat['max'], dict):
-                    for sim_run in sorted(err_stat['max'].keys()):
+                if isinstance(err_stats['max'], dict):
+                    for sim_run in sorted(err_stats['max'].keys()):
                         self.sum += '\tSimulation run ' + str(sim_run) + ':\n'
-                        self.sum += '\t\t--Max error: ' + str(err_stat['max'][sim_run]) + '\n'
-                        self.sum += '\t\t--Avg error: ' + str(err_stat['avg'][sim_run]) + '\n'
-                        self.sum += '\t\t--Std of error: ' + str(err_stat['std'][sim_run]) + '\n'
+                        self.sum += '\t\t--Max error: ' + str(err_stats['max'][sim_run]) + '\n'
+                        self.sum += '\t\t--Avg error: ' + str(err_stats['avg'][sim_run]) + '\n'
+                        self.sum += '\t\t--Std of error: ' + str(err_stats['std'][sim_run]) + '\n'
                 else:
-                    self.sum += '\t--Max error: ' + str(err_stat['max']) + '\n'
-                    self.sum += '\t--Avg error: ' + str(err_stat['avg']) + '\n'
-                    self.sum += '\t--Std of error: ' + str(err_stat['std']) + '\n'
+                    self.sum += '\t--Max error: ' + str(err_stats['max']) + '\n'
+                    self.sum += '\t--Avg error: ' + str(err_stats['avg']) + '\n'
+                    self.sum += '\t--Std of error: ' + str(err_stats['std']) + '\n'
 
         print(self.sum)
 

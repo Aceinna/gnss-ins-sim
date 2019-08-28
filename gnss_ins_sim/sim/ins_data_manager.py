@@ -364,19 +364,23 @@ class InsDataMgr(object):
         else:
             return None
 
-    def get_error_stat(self, data_name, end_point=False, angle=False, use_output_units=False,\
-                       extra_opt=''):
+    def get_error_stats(self, data_name, err_stats_start=0, angle=False,\
+                       use_output_units=False, extra_opt=''):
         '''
         Get error statistics of data_name.
         Args:
             data_name: name of data whose error will be calculated.
-            end_point: True if want to calculate only the end point error. In this case,
+            err_stats_start: This argument specify the starting point in seconds from where
+                the error statistics are calculated.
+                If it is -1, end-point error statistics will be calculated. In this case,
                 the result contains statistics of end-point errors of multiple runs.
-                False if want to calculate the process error. In this case, the result is
+                Otherwise, the process error of data specified by data_name starting from
+                err_stats_start(in seconds) is calculated. In this case, the result is
                 a dict of statistics of process error of each simulatoin run.
                 For example, if we want the end-point error of position from a free-integration
                 algorithm ran for n times, the result is {'max': numpy.array([rx, ry, rz]),
-                'avg': numpy.array([rx, ry, rz]), 'std': numpy.array([rx, ry, rz])}.
+                                                          'avg': numpy.array([rx, ry, rz]),
+                                                          'std': numpy.array([rx, ry, rz])}.
                 If we want the process error of an attitude determination algorithm ran for n
                 times, the result is {'max': a dict of numpy.array([yaw, pitch, roll]),
                                       'avg': a dict of numpy.array([yaw, pitch, roll]),
@@ -393,7 +397,7 @@ class InsDataMgr(object):
         err_stat = None
         # is this set of data available?
         if data_name not in self.available:
-            print('__process_error_stat: %s is not available.'% data_name)
+            print('error stats: %s is not available.'% data_name)
             return None
         # is the reference of data_name available?
         ref_data_name = 'ref_' + data_name
@@ -406,12 +410,12 @@ class InsDataMgr(object):
             data_err = self.calc_data_err(data_name, ref_data_name, angle, extra_opt)
             if data_err is not None:
                 self.__err[data_err.name] = data_err
-        if end_point is True:
+        if err_stats_start == -1:
             # end-point error
-            err_stat = self.__end_point_error_stat(data_name)
+            err_stat = self.__end_point_error_stats(data_name)
         else:
             # process error
-            err_stat = self.__process_error_stat(data_name)
+            err_stat = self.__process_error_stats(data_name, err_stats_start)
         # unit conversion
         if use_output_units and (err_stat is not None):
             for i in err_stat:
@@ -670,14 +674,14 @@ class InsDataMgr(object):
         '''
         return data_name in self.__all.keys()
 
-    def __end_point_error_stat(self, data_name, group=True):
+    def __end_point_error_stats(self, data_name, group=True):
         '''
         end-point error statistics
         '''
         # error available?
         err_data_name = 'err_' + data_name
         if err_data_name not in self.__err:
-            print('__end_point_error_stat: %s is not available.'% data_name)
+            print('__end_point_error_stats: %s is not available.'% data_name)
         # collect data according to keys
         if isinstance(self.__err[err_data_name].data, dict):
             # collect groups
@@ -693,7 +697,7 @@ class InsDataMgr(object):
                     err.append(self.__err[err_data_name].data[i][-1, :])
                 # convert list to np.array
                 err = np.array(err)
-                return self.__array_stat(err)
+                return self.__array_stats(err)
             # at least two groups
             else:
                 stat = {'max': {}, 'avg': {}, 'std': {}}
@@ -702,33 +706,39 @@ class InsDataMgr(object):
                     for i in self.__err[err_data_name].data:
                         if j in i:
                             err.append(self.__err[err_data_name].data[i][-1, :])
-                    tmp = self.__array_stat(err)
+                    tmp = self.__array_stats(err)
                     stat['max'][j] = tmp['max']
                     stat['avg'][j] = tmp['avg']
                     stat['std'][j] = tmp['std']
                 return stat
         elif isinstance(self.__err[err_data_name].data, np.ndarray):
             err = self.__err[err_data_name].data[-1, :]
-            return self.__array_stat(err)
+            return self.__array_stats(err)
         else:
             print('Unsupported data type to calculate error statitics for %s'% data_name)
             return None
 
-    def __process_error_stat(self, data_name):
+    def __process_error_stats(self, data_name, err_stats_start):
         '''
         process error statistics
         '''
         # error available?
         err_data_name = 'err_' + data_name
         if err_data_name not in self.__err:
-            print('__end_point_error_stat: %s is not available.'% data_name)
+            print('__process_error_stats: %s is not available.'% data_name)
         # begin to calculate error stat
         if isinstance(self.__all[data_name].data, dict):
             stat = {'max': {}, 'avg': {}, 'std': {}}
             for i in self.__all[data_name].data:
                 # error stat
-                err = self.__err[err_data_name].data[i]
-                tmp = self.__array_stat(err)
+                idx = np.where(self.algo_time.data[i] >= err_stats_start)[0]
+                if idx.shape[0] == 0:
+                    print('err_stats_start exceeds max data points.')
+                    idx = 0
+                else:
+                    idx = idx[0]
+                err = self.__err[err_data_name].data[i][idx::, :]
+                tmp = self.__array_stats(err)
                 stat['max'][i] = tmp['max']
                 stat['avg'][i] = tmp['avg']
                 stat['std'][i] = tmp['std']
@@ -736,12 +746,12 @@ class InsDataMgr(object):
         elif isinstance(self.__all[data_name].data, np.ndarray):
             # error stat
             err = self.__err[err_data_name].data
-            return self.__array_stat(err)
+            return self.__array_stats(err)
         else:
             print('Unsupported data type to calculate error statitics for %s'% data_name)
             return None
 
-    def __array_stat(self, x):
+    def __array_stats(self, x):
         '''
         statistics of array x.
         Args:

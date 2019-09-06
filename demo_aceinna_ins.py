@@ -28,7 +28,7 @@ def test_dmu380_sim():
                'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
                'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
                'gyro_b_corr': np.array([100.0, 100.0, 100.0]),
-               'accel_b': np.array([5.0e-3, 5.0e-3, 5.0e-3]) * 1.0,
+               'accel_b': np.array([5.0e-3, 5.0e-3, 5.0e-3]) * 10.0,
                'accel_vrw': np.array([0.03119, 0.03009, 0.04779]) * 1.0,
                'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0,
                'accel_b_corr': np.array([200.0, 200.0, 200.0]),
@@ -52,13 +52,13 @@ def test_dmu380_sim():
                       ref_frame=0,
                       imu=imu,
                       mode=None,
-                      env=None,#'[0.1 0.01 0.11]g-random',
+                      env='[0.01 0.01 0.11]g-random',
                       algorithm=algo)
     sim.run(1)
     # generate simulation results, summary, and save data to files
     sim.results('.//demo_saved_data//tmp', err_stats_start=210, gen_kml=True, extra_opt='ned')
     # plot data
-    sim.plot(['pos', 'vel', 'att_euler'], opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
+    sim.plot(['pos', 'vel', 'wb', 'ab', 'att_euler'], opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
 
 if __name__ == '__main__':
     test_dmu380_sim()

@@ -151,7 +151,7 @@ class DMU380Sim(object):
             raise OSError('Only support windows.')
         # algorithm description
         self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility', 'time', 'gps_time', ]
-        self.output = ['algo_time', 'pos', 'vel', 'att_euler', 'wb']
+        self.output = ['algo_time', 'pos', 'vel', 'att_euler', 'wb', 'ab']
         self.batch = True
         self.results = None
         # algorithm vars
@@ -207,6 +207,7 @@ class DMU380Sim(object):
         vel = np.zeros((n, 3))
         euler_angles = np.zeros((n, 3))
         rate_bias = np.zeros((n, 3))
+        accel_bias = np.zeros((n, 3))
         # run
         g = GPS_DATA()
         ekf_state = EKF_STATE()
@@ -241,11 +242,11 @@ class DMU380Sim(object):
                 g.HDOP = 1.0
                 g.GPSHorizAcc = g.HDOP * 3.0
                 g.GPSVertAcc = g.GPSHorizAcc * 1.5
-                g.itow = idx_gps
+                g.itow = int(gps_time[idx_gps] * 1000)
                 idx_gps += 1
                 if idx_gps == gps_time.shape[0]:
                     idx_gps = gps_time.shape[0] - 1
-            
+
             self.sim_engine.SimRun(aptr, wptr, mptr, pointer(g))
             # get output
             self.sim_engine.GetEKF_STATES(pointer(ekf_state))
@@ -265,13 +266,17 @@ class DMU380Sim(object):
             rate_bias[output_len, 0] = ekf_state.kfRateBias[0]
             rate_bias[output_len, 1] = ekf_state.kfRateBias[1]
             rate_bias[output_len, 2] = ekf_state.kfRateBias[2]
+            accel_bias[output_len, 0] = ekf_state.kfAccelBias[0]
+            accel_bias[output_len, 1] = ekf_state.kfAccelBias[1]
+            accel_bias[output_len, 2] = ekf_state.kfAccelBias[2]
             output_len += 1
         # results
         self.results = [time_step[0:output_len],\
                         pos[0:output_len, :],\
                         vel[0:output_len, :],\
                         euler_angles[0:output_len, :],\
-                        rate_bias[0:output_len, :]]
+                        rate_bias[0:output_len, :],\
+                        accel_bias[0:output_len, :]]
 
     def update(self, gyro, acc, mag=np.array([0.0, 0.0, 0.0])):
         '''

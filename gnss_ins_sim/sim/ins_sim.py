@@ -48,7 +48,7 @@ class Sim(object):
                     col 7-9: initial attitude (Euler angles that rotate the reference frame to the
                         body frame according to the ZYX rotation sequence, deg).
                 row 3: header line for motion command
-                row >=2: motion commands, which include
+                row >=4: motion commands, which include
                     col 1: motion type. The following types are supported:
                         1: Euler angles change rate and body frame velocity change rate.
                         2: absolute att and absolute vel to reach.

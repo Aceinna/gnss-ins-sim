@@ -50,7 +50,7 @@ def test_free_integration():
     # run the simulation
     sim.run(1)
     # generate simulation results, summary
-    sim.results('', end_point=True, extra_opt='ned')
+    sim.results('', err_stats_start=-1, extra_opt='ned')
     # plot
     sim.plot(['pos', 'vel', 'att_euler', 'accel', 'gyro'],
              opt={'pos':'error', 'vel':'error', 'att_euler':'error'})

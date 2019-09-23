@@ -69,7 +69,7 @@ def test_free_integration():
     sim.run(1)
     # generate simulation results, summary
     # do not save data, generate .kml file
-    sim.results('', end_point=True, gen_kml=True)
+    sim.results('', err_stats_start=-1, gen_kml=True)
 
 if __name__ == '__main__':
     test_free_integration()

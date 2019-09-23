@@ -77,7 +77,7 @@ def test_gen_data_from_files(data_dir):
     sim.run(1)
     # generate simulation results, summary
     # do not save data since the simulation runs for 1000 times and generates too many results
-    sim.results('', end_point=True, gen_kml=True)
+    sim.results('', err_stats_start=-1, gen_kml=True)
     sim.plot(['att_euler'])
 
 if __name__ == '__main__':

@@ -731,7 +731,10 @@ class InsDataMgr(object):
             stat = {'max': {}, 'avg': {}, 'std': {}}
             for i in self.__all[data_name].data:
                 # error stat
-                idx = np.where(self.algo_time.data[i] >= err_stats_start)[0]
+                if i in self.algo_time.data:
+                    idx = np.where(self.algo_time.data[i] >= err_stats_start)[0]
+                else:
+                    idx = np.where(self.time.data >= err_stats_start)[0]
                 if idx.shape[0] == 0:
                     print('err_stats_start exceeds max data points.')
                     idx = 0

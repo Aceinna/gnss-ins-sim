@@ -679,6 +679,9 @@ class Sim(object):
         coresponding quaternions and add those in self.res.
         '''
         for i in self.data_map:
+            # data is already generated
+            if i in self.dmgr.available:
+                continue
             # data available and its associated data are supported
             src_name = self.data_map[i][0]
             if src_name in self.dmgr.available and self.dmgr.is_supported(i):

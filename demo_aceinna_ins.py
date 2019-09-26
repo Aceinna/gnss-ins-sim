@@ -8,6 +8,7 @@ Created on 2018-10-31
 """
 
 import os
+import platform
 import math
 import numpy as np
 from gnss_ins_sim.sim import imu_model
@@ -61,4 +62,9 @@ def test_dmu380_sim():
     sim.plot(['pos', 'vel', 'wb', 'ab', 'att_euler'], opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
 
 if __name__ == '__main__':
-    test_dmu380_sim()
+    if platform.system() == 'Windows':
+        test_dmu380_sim()
+    else:
+        print("Because the INS algorithm is compiled into a DLL, only Windows are supported.")
+        print("For other platforms, please use the C source code. To get the C source code, ")
+        print("please refer to https://openimu.readthedocs.io/en/latest/apps/ins.html")

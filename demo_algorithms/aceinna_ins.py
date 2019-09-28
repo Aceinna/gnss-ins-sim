@@ -112,6 +112,14 @@ class GPS_DATA(Structure):
                 ("geoidAboveEllipsoid", c_float),
                 ]
 
+class ODO_DATA(Structure):
+    '''
+    Input odometer data structure
+    '''
+    _fields_ = [("odoUpdate", c_uint8),
+                ("v", c_float),
+                ]
+
 class EKF_STATE(Structure):
     '''
     Return EFK state in this structure
@@ -150,7 +158,7 @@ class DMU380Sim(object):
         else:
             raise OSError('Only support windows.')
         # algorithm description
-        self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility', 'time', 'gps_time', ]
+        self.input = ['fs', 'gyro', 'accel', 'gps', 'gps_visibility', 'time', 'gps_time', 'odo']
         self.output = ['algo_time', 'pos', 'vel', 'att_euler', 'wb', 'ab']
         self.batch = True
         self.results = None
@@ -198,6 +206,8 @@ class DMU380Sim(object):
         idx += 1
         gps_time = set_of_input[idx]
         idx += 1
+        odometer = set_of_input[idx]
+        idx += 1
         if 'mag' in self.input:
             mag = set_of_input[idx]
         n = accel.shape[0]
@@ -210,6 +220,7 @@ class DMU380Sim(object):
         accel_bias = np.zeros((n, 3))
         # run
         g = GPS_DATA()
+        odo = ODO_DATA()
         ekf_state = EKF_STATE()
         output_len = 0
         idx_gps = 0
@@ -246,8 +257,10 @@ class DMU380Sim(object):
                 idx_gps += 1
                 if idx_gps == gps_time.shape[0]:
                     idx_gps = gps_time.shape[0] - 1
-
-            self.sim_engine.SimRun(aptr, wptr, mptr, pointer(g))
+            # fill in odo data
+            odo.odoUpdate = 1
+            odo.v = odometer[i]
+            self.sim_engine.SimRun(aptr, wptr, mptr, pointer(g), pointer(odo))
             # get output
             self.sim_engine.GetEKF_STATES(pointer(ekf_state))
             # time_step[output_len] = ekf_state.timeStep / fs

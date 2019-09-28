@@ -37,8 +37,11 @@ def test_dmu380_sim():
               }
     gps_err = {'stdp': np.array([5.0, 5.0, 7.0]) * 0.2,
                'stdv': np.array([0.05, 0.05, 0.05]) * 1.0}
+    odo_err = {'scale': 0.999,
+               'stdv': 0.01}
     # generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True, gps_opt=gps_err)
+    imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=True, gps_opt=gps_err,
+                        odo=True, odo_opt=odo_err)
 
     #### Algorithm
     # DMU380 algorithm
@@ -48,7 +51,7 @@ def test_dmu380_sim():
 
     #### start simulation
     sim = ins_sim.Sim([fs, 1, fs],
-                      motion_def_path+"//motion_def-long_drive.csv",
+                      motion_def_path+"//motion_def-Holland_tunnel.csv",
                     #   ".//demo_saved_data//2019-08-27-10-26-14//",
                       ref_frame=0,
                       imu=imu,
@@ -59,7 +62,7 @@ def test_dmu380_sim():
     # generate simulation results, summary, and save data to files
     sim.results('.//demo_saved_data//tmp', err_stats_start=210, gen_kml=True, extra_opt='ned')
     # plot data
-    sim.plot(['pos', 'vel', 'wb', 'ab', 'att_euler'], opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
+    # sim.plot(['pos', 'vel', 'wb', 'ab', 'att_euler'], opt={'pos':'error', 'vel':'error', 'att_euler':'error'})
 
 if __name__ == '__main__':
     if platform.system() == 'Windows':

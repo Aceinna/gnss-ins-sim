@@ -17,9 +17,9 @@ import numpy as np
 VERSION = '1.0'
 GM = 3.986004418e14                 # m3/(s2)
 Re = 6378137                        # m
-FLATTENING = 0.00335281066475       # Earth flattening, f = (a-b)/a
+FLATTENING = 1/298.257223563        # Earth flattening, f = (a-b)/a
 ECCENTRICITY = 0.0818191908426215   # Earth eccentricy, e2 = 2*f-f^2
-E_SQR = 0.00669437999014            # squared eccentricity
+E_SQR = ECCENTRICITY**2             # squared eccentricity
 W_IE = 7292115e-11                  # Earth's rotation rate
 
 def geo_param(pos):

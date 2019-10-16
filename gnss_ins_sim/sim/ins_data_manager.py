@@ -675,6 +675,21 @@ class InsDataMgr(object):
         '''
         return data_name in self.__all.keys()
 
+    def is_available(self, data_name, key=None):
+        '''
+        Tell if data_name is available. If key is not None, further tell if data in data_name
+        has the key.
+        '''
+        # if data_name is available
+        rtn = data_name in self.available
+        # if data_name has key
+        if rtn and key is not None:
+            if isinstance(self.__all[data_name].data, dict):
+                rtn = key in self.__all[data_name].data.keys()
+            else:
+                rtn = False
+        return rtn
+
     def __end_point_error_stats(self, data_name, group=True):
         '''
         end-point error statistics

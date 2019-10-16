@@ -679,9 +679,6 @@ class Sim(object):
         coresponding quaternions and add those in self.res.
         '''
         for i in self.data_map:
-            # data is already generated
-            if i in self.dmgr.available:
-                continue
             # data available and its associated data are supported
             src_name = self.data_map[i][0]
             if src_name in self.dmgr.available and self.dmgr.is_supported(i):
@@ -689,9 +686,11 @@ class Sim(object):
                 # src_data is a dict, add associated data of all keys
                 if isinstance(src_data, dict):
                     for key in src_data:
-                        self.dmgr.add_data(i, self.data_map[i][1](src_data[key]), key)
+                        if not self.dmgr.is_available(i, key):
+                            self.dmgr.add_data(i, self.data_map[i][1](src_data[key]), key)
                 else:
-                    self.dmgr.add_data(i, self.data_map[i][1](src_data))
+                    if not self.dmgr.is_available(i):
+                        self.dmgr.add_data(i, self.data_map[i][1](src_data))
 
     def __quat2euler_zyx(self, src):
         '''

@@ -577,13 +577,15 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
     '''
     # total data count
     n = ref_gps.shape[0]
+    pos_err = gps_err['stdp'].copy()
     # If position is in the form of LLA, convert gps_err['stdp'] to LLA error
     if gps_type == 0:   # GPS is in the form of LLA, stdp meter to rad
         earth_param = geoparams.geo_param(ref_gps[0, 1:4])
-        gps_err['stdp'][0] = gps_err['stdp'][0] / earth_param[0]
-        gps_err['stdp'][1] = gps_err['stdp'][1] / earth_param[1] / earth_param[4]
+        pos_err[0] = pos_err[0] / earth_param[0]
+        pos_err[1] = pos_err[1] / earth_param[1] / earth_param[4]
     ## simulate GPS error
-    pos_noise = gps_err['stdp'] * np.random.randn(n, 3)
+    print(pos_err)
+    pos_noise = pos_err * np.random.randn(n, 3)
     vel_noise = gps_err['stdv'] * np.random.randn(n, 3)
     gps_mea = np.hstack([ref_gps[:, 0:3] + pos_noise,
                          ref_gps[:, 3:6] + vel_noise])

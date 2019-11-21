@@ -584,7 +584,6 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
         pos_err[0] = pos_err[0] / earth_param[0]
         pos_err[1] = pos_err[1] / earth_param[1] / earth_param[4]
     ## simulate GPS error
-    print(pos_err)
     pos_noise = pos_err * np.random.randn(n, 3)
     vel_noise = gps_err['stdv'] * np.random.randn(n, 3)
     gps_mea = np.hstack([ref_gps[:, 0:3] + pos_noise,

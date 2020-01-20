@@ -12,29 +12,6 @@ Created on 2017-12-20
 # import
 import numpy as np
 from gnss_ins_sim.allan import allan
-
-'''
-The algorithm should be a Python class with three memeber functions.
-1. __init__: config the interface of the algorithm.
-    input: a tuple or list of variables this algorithm requires;
-           There are two kinds of variables: constant through different calls of this algorithm and
-           varying through different calls of this algorithm.
-           These variables are defined in imu_sim.py as self.supported_in_constant and
-           self.supported_in_varying. Users should check the two variables for input that
-           imu_sim.py can provide to your algorithms.
-    output: a tuple or list of variables this algorithm returns;
-            The algorithm outpu that can be understood by the imu_sim.py is defined in imu_sim.py as
-            self.supported_out. All algorithm outputs are assumed varying through different calls of
-            the algorithm.
-    batch: This defines in which way the "run" method of the algorithm should be called.
-           If True, input variables sampled at all times should be provided to the algorithm;
-           If False, input variables should be provided to the algorithm sample by sample.
-           Only "batch is True" is supported for now
-2. run: run the algorithm.
-    set_of_input: a tuple or list of input variables consistent with self.input.
-3. get_results: return results of the algorithm.
-    self.results： a tuple or list of results consistent with self.output.
-'''
 class Allan(object):
     '''
     Allan var. A demo algorithm for Sim

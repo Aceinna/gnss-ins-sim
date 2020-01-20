@@ -62,7 +62,7 @@ def kml_gen(data_dir, pos, heading=None, name='pathgen', convert_to_lla=False,
         name: string name of this trajectory.
         convert_to_lla: true if position data are generated in a virtual inertial frame.
             xyz-form position data will be converted to [Lat Lon Alt] coordinates.
-            See imu_sim and pathgen for details about the virtual inertial frame.
+            See ins_sim and pathgen for details about the virtual inertial frame.
         color: Color and opacity (alpha) values are expressed in hexadecimal notation.
             The range of values for any one color is 0 to 255 (00 to ff). For alpha,
             00 is fully transparent and ff is fully opaque. The order of expression is

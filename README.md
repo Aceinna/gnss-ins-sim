@@ -256,7 +256,7 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
         # sample rate of imu (gyro and accel), GPS and magnetometer
         [fs, fs_gps, fs_mag],
         # initial conditions and motion definition,
-        # see IMU in imu_sim.py for details
+        # see IMU in ins_sim.py for details
         data_path+"//motion_def-90deg_turn.csv",
         # reference frame
         ref_frame=1,

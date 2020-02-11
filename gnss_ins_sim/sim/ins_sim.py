@@ -172,6 +172,9 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
+        #### generate associated data
+        self.__add_associated_data_to_results()
+
     def results(self, data_dir=None, err_stats_start=0, gen_kml=False, extra_opt=''):
         '''
         Simulation results.
@@ -204,9 +207,6 @@ class Sim(object):
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:
-            #### generate associated data
-            self.__add_associated_data_to_results()
-
             #### check data dir
             data_saved = []
             if data_dir is not None:    # data_dir specified, meaning to save .csv files
@@ -291,6 +291,18 @@ class Sim(object):
             self.dmgr.plot(data, keys, is_angle, opt, extra_opt)
         # show figures
         plt.show()
+
+    def get_data(self, data_names):
+        '''
+        Get data section of data_names.
+        Args:
+            data_names: a list of data names
+        Returns:
+            data: a list of data corresponding to data_names. Each element in the list
+                can be a scalar, an array or a dict.
+                If there is any unavailable data in data_names, return None.
+        '''
+        return self.dmgr.get_data(data_names)
 
     def __summary(self, data_dir, data_saved, err_stats_start=0, extra_opt=''):
         '''

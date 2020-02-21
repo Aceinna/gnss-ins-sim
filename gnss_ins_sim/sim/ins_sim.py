@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from .ins_data_manager import InsDataMgr
 from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
-from .. attitude import attitude
+from ..attitude import attitude
 from ..geoparams import geoparams
 
 # built-in mobility
@@ -39,7 +39,7 @@ class Sim(object):
                 a directory contains the data files. Data files should be named as data_name.csv.
                 Supported data names are algorithm input. (Refer to readme.md)
                 If you do not have logged data files and want to generate sensor data from a motion
-                definition file,  motion_def should be a .csv file to define the waypoints.
+                definition file,  motion_def should be a csv file to define the waypoints.
                 The .csv file should be organized as follows:
                 row 1: header line for initial states
                 row 2: initial states, which include:
@@ -67,6 +67,8 @@ class Sim(object):
                         executed after max time. If you want to fully control execution time by
                         your own, you should always choose motion type to be 1.
                     col 9: gps visibility, should be 1 or 0.
+                motion_def can also be a string that contains the same contents as the csv file
+                mentioned above.
 
             ref_frame: reference frame used as the navigation frame and the attitude reference.
                         0: NED (default), with x axis pointing along geographic north,
@@ -304,6 +306,16 @@ class Sim(object):
         '''
         return self.dmgr.get_data(data_names)
 
+    def get_data_properties(self, data_name):
+        '''
+        Get the properties of the data specified by data_name.
+        Args:
+            data_name: a string to specify the data
+        Returns:
+            [description, units, plottable, logx, logy, legend]
+        '''
+        return self.dmgr.get_data_properties(data_name)
+
     def __summary(self, data_dir, data_saved, err_stats_start=0, extra_opt=''):
         '''
         Summary of sim results.
@@ -388,10 +400,8 @@ class Sim(object):
             self.data_src = os.path.abspath(self.data_src)
             self.__gen_data_from_files()
             self.data_from_files = True
-        elif os.path.isfile(self.data_src): # gen data from motion definitions in a .csv file
+        else: # gen data from motion definitions
             self.__gen_data_from_pathgen()
-        else:
-            raise ValueError('%s is not a valid directory or a file.'%self.data_src)
 
     def __gen_data_from_files(self):
         '''
@@ -549,10 +559,14 @@ class Sim(object):
             motion_def: motion commands, units: rad, rad/s, m, m/s.
         '''
         try:
+            # If self.data_src is a string of motion definitions, convert it to a list of strings
+            # so genfromtxt can read it.
+            if not os.path.isfile(self.data_src):
+                self.data_src = list(self.data_src.split('\n'))
             ini_state = np.genfromtxt(self.data_src, delimiter=',', skip_header=1, max_rows=1)
             waypoints = np.genfromtxt(self.data_src, delimiter=',', skip_header=3)
         except:
-            raise ValueError('motion definition file must have nine columns \
+            raise ValueError('motion definition file/string must have nine columns \
                               and at least four rows (two header rows + at least two data rows).')
         ini_pos_n = ini_state[0:3]
         ini_pos_n[0] = ini_pos_n[0] * attitude.D2R

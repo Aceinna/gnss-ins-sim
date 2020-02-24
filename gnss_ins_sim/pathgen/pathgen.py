@@ -176,7 +176,7 @@ def path_gen(ini_pos_vel_att, motion_def, output_def, mobility, ref_frame=0, mag
     idx_low_freq = 0        # data index for gps, odo
     for i in range(0, motion_def.shape[0]):
         com_type = round(motion_def[i, 0])      # command type of this segment
-        gps_visibility = motion_def[i, 8]       # gps visibility       
+        gps_visibility = motion_def[i, 8]       # gps visibility
         # get command of this segment
         '''if i == 2:
             print("haha")'''
@@ -580,7 +580,7 @@ def gps_gen(ref_gps, gps_err, gps_type=0):
     pos_err = gps_err['stdp'].copy()
     # If position is in the form of LLA, convert gps_err['stdp'] to LLA error
     if gps_type == 0:   # GPS is in the form of LLA, stdp meter to rad
-        earth_param = geoparams.geo_param(ref_gps[0, 1:4])
+        earth_param = geoparams.geo_param(ref_gps[0, 0:3])
         pos_err[0] = pos_err[0] / earth_param[0]
         pos_err[1] = pos_err[1] / earth_param[1] / earth_param[4]
     ## simulate GPS error

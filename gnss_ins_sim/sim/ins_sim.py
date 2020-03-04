@@ -18,6 +18,10 @@ from ..pathgen import pathgen
 from ..attitude import attitude
 from ..geoparams import geoparams
 
+# version info
+NAME = 'gnss-ins-sim'
+VERSION = '3.0.0_alpha'
+
 # built-in mobility
 high_mobility = np.array([1.0, 0.5, 2.0])   # m/s/s, rad/s/s, rad/s
 
@@ -112,6 +116,10 @@ class Sim(object):
             algorithm: a user defined algorithm or list of algorithms. If there are multiple
                 algorithms, all algorithms should have the same input and output.
         '''
+        # version info of gnss-ins-sim
+        self.name = NAME
+        self.version = VERSION
+        # simulation input
         self.fs = fs
         self.imu = imu
         self.mode = mode
@@ -294,6 +302,12 @@ class Sim(object):
         # show figures
         plt.show()
 
+    def get_names_of_available_data(self):
+        '''
+        Get a list of the names of available data in the simulation
+        '''
+        return self.dmgr.available
+
     def get_data(self, data_names):
         '''
         Get data section of data_names.
@@ -304,7 +318,7 @@ class Sim(object):
                 can be a scalar, an array or a dict.
                 If there is any unavailable data in data_names, return None.
         '''
-        return self.dmgr.get_data(data_names)
+        return self.dmgr.get_data(data_names).copy()
 
     def get_data_properties(self, data_name):
         '''

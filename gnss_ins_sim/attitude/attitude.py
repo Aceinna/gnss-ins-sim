@@ -70,6 +70,7 @@ def quat_conj(q):
     qc[1] = -q[1]
     qc[2] = -q[2]
     qc[3] = -q[3]
+    return qc
 
 def quat_multiply(q1, q2):
     """

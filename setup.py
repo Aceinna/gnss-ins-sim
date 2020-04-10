@@ -15,6 +15,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Aceinna/gnss-ins-sim",
     packages=setuptools.find_packages(),
+    package_data={"": ['*.COF']},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 2.7",

@@ -14,7 +14,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Aceinna/gnss-ins-sim",
+    install_requires=['numpy>1.10', 'matplotlib'],
     packages=setuptools.find_packages(),
+    package_data={"": ['*.COF']},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 2.7",

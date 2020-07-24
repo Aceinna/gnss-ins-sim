@@ -8,7 +8,6 @@ Created on 2017-12-19
 """
 
 import numpy as np
-from . import sim_data_plot as sim_plt
 from ..attitude import attitude
 
 class Sim_data(object):
@@ -174,6 +173,7 @@ class Sim_data(object):
             plot3d: 1--3D plot, 2--3D plot projected on xy, xz and yz, otherwise--2D plot
             mpl_opt: strings to specify matplotlib properties.
         '''
+        from . import sim_data_plot as sim_plt
         if self.plottable:
             sim_plt.plot(x, self, key, plot3d, mpl_opt)
 
@@ -181,6 +181,7 @@ def show_plot():
     '''
     Show all plots
     '''
+    from . import sim_data_plot as sim_plt
     sim_plt.show_plot()
 
 def convert_unit(data, src_unit, dst_unit):

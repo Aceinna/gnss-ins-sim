@@ -630,6 +630,12 @@ class InsDataMgr(object):
             # print(list(self.supported_plot.keys()))
             # raise ValueError("Unsupported data to plot: %s."%data)
 
+    def show_plot(self):
+        '''
+        Show all plots
+        '''
+        sim_data.show_plot()
+
     def save_kml_files(self, data_dir):
         '''
         generate kml files from reference position and simulation position.

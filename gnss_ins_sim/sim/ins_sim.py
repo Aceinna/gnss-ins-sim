@@ -11,7 +11,6 @@ import os
 import time
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 from .ins_data_manager import InsDataMgr
 from .ins_algo_manager import InsAlgoMgr
 from ..pathgen import pathgen
@@ -300,7 +299,7 @@ class Sim(object):
                 is_angle = self.interested_error[data] == 'angle'
             self.dmgr.plot(data, keys, is_angle, opt, extra_opt)
         # show figures
-        plt.show()
+        self.dmgr.show_plot()
 
     def get_names_of_available_data(self):
         '''

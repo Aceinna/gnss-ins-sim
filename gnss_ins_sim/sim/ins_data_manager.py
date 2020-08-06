@@ -196,7 +196,7 @@ class InsDataMgr(object):
         self.ad_gyro = Sim_data(name='ad_gyro',\
                                 description='Allan deviation of gyro',\
                                 units=['rad/s', 'rad/s', 'rad/s'],\
-                                output_units=['deg/hr', 'deg/hr', 'deg/hr'],\
+                                output_units=['deg/s', 'deg/s', 'deg/s'],\
                                 logx=True, logy=True,\
                                 legend=['AD_wx', 'AD_wy', 'AD_wz'])
         self.ad_accel = Sim_data(name='ad_accel',\

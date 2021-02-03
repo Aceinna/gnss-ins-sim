@@ -16,9 +16,9 @@ import numpy as np
 # global
 VERSION = '1.0'
 GM = 3.986004418e14                 # m3/(s2)
-Re = 6378137                        # m
+Re = 6378137                        # Radius of earth at the equator in m
 FLATTENING = 1/298.257223563        # Earth flattening, f = (a-b)/a
-ECCENTRICITY = 0.0818191908426215   # Earth eccentricy, e2 = 2*f-f^2
+ECCENTRICITY = 0.0818191908426215   # Earth eccentricity, e2 = 2*f-f^2
 E_SQR = ECCENTRICITY**2             # squared eccentricity
 W_IE = 7292115e-11                  # Earth's rotation rate
 
@@ -46,10 +46,18 @@ def geo_param(pos):
     cl = math.cos(pos[0])
     sl_sqr = sl * sl
     h = pos[2]
-    rm = (Re*(1 - E_SQR)) / (math.sqrt(1.0 - E_SQR*sl_sqr) * (1.0 - E_SQR*sl_sqr))
+
+    # https://www2.unb.ca/gge/Pubs/LN39.pdf page 10 eq 13
+    rm = (Re*(1 - E_SQR)) / (math.sqrt(1.0 - E_SQR*sl_sqr) * (1.0 - E_SQR*sl_sqr) * (1.0 - E_SQR*sl_sqr))
     rn = Re / (math.sqrt(1.0 - E_SQR*sl_sqr))
+    # https://en.wikipedia.org/wiki/Theoretical_gravity International Gravity Formula 1980 (IGF80)
     g1 = normal_gravity * (1 + k*sl_sqr) / math.sqrt(1.0 - E_SQR*sl_sqr)
-    g = g1 * (1.0 - (2.0/Re) * (1.0 + FLATTENING + m - 2.0*FLATTENING*sl_sqr)*h + 3.0*h*h/Re/Re)
+
+    # https://www.geophysik.uni-muenchen.de/~jowa/praktikum09/geoid_tutorial.pdf 
+    g = g1 * \
+        (1.0 - \
+            (2.0/Re) * (1.0 + FLATTENING + m - 2.0*FLATTENING*sl_sqr)*h + \
+            3.0*h*h/Re/Re)
     return rm, rn, g, sl, cl, W_IE
 
 def earth_radius(lat):

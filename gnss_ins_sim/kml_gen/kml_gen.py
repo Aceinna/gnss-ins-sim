@@ -38,6 +38,7 @@ kmlstr_body = '''
       <styleUrl>#track</styleUrl>
       <Style> <IconStyle>  <heading>%f</heading> </IconStyle>  </Style>
       <Point>
+         <altitudeMode>absolute</altitudeMode>
          <coordinates>%.9f,%.9f,%f</coordinates>
       </Point>
       <ExtendedData>

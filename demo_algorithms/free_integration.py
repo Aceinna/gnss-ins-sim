@@ -87,7 +87,7 @@ class FreeIntegration(object):
                 idx = 0
             # Earth gravity
             if self.gravity is None:
-                earth_param = geoparams.geo_param(self.r0)    # geo parameters
+                earth_param = geoparams.geo_param(self.r0[:, idx])    # geo parameters
                 g_n = np.array([0, 0, earth_param[2]])
             else:
                 g_n = np.array([0, 0, self.gravity[idx]])

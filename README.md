@@ -274,16 +274,24 @@ For example, if you set self.output = ['allan_t', 'allan_std_accel', 'allan_std_
 
 **gnss-ins-sim** supports running multiple algorithms in one simulation. You can refer to demo_multiple_algorihtms.py for example.
 
-There are three kinds of vibration models:
+There are three kinds of vibration models: random, sinusoidal and PSD.
 
-| vibration model | description |
+| Acceleration vibration model | description |
 |-|-|
-| 'ng-random' | normal-distribution random vibration, rms is n*9.8 m/s^2 |
-| 'n-random' | normal-distribution random vibration, rms is n m/s^2 |
-| 'ng-mHz-sinusoidal' | sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2 |
-| 'n-mHz-sinusoidal' | sinusoidal vibration of m Hz, amplitude is n m/s^2 |
-| numpy array of size (n,4) | single-sided PSD. [freqency, x, y, z], m^2/s^4/Hz |
+| '[nx ny nz]g-random' | normal-distribution random vibration, rms is n*9.8 m/s^2 |
+| '[nx ny nz]-random' | normal-distribution random vibration, rms is n m/s^2 |
+| '[nx ny nz]g-mHz-sinusoidal' | sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2 |
+| '[nx ny nz]-mHz-sinusoidal' | sinusoidal vibration of m Hz, amplitude is n m/s^2 |
+| numpy array of size (n,4) | single-sided PSD. The four columns are [freqency, x, y, z], in units of (m/s^2)^2/Hz |
+|
 
+For the vibratoin model of the gyro, it is similar as that of the acceleration except that the unit is default to rad/s and 'd' is used to change the unit to be deg/s.
+
+The following example sets random vibration to accel with RMS for x/y/z axis being 1, 2 and 3 m/s^2, respectively, and sets sinusoidal vibration to gyro with frequency being 0.5Hz and amplitude for x/y/z axis being 6, 5 and 4 deg/s, respectively.
+```
+    env = {'acc': '[1 2 3]-random',
+           'gyro': '[6 5 4]d-0.5Hz-sinusoidal'}
+```
 ### Step 4.2 Run the simulation
 
 ```python

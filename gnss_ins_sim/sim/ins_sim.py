@@ -105,13 +105,20 @@ class Sim(object):
                     [max_acceleration, max_angular_acceleration, max_angular_velocity],
                     in units of [m/s/s, deg/s/s, deg/s]
 
-            env: vibration model. There are three kinds of vibration models:
-                '[nx ny nz]g-random': normal-distribution random vibration, rms is n*9.8 m/s^2
-                '[nx ny nz]-random': normal-distribution random vibration, rms is n m/s^2
-                '[nx ny nz]g-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2
-                '[nx ny nz]-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
-                numpy array of (n,4): single-sided PSD. Each row is [freq, x, y, z], m^2/s^4/Hz
-
+            env: vibration model. 
+            There are three kinds of vibration models: random, sinusoidal and PSD
+                'acc'
+                    '[nx ny nz]g-random': normal-distribution random vibration, rms is n*9.8 m/s^2
+                    '[nx ny nz]-random': normal-distribution random vibration, rms is n m/s^2
+                    '[nx ny nz]g-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n*9.8 m/s^2
+                    '[nx ny nz]-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n m/s^2
+                    numpy array of (n,4): single-sided PSD. Each row is [freq, x, y, z], (m/s^2)^2/Hz
+                'gyro'
+                    '[nx ny nz]d-random': normal-distribution random vibration, rms is n deg/s
+                    '[nx ny nz]-random': normal-distribution random vibration, rms is n rad/s
+                    '[nx ny nz]d-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n deg/s
+                    '[nx ny nz]-mHz-sinusoidal': sinusoidal vibration of m Hz, amplitude is n rad/s
+                    numpy array of (n,4): single-sided PSD. Each row is [freq, x, y, z], (deg/s)^2/Hz
             algorithm: a user defined algorithm or list of algorithms. If there are multiple
                 algorithms, all algorithms should have the same input and output.
         '''
@@ -266,7 +273,7 @@ class Sim(object):
         elif isinstance(sim_idx, float):
             sim_idx = [int(sim_idx)]
         invalid_idx = []
-        for i in range(0, len(sim_idx)):    # a list specified, remove invalid values
+        for i in range(len(sim_idx)):    # a list specified, remove invalid values
             sim_idx[i] = int(sim_idx[i])
             if sim_idx[i] >= self.sim_count or sim_idx[i] < 0:
                 invalid_idx.append(sim_idx[i])
@@ -473,13 +480,18 @@ class Sim(object):
             self.dmgr.add_data(self.dmgr.ref_odo.name, rtn['odo'][:, 2])
         # generate sensor data
         # environment-->vibraition params
-        vib_def = self.__parse_env(self.env)
+        vib_def_acc = None
+        vib_def_gyro = None
+        if 'acc' in self.env.keys():
+            vib_def_acc = self.__parse_env(self.env['acc'])
+        if 'gyro' in self.env.keys():
+            vib_def_gyro = self.__parse_env(self.env['gyro'])
         for i in range(self.sim_count):
             accel = pathgen.acc_gen(self.fs[0], self.dmgr.ref_accel.data,
-                                    self.imu.accel_err, vib_def)
+                                    self.imu.accel_err, vib_def_acc)
             self.dmgr.add_data(self.dmgr.accel.name, accel, key=i)
             gyro = pathgen.gyro_gen(self.fs[0], self.dmgr.ref_gyro.data,\
-                                    self.imu.gyro_err)
+                                    self.imu.gyro_err, vib_def_gyro)
             self.dmgr.add_data(self.dmgr.gyro.name, gyro, key=i)
             if self.imu.gps:
                 gps = pathgen.gps_gen(self.dmgr.ref_gps.data, self.imu.gps_err,\
@@ -655,9 +667,12 @@ class Sim(object):
             else:
                 raise ValueError('env = \'%s\' is not valid.'% env)
             vib_amp = 1.0   # vibration amplitude, 1sigma for random, peak value for sinusoidal
-            if env[-1] == 'g' or env[-1] == 'G':
+            if env[-1] == 'g' or env[-1] == 'G':    # acc vib in unit of g
                 vib_amp = 9.8
                 env = env[:-1]  # remove 'g' or 'G'
+            elif env[-1] == 'd' or env[-1] == 'D':  # gyro vib in unit of deg/s
+                vib_amp = attitude.D2R
+                env = env[:-1]  # remove 'd' or 'D'
             try:
                 env = env[1:-1] # remove '[]' or '()'
                 env = env.split(' ')

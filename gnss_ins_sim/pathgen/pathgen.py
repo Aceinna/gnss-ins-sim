@@ -459,9 +459,9 @@ def acc_gen(fs, ref_a, acc_err, vib_def=None):
                 x, y and z axis. units: m/s2.
             'type' == 'psd'. Single sided PSD.
                 'freq':  frequency, in unit of Hz
-                'x': x axis, in unit of m2/s4/Hz.
-                'y': y axis, in unit of m2/s4/Hz.
-                'z': z axis, in unit of m2/s4/Hz.
+                'x': x axis, in unit of (m/s^2)^2/Hz.
+                'y': y axis, in unit of (m/s^2)^2/Hz.
+                'z': z axis, in unit of (m/s^2)^2/Hz.
     Returns:
         a_mea: nx3 measured acc data
     """
@@ -500,7 +500,7 @@ def acc_gen(fs, ref_a, acc_err, vib_def=None):
     a_mea = ref_a + acc_bias + acc_bias_drift + acc_noise + acc_vib
     return a_mea
 
-def gyro_gen(fs, ref_w, gyro_err):
+def gyro_gen(fs, ref_w, gyro_err, vib_def=None):
     """
     Add error to true gyro data according to gyroscope model parameters
     Args:
@@ -510,6 +510,20 @@ def gyro_gen(fs, ref_w, gyro_err):
             'b': 3x1 constant gyro bias, rad/s.
             'b_drift': 3x1 gyro bias drift, rad/s.
             'arw': 3x1 angle random walk, rad/s/root-Hz.
+        vib_def: Vibration model and parameters. Vibration type can be random, sinunoida or
+            specified by single-sided PSD.
+            Generated vibrating acc is expressed in the body frame.
+            'type' == 'random':
+                Normal distribution. 'x', 'y' and 'z' give the 1sigma values along x, y and z axis.
+                units: rad/s
+            'type' == 'sinunoidal'
+                Sinunoidal vibration. 'x', 'y' and 'z' give the amplitude of the sine wave along
+                x, y and z axis. units: rad/s.
+            'type' == 'psd'. Single sided PSD.
+                'freq':  frequency, in unit of Hz
+                'x': x axis, in unit of (rad/s)^2/Hz.
+                'y': y axis, in unit of (rad/s)^2/Hz.
+                'z': z axis, in unit of (rad/s)^2/Hz.
     Returns:
         w_mea: nx3 measured gyro data
     """
@@ -519,15 +533,33 @@ def gyro_gen(fs, ref_w, gyro_err):
     ## simulate sensor error
     # static bias
     gyro_bias = gyro_err['b']
-    # bias drift Todo: first-order Gauss-Markov model
+    # bias drift
     gyro_bias_drift = bias_drift(gyro_err['b_corr'], gyro_err['b_drift'], n, fs)
+    # vibrating gyro
+    gyro_vib = np.zeros((n, 3))
+    if vib_def is not None:
+        if vib_def['type'].lower() == 'psd':
+            gyro_vib[:, 0] = time_series_from_psd.time_series_from_psd(vib_def['x'],
+                                                                       vib_def['freq'], fs, n)[1]
+            gyro_vib[:, 1] = time_series_from_psd.time_series_from_psd(vib_def['y'],
+                                                                       vib_def['freq'], fs, n)[1]
+            gyro_vib[:, 2] = time_series_from_psd.time_series_from_psd(vib_def['z'],
+                                                                       vib_def['freq'], fs, n)[1]
+        elif vib_def['type'] == 'random':
+            gyro_vib[:, 0] = vib_def['x'] * np.random.randn(n)
+            gyro_vib[:, 1] = vib_def['y'] * np.random.randn(n)
+            gyro_vib[:, 2] = vib_def['z'] * np.random.randn(n)
+        elif vib_def['type'] == 'sinusoidal':
+            gyro_vib[:, 0] = vib_def['x'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+            gyro_vib[:, 1] = vib_def['y'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+            gyro_vib[:, 2] = vib_def['z'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
     # gyroscope white noise
     gyro_noise = np.random.randn(n, 3)
     gyro_noise[:, 0] = gyro_err['arw'][0] / math.sqrt(dt) * gyro_noise[:, 0]
     gyro_noise[:, 1] = gyro_err['arw'][1] / math.sqrt(dt) * gyro_noise[:, 1]
     gyro_noise[:, 2] = gyro_err['arw'][2] / math.sqrt(dt) * gyro_noise[:, 2]
     # true + constant_bias + bias_drift + noise
-    w_mea = ref_w + gyro_bias + gyro_bias_drift + gyro_noise
+    w_mea = ref_w + gyro_bias + gyro_bias_drift + gyro_noise + gyro_vib
     return w_mea
 
 def bias_drift(corr_time, drift, n, fs):

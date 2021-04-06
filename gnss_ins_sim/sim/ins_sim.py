@@ -482,10 +482,11 @@ class Sim(object):
         # environment-->vibraition params
         vib_def_acc = None
         vib_def_gyro = None
-        if 'acc' in self.env.keys():
-            vib_def_acc = self.__parse_env(self.env['acc'])
-        if 'gyro' in self.env.keys():
-            vib_def_gyro = self.__parse_env(self.env['gyro'])
+        if self.env is not None:
+            if 'acc' in self.env.keys():
+                vib_def_acc = self.__parse_env(self.env['acc'])
+            if 'gyro' in self.env.keys():
+                vib_def_gyro = self.__parse_env(self.env['gyro'])
         for i in range(self.sim_count):
             accel = pathgen.acc_gen(self.fs[0], self.dmgr.ref_accel.data,
                                     self.imu.accel_err, vib_def_acc)
@@ -686,7 +687,7 @@ class Sim(object):
             if env.ndim == 2 and env.shape[1] == 4: # env is a np.array of size (n,4)
                 vib_def['type'] = 'psd'
                 n = env.shape[0]
-                half_fs = 0.5*self.fs.data
+                half_fs = 0.5*self.fs[0]
                 if env[-1, 0] > half_fs:
                     n = np.where(env[:, 0] > half_fs)[0][0]
                 vib_def['freq'] = env[:n, 0]

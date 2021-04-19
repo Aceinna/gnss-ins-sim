@@ -303,14 +303,14 @@ class IMU(object):
                     'scale': scale factor
                     'stdv': velocity RMS error, meters/second
         '''
-        if not self.gps:
+        if not self.odo:
             return
         if odo_error is None:
             self.odo_err = odo_low_accuracy
         elif isinstance(odo_error, dict):
             if 'stdp' in odo_error and\
                 'stdv' in odo_error:
-                self.gps_err = odo_error
+                self.odo_err = odo_error
             else:
                 raise ValueError('odo_error should have key: stdp and stdv')
         else:

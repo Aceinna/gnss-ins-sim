@@ -79,7 +79,7 @@ imu_err = {
 
 ```python
 imu = imu_model.IMU(accuracy=imu_err, axis=6, gps=False)
-imu = imu_model.IMU(accuracy='low accuracy', axis=9, gps=True)
+imu = imu_model.IMU(accuracy='low-accuracy', axis=9, gps=True)
 ```
 
 axis = 6 to generate only gyro and accelerometer data.

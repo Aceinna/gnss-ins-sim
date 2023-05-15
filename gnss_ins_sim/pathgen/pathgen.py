@@ -550,9 +550,9 @@ def gyro_gen(fs, ref_w, gyro_err, vib_def=None):
             gyro_vib[:, 1] = vib_def['y'] * np.random.randn(n)
             gyro_vib[:, 2] = vib_def['z'] * np.random.randn(n)
         elif vib_def['type'] == 'sinusoidal':
-            gyro_vib[:, 0] = vib_def['x'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
-            gyro_vib[:, 1] = vib_def['y'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
-            gyro_vib[:, 2] = vib_def['z'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n))
+            gyro_vib[:, 0] = vib_def['x'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n) + np.random.rand(1)*2*math.pi)
+            gyro_vib[:, 1] = vib_def['y'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n) + np.random.rand(1)*2*math.pi)
+            gyro_vib[:, 2] = vib_def['z'] * np.sin(2.0*math.pi*vib_def['freq']*dt*np.arange(n) + np.random.rand(1)*2*math.pi)
     # gyroscope white noise
     gyro_noise = np.random.randn(n, 3)
     gyro_noise[:, 0] = gyro_err['arw'][0] / math.sqrt(dt) * gyro_noise[:, 0]

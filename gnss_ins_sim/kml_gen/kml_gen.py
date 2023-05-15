@@ -42,7 +42,7 @@ kmlstr_body = '''
       </Point>
       <ExtendedData>
          <Data name="Index">
-         <value>%d</value>
+         <value><TD>%d</TD> <TD>%f</TD> <TD>%f</TD></value>
          </Data>
       </ExtendedData>
    </Placemark>'''
@@ -51,14 +51,17 @@ kmlstr_end = '''
 </kml>
 '''
 
-def kml_gen(data_dir, pos, heading=None, name='pathgen', convert_to_lla=False, 
-            color='ffff0000', max_points=None):
+def kml_gen(data_dir, pos, heading=None, time_stamp=None, name='pathgen', convert_to_lla=False, 
+            color='ffff0000', max_points=8000):
     '''
     Generate .kml file contents from position data.
     Args:
         data_dir: directory to save the .kml files.
         pos: nx3 [lat, lon, alt in rad and m, or [x, y, z] in m
         heading: in unit of deg
+        time_stamp: 
+            'week': week number
+            'tow': time of week in seconds
         name: string name of this trajectory.
         convert_to_lla: true if position data are generated in a virtual inertial frame.
             xyz-form position data will be converted to [Lat Lon Alt] coordinates.
@@ -70,7 +73,8 @@ def kml_gen(data_dir, pos, heading=None, name='pathgen', convert_to_lla=False,
             rr=red (00 to ff). For example, if you want to apply a blue color with 50 percent
             opacity to an overlay, you would specify the following: <color>7fff0000</color>,
             where alpha=0x7f, blue=0xff, green=0x00, and red=0x00.
-        max_points: the number of points in the generated kml file.
+        max_points: the number of points in the generated kml file. The default value is 8000.
+            If it is -1, that means only integer seconds are used. In this case, time_stamp is required.
     Returns:
         None.
     '''
@@ -98,6 +102,31 @@ def kml_gen(data_dir, pos, heading=None, name='pathgen', convert_to_lla=False,
         header_line = 'Latitude (deg), Longitude (deg), Altitude (deg)'
         file_name = data_dir + '//' + name + '_LLA.csv'
         np.savetxt(file_name, lla, header=header_line, delimiter=',', comments='')
+    # write data
+    ndim = lla.ndim
+    nsample = lla.shape[0]
+    if heading is None:
+        heading = np.zeros((nsample, 1))
+    if ndim == 1:
+        coordinate_lines = (kmlstr_body)% (heading[0], lla[1], lla[0], lla[2], 0)
+    else:
+        coordinate_lines = ''
+        if max_points < 0:
+            # use only integer seconds.
+            idx = np.where(time_stamp['tow'] % 1 == 0)[0]
+        else:
+            step = int(math.ceil(nsample / max_points))
+            idx = range(0, nsample, step)
+        for i in idx:
+            if lla[i][2] < 0:
+                lla[i][2] = 0
+            if time_stamp is None:
+                coordinate_lines += (kmlstr_body)% (heading[i], lla[i][1], lla[i][0], lla[i][2],\
+                                                    i, 0, 0)
+            else:
+                coordinate_lines += (kmlstr_body)% (heading[i], lla[i][1], lla[i][0], lla[i][2],\
+                                                    i, time_stamp['week'][i], time_stamp['tow'][i])
+    # write to file
     # gen kml according to data and template
     kml_file = data_dir + '//' + name + '.kml'
     f = open(kml_file, 'w+')
@@ -106,25 +135,7 @@ def kml_gen(data_dir, pos, heading=None, name='pathgen', convert_to_lla=False,
     lines = (kmlstr_header)% (color, color)
     f.write(lines)
     # write data
-    ndim = lla.ndim
-    if ndim == 1:
-        if heading is None:
-            lines = (kmlstr_body)% (0, lla[1], lla[0], lla[2], 0)
-        else:
-            lines = (kmlstr_body)% (heading, lla[1], lla[0], lla[2], 0)
-        f.write(lines)
-    else:
-        if max_points is None:
-            max_points = 8000.0
-        step = int(math.ceil(lla.shape[0]/max_points))
-        for i in range(0, lla.shape[0], step):
-            if lla[i][2] < 0:
-                lla[i][2] = 0
-            if heading is None:
-                lines = (kmlstr_body)% (0, lla[i][1], lla[i][0], lla[i][2], i)
-            else:
-                lines = (kmlstr_body)% (heading[i], lla[i][1], lla[i][0], lla[i][2], i)
-            f.write(lines)
+    f.write(coordinate_lines)
     # write end
     f.write(kmlstr_end)
     f.close()

@@ -18,8 +18,10 @@ D2R = math.pi/180
 
 ins_cfg = {'delim':',', 'headerLines':1, 'idx_week':0, 'idx_tow':1, 'idx_lla':(4, 5, 6),\
            'idx_rpy':(12, 13, 14), 'track_icon':'ins'}
-gnss_err_cfg = {'delim':',', 'headerLines':0, 'idx_week':0, 'idx_tow':1, 'idx_lla':(2, 3, 4, 8, 9),\
+gnss_cfg = {'delim':',', 'headerLines':1, 'idx_week':0, 'idx_tow':1, 'idx_lla':(2, 3, 4, 8),\
            'idx_rpy':(5, 6, 7), 'track_icon':'gnss'}
+gnss_err_cfg = {'delim':',', 'headerLines':0, 'idx_week':0, 'idx_tow':1, 'idx_lla':(2, 3, 4, 8, 9),\
+           'idx_rpy':(5, 6, 7), 'track_icon':'gnss'} # 8: fix type, 9: error
 ins_err_cfg = {'delim':',', 'headerLines':0, 'idx_week':0, 'idx_tow':1, 'idx_lla':(2, 3, 4, 8, 9),\
            'idx_rpy':(5, 6, 7), 'track_icon':'ins'}
 span_cfg = {'delim':None, 'headerLines':45, 'idx_week':0, 'idx_tow':1, 'idx_lla':(2, 3, 4),\
@@ -50,13 +52,13 @@ def test_kml_gen(lla_file, cfg, dt, time_span):
 
 if __name__ == '__main__':
     #### defaults
-    in_data_dir = 'f:\\desktop\\tmp\\INS502\pl\\postpro\\'
-    in_file_name = '20240222_053_AM_Antenna_DY_INS402_UM982.postproc.txt'
+    in_data_dir = 'f:\\desktop\\tmp\\INS502\\ref_improve\\'
+    in_file_name = 'ctp7-hg4930-gnss.csv'
     in_file = os.path.abspath(in_data_dir + in_file_name)
-    in_cfg = span_cfg
-    in_dt = 0.1
+    in_cfg = gnss_cfg
+    in_dt = 1
     in_time_span = []
-    in_time_span = [350500, 353800]
+    # in_time_span = [368946, 369146]
 
     #### args
     nargin = len(sys.argv)
@@ -68,6 +70,8 @@ if __name__ == '__main__':
                 in_cfg = ins_cfg
             elif cmd_str.lower() == 'ins_err':
                 in_cfg = ins_err_cfg
+            elif cmd_str.lower() == 'gnss':
+                in_cfg = gnss_cfg
             elif cmd_str.lower() == 'gnss_err':
                 in_cfg = gnss_err_cfg
             elif cmd_str.lower() == 'span':
@@ -76,10 +80,11 @@ if __name__ == '__main__':
                 in_cfg = compact_cfg
             else:
                 in_cfg = ins_cfg
+            dt = 1
+            in_time_span = []
             if nargin > 3:
                 in_dt = float(sys.argv[3])
-                in_time_span = []
                 if nargin > 5:
                     in_time_span = [float(sys.argv[4]), float(sys.argv[5])]
-
+    
     test_kml_gen(in_file, in_cfg, in_dt, in_time_span)

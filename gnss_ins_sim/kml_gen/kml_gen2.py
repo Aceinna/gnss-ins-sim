@@ -19,10 +19,32 @@ kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
      xmlns:gx = "http://www.google.com/kml/ext/2.2" > 
 <Document>
+      <Style id="default">
+         <IconStyle>
+            <color>ffffff00</color><colorMode>normal</colorMode>
+            <scale>0.70</scale>
+            <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
+         </IconStyle>
+         <LabelStyle>
+            <color>ffffff00</color>
+            <scale>1</scale>
+         </LabelStyle>
+      </Style>
+      <Style id="default_err">
+         <IconStyle>
+            <color>ffffff00</color><colorMode>normal</colorMode>
+            <scale>1.2</scale>
+            <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
+         </IconStyle>
+         <LabelStyle>
+            <color>ffffff00</color>
+            <scale>1</scale>
+         </LabelStyle>
+      </Style>
       <Style id="track_spp">
          <IconStyle>
             <color>ff0000ff</color><colorMode>normal</colorMode>
-            <scale>0.50</scale>
+            <scale>0.70</scale>
             <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
          </IconStyle>
          <LabelStyle>
@@ -38,13 +60,13 @@ kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
          </IconStyle>
          <LabelStyle>
             <color>ffffff00</color>
-            <scale>1</scale>
+            <scale>1.2</scale>
          </LabelStyle>
       </Style>
       <Style id="track_rtd">
          <IconStyle>
             <color>ff00ffff</color><colorMode>normal</colorMode>
-            <scale>0.50</scale>
+            <scale>0.70</scale>
             <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
          </IconStyle>
          <LabelStyle>
@@ -60,13 +82,13 @@ kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
          </IconStyle>
          <LabelStyle>
             <color>ffffff00</color>
-            <scale>1</scale>
+            <scale>1.2</scale>
          </LabelStyle>
       </Style>
       <Style id="track_float">
          <IconStyle>
             <color>ffff0000</color><colorMode>normal</colorMode>
-            <scale>0.50</scale>
+            <scale>0.70</scale>
             <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
          </IconStyle>
          <LabelStyle>
@@ -77,7 +99,7 @@ kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
       <Style id="track_float_err">
          <IconStyle>
             <color>ffff0000</color><colorMode>normal</colorMode>
-            <scale>1</scale>
+            <scale>1.2</scale>
             <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
          </IconStyle>
          <LabelStyle>
@@ -88,7 +110,7 @@ kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
       <Style id="track_fixed">
          <IconStyle>
             <color>ff00ff00</color><colorMode>normal</colorMode>
-            <scale>0.50</scale>
+            <scale>0.70</scale>
             <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
          </IconStyle>
          <LabelStyle>
@@ -99,7 +121,7 @@ kmlstr_header = '''<?xml version = "1.0" encoding = "UTF-8"?>
       <Style id="track_fixed_err">
          <IconStyle>
             <color>ff00ff00</color><colorMode>normal</colorMode>
-            <scale>1</scale>
+            <scale>1.2</scale>
             <Icon><href>http://maps.google.com/mapfiles/kml/shapes/%s.png</href></Icon>
          </IconStyle>
          <LabelStyle>
@@ -175,24 +197,24 @@ map_err_limit = {SPP:200,\
                  RTD:200,\
                  FIXED:0.5,\
                  FLOAT:1,\
-                 INS:2}
+                 INS:0.5}
 map_fix_type = {SPP:'track_spp',\
                 RTD:'track_rtd',\
                 FIXED:'track_fixed',\
                 FLOAT:'track_float',\
-                INS:'track_spp',\
+                INS:'default',\
                 SPP+100:'track_spp_err',\
                 RTD+100:'track_rtd_err',\
                 FIXED+100:'track_fixed_err',\
                 FLOAT+100:'track_float_err',\
-                INS+100:'track_spp_err'}
+                INS+100:'default_err'}
 map_track_icon = {'ins':'track',\
                   'gnss':'square',\
                   'gps':'square',\
                   'ref':'triangle'}
 
 def kml_gen(data_dir, pos, rpy=None, time_stamp=None, name='pathgen', convert_to_lla=False,
-            track_icon='track', dt=1):
+            track_icon='track', dt=1, with_lines=False):
     '''
     Generate .kml file contents from position data.
     Args:
@@ -218,6 +240,7 @@ def kml_gen(data_dir, pos, rpy=None, time_stamp=None, name='pathgen', convert_to
         track_icon: icon for the track. see the definitions of "map_track_icon" for details.
         dt: Time interval in unit of second to resample the input data. Default is 1s.
             If it is 0, that means all the input LLA will be included in the generated kml file.
+        with_lines: KML is generated to have lines connecting adajecent track icons.
     Returns:
         None.
     '''
@@ -252,8 +275,8 @@ def kml_gen(data_dir, pos, rpy=None, time_stamp=None, name='pathgen', convert_to
     f.truncate()
     # write header
     track_icon = map_track_icon[track_icon]
-    lines = (kmlstr_header)% (track_icon, track_icon, track_icon, track_icon,\
-                              track_icon, track_icon, track_icon, track_icon)
+    lines = (kmlstr_header)% (track_icon, track_icon, track_icon, track_icon, track_icon,\
+                              track_icon, track_icon, track_icon, track_icon, track_icon)
     f.write(lines)
     ## write coordinates
     ndim = lla.ndim
@@ -268,10 +291,7 @@ def kml_gen(data_dir, pos, rpy=None, time_stamp=None, name='pathgen', convert_to
         rpy = rpy * np.array([[0, 0, 1]])
     # start writing the line connecting each point
     idx = []    # this is used to select samples from the input to be written in kml
-    if ndim == 1:
-        tmplines = '            %s,%s,%s\n' % (lla[1], lla[0], lla[2])
-    else:
-        tmplines = ''
+    if ndim > 1:
         dt = abs(dt)
         if dt == 0:
             # use all samples
@@ -282,10 +302,15 @@ def kml_gen(data_dir, pos, rpy=None, time_stamp=None, name='pathgen', convert_to
             tmp_time_stamp = time_stamp['tow'] * (1.0/dt)
             rem = abs(np.round(tmp_time_stamp) - tmp_time_stamp) / (1.0/dt)
             idx = np.where(rem < 0.001)[0] # 0.001 is 1ms
-        for i in idx:
-            tmplines += '            %s,%s,%s\n' % (lla[i, 1], lla[i, 0], lla[i, 2])
-    coordinate_lines = (kml_line) % (tmplines)
-    f.write(coordinate_lines)
+    if with_lines:
+        if idx ==[]:
+            tmplines = '            %s,%s,%s\n' % (lla[1], lla[0], lla[2])
+        else:
+            tmplines = ''
+            for i in idx:
+                tmplines += '            %s,%s,%s\n' % (lla[i, 1], lla[i, 0], lla[i, 2])
+            coordinate_lines = (kml_line) % (tmplines)
+            f.write(coordinate_lines)
     # start writing each point
     if ndim == 1:
         coordinate_lines = (kmlstr_body)% (rpy[2], lla[1], lla[0], lla[2], 0)
@@ -302,10 +327,12 @@ def kml_gen(data_dir, pos, rpy=None, time_stamp=None, name='pathgen', convert_to
             if lla[i, 2] < 0:
                 lla[i, 2] = 0
             # fix type
-            fix_type = 1
+            fix_type = 6    # default to INS
             nCol = lla.shape[1]
             if nCol >= 4:
                 fix_type = lla[i, 3]
+                if fix_type < SPP:
+                    continue    # only deal with valid solution
                 if nCol >= 5:
                     if lla[i, 4] > map_err_limit[fix_type]:
                         fix_type += 100
